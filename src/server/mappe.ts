@@ -23,7 +23,7 @@ export interface StatoMappa {
 }
 
 export async function statoMappa(): Promise<StatoMappa> {
-  if (!process.env.NEXT_PUBLIC_MAPTILER_KEY && !process.env.NEXT_PUBLIC_MAPS_KEY) {
+  if (!process.env.NEXT_PUBLIC_MAPTILER_KEY) {
     return { attiva: false, caricamenti: 0, soglia: SOGLIA_MENSILE, motivo: 'nessuna_chiave' }
   }
 

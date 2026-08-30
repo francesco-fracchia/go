@@ -291,6 +291,22 @@ Due cose che la flessibilità **non** fa:
 - **non resta aperta.** Alla prima prenotazione l'orario si fissa, e lo fa un
   trigger del database: non è una regola da ricordarsi di applicare.
 
+## Quali servizi esterni usiamo, e per cosa
+
+| serve per | chi lo fa | costo |
+|---|---|---|
+| percorsi e ricerca indirizzi | **OpenRouteService** | gratis, 2.000 chiamate/giorno |
+| piastrelle della mappa | **MapTiler** | 30 $/mese, e senza chiave la mappa non si offre |
+| aprire il navigatore | **Google Maps / Mappe / Waze** | zero — è un collegamento, non un servizio |
+| pagamenti | **Stripe** | 1,5 % + 0,25 € a incasso |
+| SMS e chiamate mascherate | **Twilio** | ~7 centesimi a SMS |
+| database, accesso, file | **Supabase** | gratis fino a 50.000 utenti/mese |
+| elenco dei posti | **OpenStreetMap** via Overpass | gratis |
+
+Google compare **solo come collegamento**: si apre l'app che il conducente
+ha già installato, con il giro impostato. Nessuna chiave, nessuna chiamata,
+nessun costo. Le sue API non le usiamo.
+
 ## Il navigatore e la posizione
 
 **Non costruiamo un navigatore.** Ne esistono tre che la gente ha già,
