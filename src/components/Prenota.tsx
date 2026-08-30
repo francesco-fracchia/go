@@ -56,22 +56,9 @@ export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, pre
 
   return (
     <>
-      <div
-        onClick={() => !invio && setAperto(false)}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.42)', zIndex: 40,
-        }}
-      />
-      <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 41,
-        background: 'var(--carta)', borderRadius: '20px 20px 0 0',
-        padding: '10px 20px calc(24px + env(safe-area-inset-bottom))',
-        maxHeight: '88dvh', overflowY: 'auto', boxShadow: 'var(--ombra-alta)',
-      }}>
-        <div style={{
-          width: 40, height: 4, borderRadius: 2, background: 'var(--riga)',
-          margin: '0 auto 18px',
-        }} />
+      <div className="velo" onClick={() => !invio && setAperto(false)} />
+      <div className="foglio">
+        <div className="maniglia" />
 
         {/* Il totale resta visibile mentre si digita la carta. */}
         <div style={{

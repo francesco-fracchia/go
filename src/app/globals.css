@@ -252,3 +252,117 @@ a { color: var(--accento); }
 @media (min-width: 1200px) {
   .intestazione-dentro { padding: 0 40px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Pannelli sovrapposti.
+
+   Sul telefono salgono dal basso e riempiono lo schermo: è il gesto giusto
+   per un pollice. Sul desktop diventano riquadri centrati — un foglio a
+   tutto schermo su un monitor da ventisette pollici non è immersivo, è una
+   pagina che ha perso il contesto.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.sovrapposto {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column;
+  background: var(--carta);
+}
+
+.pannello-mappa {
+  flex-grow: 1; display: flex; flex-direction: column; min-height: 0;
+}
+
+.foglio {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  background: var(--carta);
+  border-radius: 18px 18px 0 0;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height: 88dvh; overflow-y: auto;
+  box-shadow: var(--ombra-alta);
+}
+
+.velo { position: fixed; inset: 0; z-index: 40; background: rgba(11,11,15,.45); }
+
+.maniglia {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--riga); margin: 0 auto 18px;
+}
+
+@media (min-width: 860px) {
+  .sovrapposto {
+    background: rgba(11,11,15,.45);
+    align-items: center; justify-content: center;
+    padding: 40px;
+  }
+  .pannello-mappa {
+    flex-grow: 0;
+    width: min(920px, 100%); height: min(680px, 100%);
+    background: var(--carta);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: var(--ombra-alta);
+  }
+
+  /* Il foglio smette di salire dal basso e diventa una finestra. */
+  .foglio {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(460px, calc(100vw - 80px));
+    border-radius: 16px;
+    padding: 24px 26px 26px;
+    max-height: 84vh;
+  }
+  .maniglia { display: none; }
+}
+
+/* ─── La conversazione ─────────────────────────────────────────────────
+   Sul telefono occupa lo schermo: è l'unica cosa che si sta facendo.
+   Sul desktop diventa un riquadro alto quanto serve — una chat di quattro
+   messaggi stirata su milleduecento pixel di altezza è tre quarti di vuoto
+   con due frasi in cima. */
+
+.conversazione {
+  display: flex; flex-direction: column;
+  min-height: 100dvh;
+}
+.conversazione-testa {
+  padding: 14px 20px; border-bottom: 1px solid var(--riga);
+  background: var(--superficie); position: sticky; top: 0; z-index: 2;
+}
+.conversazione-piede {
+  position: sticky; bottom: 0; background: var(--superficie);
+  border-top: 1px solid var(--riga);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 860px) {
+  .conversazione {
+    min-height: 0; height: min(640px, calc(100dvh - 160px));
+    max-width: var(--colonna); margin: 28px auto;
+    background: var(--carta); border: 1px solid var(--riga);
+    border-radius: 16px; overflow: hidden; box-shadow: var(--ombra);
+  }
+  .conversazione-testa { border-radius: 16px 16px 0 0; }
+  .conversazione-piede { padding: 10px 16px 14px; }
+}
+
+/* ─── La prima schermata sulla scrivania ───────────────────────────────
+   Il modulo di ricerca e l'invito a offrire un passaggio stanno affiancati
+   invece che incolonnati: su uno schermo largo mettere in fila due blocchi
+   corti lascia metà pagina vuota e fa scorrere per niente. */
+
+@media (min-width: 860px) {
+  .prima {
+    --colonna: 880px;
+  }
+  .prima-titolo { font-size: 34px; }
+  .prima-affiancate {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
+/* Elementi che esistono solo su uno dei due formati. */
+@media (min-width: 860px) { .solo-telefono { display: none !important; } }
+@media (max-width: 859px) { .solo-scrivania { display: none !important; } }

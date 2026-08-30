@@ -23,14 +23,20 @@ import { Marchio } from './Marchio.tsx'
 export interface VoceNavigazione {
   href: string
   testo: string
-  attiva?: boolean
+  /**
+   * L'etichetta della barra bassa, quando quella lunga non ci sta.
+   * Su un telefono da 375 pixel quattro voci hanno una settantina di pixel
+   * a testa: «Offri un passaggio» va a capo e la barra cresce di una riga,
+   * mangiando spazio alla schermata per una parola che si può togliere.
+   */
+  corto?: string
 }
 
 const VOCI: VoceNavigazione[] = [
   { href: '/', testo: 'Cerca' },
-  { href: '/posti', testo: 'Dove si va' },
-  { href: '/pubblica', testo: 'Offri un passaggio' },
-  { href: '/viaggi', testo: 'I tuoi viaggi' },
+  { href: '/posti', testo: 'Dove si va', corto: 'Posti' },
+  { href: '/pubblica', testo: 'Offri un passaggio', corto: 'Offri' },
+  { href: '/viaggi', testo: 'I tuoi viaggi', corto: 'Viaggi' },
 ]
 
 export function Telaio({ children, larga, attiva }: {
@@ -72,7 +78,7 @@ export function Telaio({ children, larga, attiva }: {
         {VOCI.map((v) => (
           <a key={v.href} href={v.href}
             className={`voce-bassa${attiva === v.href ? ' voce-bassa-attiva' : ''}`}>
-            {v.testo}
+            {v.corto ?? v.testo}
           </a>
         ))}
       </nav>

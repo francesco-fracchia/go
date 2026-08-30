@@ -81,22 +81,18 @@ leggono da uno stile in linea, che batterebbe qualunque classe.
 
 ## Le piastrelle della mappa
 
-MapLibre carica le immagini con `crossOrigin`, quindi servono le intestazioni
-CORS — e **fra i fornitori gratuiti senza chiave non ne resta nessuno che le
-mandi**: OpenStreetMap ed Esri rifiutano le richieste dal browser, CARTO
-risponde ma stampa «API KEY REQUIRED» sopra la mappa.
+**MapTiler**, con la chiave in `NEXT_PUBLIC_MAPTILER_KEY`. Centomila
+caricamenti al mese gratis: dieci volte la soglia di Google, e un decimo del
+prezzo oltre.
 
-Senza configurazione si usa CARTO senza chiave: la mappa si vede, con la
-scritta addosso. Serve a capire che manca la configurazione, non a restare
-così.
+Il conto che decide non è il prezzo unitario ma **cosa conta come
+caricamento**: ogni apertura della mappa, anche di chi poi non prenota. A
+cinquantamila aperture al mese Google costa 280 $ — con un netto di 2 € a
+corsa sono 140 corse al mese solo per pagare la mappa.
 
-**Prima di andare online** basta una chiave gratuita — MapTiler dà centomila
-caricamenti al mese — in `NEXT_PUBLIC_TILES_URL`:
-
-```
-NEXT_PUBLIC_TILES_URL=https://api.maptiler.com/maps/dataviz-light/{z}/{x}/{y}.png?key=LA_TUA_CHIAVE
-NEXT_PUBLIC_TILES_ATTRIBUZIONE=© MapTiler © contributori OpenStreetMap
-```
+Senza chiave si ripiega su CARTO, che funziona ma stampa «API KEY REQUIRED»
+sopra la mappa: si vede qualcosa e si capisce che manca la configurazione,
+che è meglio di un rettangolo grigio.
 
 ## I posti
 
@@ -328,8 +324,7 @@ SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY   solo lato server
 STRIPE_SECRET_KEY
 ORS_API_KEY                 OpenRouteService
-NEXT_PUBLIC_TILES_URL       piastrelle della mappa — vedi sotto
-NEXT_PUBLIC_TILES_ATTRIBUZIONE
+NEXT_PUBLIC_MAPTILER_KEY    piastrelle della mappa — vedi sotto
 VAPID_PUBLIC_KEY            web push
 VAPID_PRIVATE_KEY
 CONTATTO_EMAIL              anche il punto di contatto unico DSA

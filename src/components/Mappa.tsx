@@ -20,40 +20,35 @@ import { Bottone } from './base.tsx'
  */
 
 /**
- * Uno stile a PIASTRELLE RASTER, non vettoriale.
+ * Le piastrelle della mappa.
  *
- * Il vettoriale disegna le mappe dentro un Web Worker, e quel worker con
- * Next non si carica: la libreria lo cerca per percorso relativo e riceve
- * una pagina HTML, oppure — passando `setWorkerUrl`, l'unico appiglio
- * offerto — viene creato come worker classico su un file a moduli. In
- * entrambi i casi fallisce in silenzio: la mappa monta, i controlli e
- * l'attribuzione compaiono, e resta grigia. È il modo peggiore di rompersi,
- * perché sembra funzionante.
+ * MapTiler: centomila caricamenti al mese gratis, dieci volte la soglia di
+ * Google, e un decimo del prezzo oltre. Il conto che decide è che ogni
+ * APERTURA della mappa conta — anche di chi poi non prenota — e con un netto
+ * di due euro a corsa un fornitore caro si mangia il margine prima di
+ * portare un solo passeggero.
  *
- * Il raster non usa nessun worker. Per scegliere un punto su una mappa il
- * vettoriale non porta niente — niente rotazione, niente stili dinamici,
- * niente tre dimensioni — e in cambio costava l'intera funzione.
+ * Raster e non vettoriale: il vettoriale disegna dentro un Web Worker che
+ * con Next non si carica, e fallisce in silenzio — la mappa monta, i
+ * controlli compaiono, e resta grigia. Per scegliere un punto il vettoriale
+ * non porta niente in cambio.
  *
- * Il fornitore delle piastrelle è una variabile d'ambiente, e non per
- * eleganza: MapLibre carica le immagini con `crossOrigin`, quindi servono
- * le intestazioni CORS, e fra i fornitori gratuiti senza chiave non ne
- * resta nessuno che le mandi. OpenStreetMap ed Esri rifiutano le richieste
- * dal browser; CARTO risponde ma stampa «API KEY REQUIRED» sopra la mappa.
- *
- * Il valore predefinito è CARTO senza chiave: si vede qualcosa e si capisce
- * subito che manca la configurazione, che è meglio di un rettangolo grigio.
- *
- * ⚠️  PRIMA DI ANDARE ONLINE: prendere una chiave gratuita (MapTiler dà
- *     centomila caricamenti al mese, più che sufficienti) e metterla in
- *     NEXT_PUBLIC_TILES_URL. È una variabile, non una riga di codice.
+ * Senza chiave si ripiega su CARTO, che funziona ma stampa «API KEY
+ * REQUIRED» sopra la mappa: si vede qualcosa e si capisce subito che manca
+ * la configurazione, che è meglio di un rettangolo grigio.
  */
-const PIASTRELLE = process.env.NEXT_PUBLIC_TILES_URL
-  ? [process.env.NEXT_PUBLIC_TILES_URL]
+const CHIAVE = process.env.NEXT_PUBLIC_MAPTILER_KEY
+
+const PIASTRELLE = CHIAVE
+  ? [`https://api.maptiler.com/maps/dataviz-light/{z}/{x}/{y}@2x.png?key=${CHIAVE}`]
   : ['a', 'b', 'c'].map(
       (s) => `https://${s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png`,
     )
-const ATTRIBUZIONE = process.env.NEXT_PUBLIC_TILES_ATTRIBUZIONE
-  ?? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'
+
+const ATTRIBUZIONE = CHIAVE
+  ? '<a href="https://www.maptiler.com/copyright/">© MapTiler</a> · <a href="https://www.openstreetmap.org/copyright">© contributori OpenStreetMap</a>'
+  : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'
+
 const STILE: import('maplibre-gl').StyleSpecification = {
   version: 8,
   sources: {
@@ -66,7 +61,7 @@ const STILE: import('maplibre-gl').StyleSpecification = {
     },
   },
   layers: [
-    { id: 'sfondo', type: 'background', paint: { 'background-color': '#F2F0ED' } },
+    { id: 'sfondo', type: 'background', paint: { 'background-color': '#F1F1F4' } },
     { id: 'base', type: 'raster', source: 'base' },
   ],
 }
@@ -195,10 +190,8 @@ export function Mappa({ centro, iniziale, onConferma, onAnnulla }: {
   }, [punto.lat, punto.lng])
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 60, background: 'var(--carta)',
-      display: 'flex', flexDirection: 'column',
-    }}>
+    <div className="sovrapposto">
+      <div className="pannello-mappa">
       <div style={{ position: 'relative', flexGrow: 1 }}>
         <div ref={contenitore} style={{ position: 'absolute', inset: 0 }} />
 
@@ -251,6 +244,7 @@ export function Mappa({ centro, iniziale, onConferma, onAnnulla }: {
           disabled={!etichetta}
           onClick={() => onConferma({ ...punto, etichetta })}
         >Usa questo punto</Bottone>
+      </div>
       </div>
     </div>
   )

@@ -33,8 +33,10 @@ export function Cerca({ serate = [], destinazione }: {
   const [quando, setQuando] = useState('')
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
+    <main className="prima" style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
+      {/* Sul desktop il marchio è già in barra: ripeterlo dentro la pagina
+          è rumore, e ruba lo spazio che serve al motivo per cui si è qui. */}
+      <header className="solo-telefono" style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
         <Marchio dimensione={36} />
         <div>
           <div style={{
@@ -48,6 +50,8 @@ export function Cerca({ serate = [], destinazione }: {
       </header>
 
       {/* ── La ricerca. Tre campi, nessuno facoltativo, nessuno in più. ── */}
+      <div className="prima-affiancate">
+      <div>
       <CampoLuogo etichetta="Parti da" valore={da} onScegli={setDa}
         segnaposto="Lodi, piazza della Vittoria" />
       <CampoLuogo etichetta="Vai a" valore={a} onScegli={setA}
@@ -70,7 +74,9 @@ export function Cerca({ serate = [], destinazione }: {
           window.location.href = `/cerca?${p}`
         }}
       >Cerca</Bottone>
+      </div>
 
+      <div>
       {/* ── L'altra metà del mercato, non nascosta in un menu ── */}
       <a href="/pubblica" style={{ textDecoration: 'none' }}>
         <div style={{
@@ -87,6 +93,9 @@ export function Cerca({ serate = [], destinazione }: {
           </div>
         </div>
       </a>
+
+      </div>
+      </div>
 
       {/* ── Dove si va ──
           Risolve il problema di chi apre l'applicazione senza un indirizzo

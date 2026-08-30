@@ -71,11 +71,8 @@ export function Chat({ corsaId, mio, iniziali, titolo }: {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
-      <header style={{
-        padding: '14px 20px', borderBottom: '1px solid var(--riga)',
-        background: 'var(--superficie)', position: 'sticky', top: 0, zIndex: 2,
-      }}>
+    <div className="conversazione">
+      <header className="conversazione-testa">
         <div style={{ fontWeight: 600, fontSize: 16, fontFamily: 'var(--titoli)' }}>{titolo}</div>
         <div style={{ fontSize: 12.5, color: 'var(--tenue)' }}>
           Vedono tutti quelli che salgono
@@ -111,11 +108,7 @@ export function Chat({ corsaId, mio, iniziali, titolo }: {
         <div ref={fondo} />
       </div>
 
-      <div style={{
-        position: 'sticky', bottom: 0, background: 'var(--superficie)',
-        borderTop: '1px solid var(--riga)',
-        padding: '10px 16px calc(10px + env(safe-area-inset-bottom))',
-      }}>
+      <div className="conversazione-piede">
         <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 9 }}>
           {PRONTE.map((p) => (
             <button key={p} onClick={() => invia(p)} style={{
