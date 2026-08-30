@@ -1,92 +1,78 @@
 """
 Genera le icone PNG dell'applicazione.
 
-Il marchio è un segno figurativo — quadrato con angoli morbidi, sfumatura
-radiale calda, le lettere GO in negativo — perché la parola «GO» da sola non
-è registrabile. Qui si disegna con la matematica dei pixel invece che con
-un font: serve solo per due lettere, e toglie una dipendenza da un carattere
-che potrebbe non essere installato dove si costruisce.
+Stessa geometria del marchio vettoriale in `src/components/Marchio.tsx`,
+tenuta allineata a mano: la G è un anello con l'apertura tagliata in
+diagonale più una barra, la O un anello chiuso, su una griglia 219×120
+riportata dentro un quadrato di 100.
 
 Si disegna a quattro volte la dimensione e si riduce: è l'antialiasing del
 poveraccio, e su un'icona da 192 pixel non si distingue da quello vero.
 """
 import zlib, struct, math, os
 
-SUPER = 4  # fattore di supercampionamento
+SUPER = 4
 
-def png(percorso, larghezza, altezza, pixel):
+VIOLA = (79, 53, 245)      # --accento
+BIANCO = (255, 255, 255)   # --su-accento
+NERO = (10, 10, 15)
+
+# La stessa trasformazione dell'SVG: translate(11 28.6) scale(0.356)
+SPOSTA_X, SPOSTA_Y, SCALA = 11.0, 28.6, 0.356
+RAGGIO_SQUADRO = 26.0      # rx del rettangolo, su 100
+
+def png(percorso, n, pixel):
     grezzo = b''.join(
-        b'\x00' + bytes(v for x in range(larghezza) for v in pixel[y * larghezza + x])
-        for y in range(altezza)
+        b'\x00' + bytes(v for x in range(n) for v in pixel[y * n + x])
+        for y in range(n)
     )
     def blocco(tipo, dati):
         c = tipo + dati
         return struct.pack('>I', len(dati)) + c + struct.pack('>I', zlib.crc32(c))
     with open(percorso, 'wb') as f:
         f.write(b'\x89PNG\r\n\x1a\n')
-        f.write(blocco(b'IHDR', struct.pack('>IIBBBBB', larghezza, altezza, 8, 6, 0, 0, 0)))
+        f.write(blocco(b'IHDR', struct.pack('>IIBBBBB', n, n, 8, 6, 0, 0, 0)))
         f.write(blocco(b'IDAT', zlib.compress(grezzo, 9)))
         f.write(blocco(b'IEND', b''))
 
-def misto(a, b, t):
-    t = max(0.0, min(1.0, t))
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
-
-# La stessa sfumatura del marchio nell'interfaccia.
-LUCE   = (255, 217, 184)
-MEDIO  = (242, 145, 94)
-SCURO  = (200, 90, 42)
-
-def sfumatura(x, y, n):
-    """Radiale, con il fuoco al 68% di larghezza e al 42% di altezza."""
-    d = math.hypot(x - 0.68 * n, y - 0.42 * n) / (n * 0.85)
-    return misto(LUCE, MEDIO, d / 0.42) if d < 0.42 else misto(MEDIO, SCURO, (d - 0.42) / 0.58)
-
-def dentro_quadrato_morbido(x, y, n, raggio):
-    """Quadrato con angoli arrotondati: distanza di Chebyshev smussata."""
-    dx = max(raggio - x, 0, x - (n - raggio))
-    dy = max(raggio - y, 0, y - (n - raggio))
+def dentro_squadro(x, y, lato, raggio):
+    dx = max(raggio - x, 0, x - (lato - raggio))
+    dy = max(raggio - y, 0, y - (lato - raggio))
     return math.hypot(dx, dy) <= raggio
 
-def dentro_o(x, y, cx, cy, r, spessore):
-    d = math.hypot(x - cx, y - cy)
-    return r - spessore <= d <= r
+def dentro_segno(mx, my):
+    """Vero se il punto, in coordinate del marchio, sta dentro le lettere."""
+    # G: anello aperto fra -42° e 15°
+    d = math.hypot(mx - 52, my - 60)
+    if 29.5 <= d <= 50.5:
+        ang = math.degrees(math.atan2(my - 60, mx - 52))
+        if not (-42 <= ang <= 15):
+            return True
+    # la barra della G
+    if 58 <= mx <= 92 and abs(my - 60) <= 10.5:
+        return True
+    # O: anello chiuso
+    return 29.5 <= math.hypot(mx - 158, my - 60) <= 50.5
 
-def dentro_g(x, y, cx, cy, r, spessore):
-    d = math.hypot(x - cx, y - cy)
-    if not (r - spessore <= d <= r):
-        # la barretta orizzontale della G
-        return (cx <= x <= cx + r) and (cy - spessore * 0.5 <= y <= cy + spessore * 0.5)
-    ang = math.degrees(math.atan2(y - cy, x - cx))  # 0 = destra, positivo in basso
-    return not (-38 <= ang <= 8)                     # apertura della G
-
-def genera(percorso, n, mascherabile=False):
+def genera(percorso, n, fondo, segno, mascherabile=False):
     N = n * SUPER
-    # Un'icona mascherabile viene ritagliata: il segno sta nel 60% centrale,
-    # il resto è margine che il sistema può mangiare senza tagliare le lettere.
+    # Un'icona mascherabile viene ritagliata dal sistema: il segno sta nel
+    # 60% centrale, il resto è margine che si può mangiare senza tagliarlo.
     margine = int(N * 0.20) if mascherabile else 0
     lato = N - margine * 2
-    raggio = lato * 0.29
-
-    cy = margine + lato * 0.5
-    r  = lato * 0.155
-    sp = lato * 0.072
-    cxg = margine + lato * 0.325
-    cxo = margine + lato * 0.675
+    k = lato / 100.0
 
     grande = []
     for y in range(N):
         for x in range(N):
-            lx, ly = x - margine, y - margine
-            if not (0 <= lx < lato and 0 <= ly < lato and
-                    dentro_quadrato_morbido(lx, ly, lato, raggio)):
+            lx, ly = (x - margine) / k, (y - margine) / k
+            if not (0 <= lx <= 100 and 0 <= ly <= 100
+                    and dentro_squadro(lx, ly, 100, RAGGIO_SQUADRO)):
                 grande.append((0, 0, 0, 0)); continue
-            if dentro_g(x, y, cxg, cy, r, sp) or dentro_o(x, y, cxo, cy, r, sp):
-                grande.append((255, 255, 255, 255)); continue
-            grande.append(sfumatura(lx, ly, lato) + (255,))
+            mx = (lx - SPOSTA_X) / SCALA
+            my = (ly - SPOSTA_Y) / SCALA
+            grande.append((segno if dentro_segno(mx, my) else fondo) + (255,))
 
-    # Riduzione: la media dei SUPER×SUPER pixel, premoltiplicata sull'alfa
-    # per non veder comparire aloni scuri sui bordi trasparenti.
     piccolo = []
     for y in range(n):
         for x in range(n):
@@ -96,18 +82,20 @@ def genera(percorso, n, mascherabile=False):
                     p = grande[(y * SUPER + dy) * N + (x * SUPER + dx)]
                     a = p[3] / 255
                     sr += p[0] * a; sg += p[1] * a; sb += p[2] * a; sa += a
-            k = SUPER * SUPER
             if sa < 0.001:
                 piccolo.append((0, 0, 0, 0))
             else:
-                piccolo.append((round(sr / sa), round(sg / sa), round(sb / sa), round(sa / k * 255)))
-    png(percorso, n, n, piccolo)
+                piccolo.append((round(sr / sa), round(sg / sa), round(sb / sa),
+                                round(sa / (SUPER * SUPER) * 255)))
+    png(percorso, n, piccolo)
     print(f'  {percorso}  {n}×{n}')
 
 os.makedirs('public', exist_ok=True)
 print('icone:')
-genera('public/icona-192.png', 192)
-genera('public/icona-512.png', 512)
-genera('public/icona-mascherabile.png', 512, mascherabile=True)
-genera('public/badge.png', 96)
-genera('public/apple-touch-icon.png', 180)
+genera('public/icona-192.png', 192, VIOLA, BIANCO)
+genera('public/icona-512.png', 512, VIOLA, BIANCO)
+genera('public/icona-mascherabile.png', 512, VIOLA, BIANCO, mascherabile=True)
+genera('public/apple-touch-icon.png', 180, VIOLA, BIANCO)
+# Il distintivo delle notifiche viene mostrato monocromo: si disegna scuro
+# su trasparente, che è come Android lo vuole.
+genera('public/badge.png', 96, NERO, BIANCO)

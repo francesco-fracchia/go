@@ -37,7 +37,6 @@ export async function middleware(req: NextRequest) {
   const percorso = req.nextUrl.pathname
   const protetta = PROTETTE.some((p) => percorso.startsWith(p))
     || PROTETTE_ESATTE.includes(percorso)
-  if (!protetta) return NextResponse.next()
 
   /**
    * Senza le chiavi si lascia passare.
@@ -78,6 +77,10 @@ export async function middleware(req: NextRequest) {
   } catch {
     return risposta
   }
+
+  // Su una pagina aperta si passa comunque: qui la sessione è stata
+  // rinnovata, che è l'unica ragione per cui il middleware gira anche lì.
+  if (!protetta) return risposta
 
   if (!utente) {
     const entra = new URL('/entra', req.url)

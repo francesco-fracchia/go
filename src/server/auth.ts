@@ -21,7 +21,20 @@ export async function utenteCorrente(): Promise<string | null> {
     {
       cookies: {
         getAll: () => store.getAll(),
-        setAll: (c) => { for (const x of c) store.set(x.name, x.value, x.options) },
+        setAll: (c) => {
+          /**
+           * Scrivere un biscotto durante il disegno di un componente
+           * server SOLLEVA in Next. Se lasciamo che sollevi, la lettura
+           * della sessione fallisce e l'utente risulta non autenticato
+           * pur essendolo — che è esattamente il modo peggiore di
+           * rompersi, perché sembra che l'accesso non abbia funzionato.
+           *
+           * Il rinnovo del biscotto lo fa il middleware, dove scrivere è
+           * permesso: qui si può ignorare.
+           */
+          try { for (const x of c) store.set(x.name, x.value, x.options) }
+          catch { /* siamo dentro un componente server: rinnova il middleware */ }
+        },
       },
     },
   )
