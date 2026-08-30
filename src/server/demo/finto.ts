@@ -25,12 +25,26 @@ class Interrogazione implements PromiseLike<Risposta> {
   private massimo: number | null = null
   private singola: 'obbligatoria' | 'facoltativa' | null = null
 
+  private tabelle: Tabelle
+  private tabella: string
+  private operazione: 'select' | 'insert' | 'update' | 'delete' | 'upsert'
+  private carico: Riga | Riga[] | null
+
+  // I campi si dichiarano e si assegnano a mano: la scorciatoia
+  // `constructor(private …)` non è un tipo, è codice, e Node esegue
+  // TypeScript limitandosi a togliere i tipi. Con quella, questo file non
+  // si carica fuori dal compilatore — e con lui nessun collaudo del server.
   constructor(
-    private tabelle: Tabelle,
-    private tabella: string,
-    private operazione: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select',
-    private carico: Riga | Riga[] | null = null,
-  ) {}
+    tabelle: Tabelle,
+    tabella: string,
+    operazione: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select',
+    carico: Riga | Riga[] | null = null,
+  ) {
+    this.tabelle = tabelle
+    this.tabella = tabella
+    this.operazione = operazione
+    this.carico = carico
+  }
 
   select(s = '*') { this.selezione = s; return this }
   eq(c: string, v: unknown) { return this.filtro('eq', c, v) }

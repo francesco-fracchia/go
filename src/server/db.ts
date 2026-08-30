@@ -24,6 +24,22 @@ export const DEMO = process.env.DEMO === '1'
 
 let cache: SupabaseClient | null = null
 
+/**
+ * Consegnare a mano un database.
+ *
+ * Serve al collaudo. Le funzioni del server — pubblicare una corsa,
+ * prenotare, accettare una proposta — sono dove vivono le regole che
+ * contano, e finora non erano collaudabili affatto: pretendevano un
+ * Supabase vero, e il finto si accendeva solo dentro Next.
+ *
+ * Non è una porta di servizio sull'ambiente vero: chi chiama questa
+ * funzione ha già in mano un client, e passarne uno è esattamente ciò che
+ * un collaudo deve poter fare.
+ */
+export function usaDatabase(c: unknown) {
+  cache = c as SupabaseClient
+}
+
 function client(): SupabaseClient {
   if (!cache) {
     if (DEMO) {

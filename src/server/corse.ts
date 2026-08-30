@@ -1,13 +1,19 @@
 import { db } from './db.ts'
 import { percorso, type Punto } from './percorsi.ts'
 import { risolvi } from './luoghi.ts'
-import { SMS_DISPONIBILE } from './profili.ts'
+import { SMS_DISPONIBILE, dichiaraPrivato } from './profili.ts'
 import { quotaPiena, costoBase, preventivo, type Corsa, type Modalita } from '../lib/pricing.ts'
 import type { Cents } from '../lib/money.ts'
 
 export class ErroreCorsa extends Error {
-  constructor(public codice: string, msg: string) {
+  readonly codice: string
+  // Il campo si dichiara e si assegna a mano invece di usare la scorciatoia
+  // `constructor(public …)`: Node esegue TypeScript togliendo i tipi, e
+  // quella scorciatoia non è un tipo — è codice che sparirebbe. Senza
+  // questo, nessun modulo del server è collaudabile.
+  constructor(codice: string, msg: string) {
     super(msg)
+    this.codice = codice
     this.name = 'ErroreCorsa'
   }
 }
@@ -44,6 +50,16 @@ export interface RichiestaPubblicazione {
   oraRitorno?: Date
   /** tolleranza sull'ora di arrivo, in minuti — vale solo per la ricerca */
   flessibilitaMin?: number
+  /**
+   * La dichiarazione di non professionalità, spuntata in questo momento.
+   *
+   * Viaggia con la pubblicazione e non a parte: è la spunta stessa a essere
+   * l'atto, e registrarla con una chiamata separata vorrebbe dire poterla
+   * avere registrata su un profilo che poi non pubblica — o, peggio, una
+   * pubblicazione andata a buon fine senza che la dichiarazione sia stata
+   * salvata.
+   */
+  dichiarazione?: boolean
 }
 
 /** Margine sull'orario: meglio arrivare presto che tardi, di notte. */
@@ -72,11 +88,27 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
   if (SMS_DISPONIBILE && !profilo.telefono_ok) {
     throw new ErroreCorsa('telefono', 'verifica il tuo numero prima di pubblicare')
   }
-  // La dichiarazione di non professionalità si raccoglie qui, alla prima
-  // pubblicazione: è l'artefatto con cui si documenta, utente per utente,
-  // la natura tra privati del rapporto.
+  /**
+   * La dichiarazione di non professionalità si raccoglie qui, alla prima
+   * pubblicazione: è l'artefatto con cui si documenta, utente per utente,
+   * la natura tra privati del rapporto.
+   *
+   * Va REGISTRATA, non solo pretesa. Prima la si chiedeva al modulo e la si
+   * verificava sul profilo, ma niente scriveva mai quel campo: la spunta
+   * restava nel browser, il profilo restava a `false`, e la pubblicazione
+   * veniva rifiutata a chiunque avesse appena dichiarato. La casella era
+   * decorativa e la corsa non partiva mai.
+   *
+   * Si scrive PRIMA di creare la corsa, di proposito: se la scrittura non
+   * riesce non deve esistere una corsa pubblicata senza la dichiarazione
+   * che la giustifica — è l'unico documento che dice perché quel passaggio
+   * non è un trasporto abusivo.
+   */
   if (!profilo.dichiarazione_privato) {
-    throw new ErroreCorsa('dichiarazione', 'manca la dichiarazione di privato')
+    if (req.dichiarazione !== true) {
+      throw new ErroreCorsa('dichiarazione', 'manca la dichiarazione di privato')
+    }
+    await dichiaraPrivato(req.conducenteId)
   }
   // Un account si limita caso per caso, su un giudizio: mai su un contatore.
   // La frequenza da sola non dice nulla — chi fa la stessa tratta ogni

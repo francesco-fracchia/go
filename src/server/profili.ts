@@ -17,8 +17,14 @@ import { db } from './db.ts'
  */
 
 export class ErroreProfilo extends Error {
-  constructor(public codice: string, msg: string) {
-    super(msg); this.name = 'ErroreProfilo'
+  readonly codice: string
+  // Il campo si dichiara e si assegna a mano invece di usare la scorciatoia
+  // `constructor(public …)`: Node esegue TypeScript togliendo i tipi, e
+  // quella scorciatoia non è un tipo — è codice che sparirebbe. Senza
+  // questo, nessun modulo del server è collaudabile.
+  constructor(codice: string, msg: string) {
+    super(msg)
+    this.codice = codice; this.name = 'ErroreProfilo'
   }
 }
 

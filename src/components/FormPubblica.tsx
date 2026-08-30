@@ -408,6 +408,9 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
         politica, note,
         oraRitorno: oraRitorno || undefined,
         flessibilitaMin: scelta,
+        // La spunta È l'atto: viaggia con la pubblicazione, e il server la
+        // registra con la data prima di creare la corsa.
+        dichiarazione: dichiarato,
       }),
     })
     const d = await r.json()
