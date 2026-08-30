@@ -35,7 +35,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       accetta_deviazioni, deviazioni_ritiro, deviazioni_deposito, token_link,
       profili:conducente ( nome, foto_url, data_nascita ),
       veicoli ( marca, modello, colore, fumo, animali, bagagli_grandi, centesimi_per_km ),
-      fermate ( id, ordine, tipo, etichetta, ora_stimata, km_incrementali )
+      fermate ( id, ordine, tipo, etichetta, ora_stimata, km_incrementali, geo )
     `)
     .eq('id', id)
     .single()
@@ -89,6 +89,16 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       tokenLink: r.token_link,
       costoCent: costoBase(corsa),
       tettoCent: tettoComplessivo(corsa),
+      tappe: ((r.fermate ?? []) as unknown as RigaFermata[])
+        .slice()
+        .sort((a, b) => a.ordine - b.ordine)
+        .map((f) => {
+          const g = (f as unknown as { geo?: { coordinates?: [number, number] } }).geo
+          return g?.coordinates
+            ? { lat: g.coordinates[1], lng: g.coordinates[0], etichetta: f.etichetta }
+            : null
+        })
+        .filter((x): x is { lat: number; lng: number; etichetta: string } => x !== null),
       rientroNettoCent: calcolo?.nettoConducente ?? 0,
       // Si chiede la conferma da tre ore prima, e solo se qualcuno aspetta.
       daConfermare: r.stato === 'pubblicata' && aBordo.length > 0 && minuti <= 180 && minuti > 0,

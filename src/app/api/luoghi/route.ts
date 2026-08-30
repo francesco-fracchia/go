@@ -1,4 +1,5 @@
 import { suggerisci, inverso } from '../../../server/luoghi.ts'
+import { utenteCorrente } from '../../../server/auth.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
 
 export async function GET(req: Request) {
@@ -12,6 +13,7 @@ export async function GET(req: Request) {
     }
 
     const vicino = Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined
-    return json({ luoghi: await suggerisci(q.get('testo') ?? '', vicino) })
+    const utente = await utenteCorrente().catch(() => null)
+    return json({ luoghi: await suggerisci(q.get('testo') ?? '', vicino, utente ?? undefined) })
   } catch (e) { return rispostaErrore(e) }
 }

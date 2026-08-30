@@ -18,6 +18,16 @@ export interface Luogo {
   lng: number
   /** «Lodi», «Milano» — serve a mostrare risultati leggibili */
   comune?: string
+  /**
+   * Da dove viene questo risultato. Serve a raggrupparli: un posto che si
+   * conosce vale più di un indirizzo che somiglia, e un luogo salvato vale
+   * più di entrambi.
+   */
+  fonte?: 'salvato' | 'posto' | 'indirizzo'
+  /** solo per i posti: quante corse ci vanno adesso */
+  corse?: number
+  /** solo per i luoghi salvati */
+  id?: string
 }
 
 const ORS = 'https://api.openrouteservice.org/geocode'
@@ -43,16 +53,86 @@ const DEMO_LUOGHI: Luogo[] = [
   { etichetta: 'Malpensa, Ferno', lat: 45.6306, lng: 8.7281, comune: 'Ferno' },
 ]
 
+/**
+ * Suggerimenti, da tre fonti diverse.
+ *
+ * L'ordine non è casuale e non è per somiglianza del testo:
+ *
+ *   1. i luoghi salvati — casa e lavoro sono la risposta giusta quasi sempre
+ *   2. i posti conosciuti — «Fabrique» è quello che uno ha in testa, non
+ *      «via Gaudenzio Fantoli 9»; e li ordiniamo per quante corse ci vanno,
+ *      che è un'informazione che Google non ha
+ *   3. gli indirizzi — la rete di sicurezza, per tutto il resto
+ *
+ * Il geocoder da solo risponde male alla domanda vera. Chi scrive «fab» non
+ * sta cercando una via: sta cercando il posto dove stasera si va.
+ */
 export async function suggerisci(
-  testo: string, vicino?: { lat: number; lng: number },
+  testo: string,
+  vicino?: { lat: number; lng: number },
+  utenteId?: string,
 ): Promise<Luogo[]> {
   const q = testo.trim()
-  if (q.length < 3) return []
+  if (q.length < 2) return []
 
-  if (DEMO) return luoghiDemo(q)
+  const [salvati, posti] = await Promise.all([
+    utenteId ? cercaFraSalvati(utenteId, q) : Promise.resolve([]),
+    cercaFraPosti(q, vicino),
+  ])
+
+  // L'indirizzo si chiede solo se serve: se i posti già rispondono, una
+  // chiamata al geocoder è una chiamata sprecata su una quota che finisce.
+  const bastano = salvati.length + posti.length
+  const indirizzi = bastano >= 4 || q.length < 3
+    ? []
+    : (DEMO ? luoghiDemo(q) : await geocodifica(q, vicino))
+
+  return [...salvati, ...posti, ...indirizzi].slice(0, 8)
+}
+
+async function cercaFraSalvati(utenteId: string, q: string): Promise<Luogo[]> {
+  const { luoghiSalvati } = await import('./preferiti.ts')
+  const t = q.toLowerCase()
+  const tutti = await luoghiSalvati(utenteId).catch(() => [])
+  return tutti
+    .filter((l) => l.etichetta.toLowerCase().includes(t) || l.indirizzo.toLowerCase().includes(t))
+    .map((l): Luogo => ({
+      etichetta: l.etichetta, lat: l.lat, lng: l.lng,
+      comune: l.indirizzo, fonte: 'salvato', id: l.id,
+    }))
+}
+
+async function cercaFraPosti(
+  q: string, vicino?: { lat: number; lng: number },
+): Promise<Luogo[]> {
+  let data: unknown = null
+  try {
+    ({ data } = await db.rpc('cerca_posti', {
+      p_testo: q,
+      p_geo: vicino ? `SRID=4326;POINT(${vicino.lng} ${vicino.lat})` : null,
+      p_limite: 5,
+    }))
+  } catch {
+    // Nessun posto importato in questa zona: si va avanti con gli indirizzi.
+    return []
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((r): Luogo => ({
+    etichetta: String(r.nome),
+    lat: Number(r.lat),
+    lng: Number(r.lng),
+    comune: (r.citta as string) ?? undefined,
+    fonte: 'posto',
+    corse: Number(r.corse ?? 0),
+  }))
+}
+
+async function geocodifica(
+  q: string, vicino?: { lat: number; lng: number },
+): Promise<Luogo[]> {
 
   const chiave = process.env.ORS_API_KEY
-  if (!chiave) throw new Error("variabile d'ambiente mancante: ORS_API_KEY")
+  if (!chiave) return []
 
   const p = new URLSearchParams({
     api_key: chiave,
@@ -69,7 +149,7 @@ export async function suggerisci(
   const r = await fetch(`${ORS}/autocomplete?${p}`)
   if (!r.ok) return []
   const d = await r.json() as RispostaGeocoder
-  return (d.features ?? []).map(aLuogo)
+  return (d.features ?? []).map(aLuogo).map((l) => ({ ...l, fonte: 'indirizzo' as const }))
 }
 
 /**

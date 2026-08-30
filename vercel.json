@@ -35,6 +35,10 @@
     {
       "path": "/api/cron?lavoro=chiudi_contestazioni",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron?lavoro=dimentica_posizioni",
+      "schedule": "0 */2 * * *"
     }
   ]
 }

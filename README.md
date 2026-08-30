@@ -276,6 +276,44 @@ Due cose che la flessibilità **non** fa:
 - **non resta aperta.** Alla prima prenotazione l'orario si fissa, e lo fa un
   trigger del database: non è una regola da ricordarsi di applicare.
 
+## Il navigatore e la posizione
+
+**Non costruiamo un navigatore.** Ne esistono tre che la gente ha già,
+conosce e in cui si fida: un collegamento profondo costa zero e porta il giro
+intero — partenza, ritiri nell'ordine, destinazione — dentro Google Maps.
+Apple Mappe e Waze non reggono le tappe: lì si punta alla prossima fermata,
+perché una navigazione giusta verso il prossimo ritiro vale più di una
+sbagliata verso la fine del giro.
+
+**Non compriamo il traffico.** Un servizio di percorsi con il traffico
+costerebbe a ogni corsa, e di notte il traffico non c'è: si pagherebbe per un
+dato che vale zero proprio quando serve.
+
+**Condividiamo la posizione vera**, che è meglio di entrambi. «4 minuti»
+calcolato da dove chi guida si trova adesso risponde alla domanda che il
+passeggero si fa davvero — *devo scendere?* — e a cui nessuna stima fatta tre
+ore prima può rispondere. I minuti li calcola lo stesso servizio di percorsi
+che usiamo per i prezzi, quindi non costa niente.
+
+Tre limiti, tutti nel database e non solo nell'interfaccia: si accende **solo
+nella mezz'ora attorno alla partenza**, la vedono **solo i passeggeri di
+quella corsa**, e ogni punto **scade dopo cinque minuti**. Nessuno storico:
+la riga si sovrascrive, e a corsa conclusa si cancella. Sapere dov'era
+qualcuno mezz'ora fa non serve a nessuno e sarebbe un archivio di spostamenti
+che non vogliamo avere.
+
+## Cercare un posto, non un indirizzo
+
+I suggerimenti vengono da tre fonti, in quest'ordine:
+
+1. **i luoghi salvati** — casa e lavoro sono la risposta giusta quasi sempre,
+   e compaiono al primo tocco, prima di digitare
+2. **i posti conosciuti** — «Fabrique» è quello che uno ha in testa, non «via
+   Gaudenzio Fantoli 9». Ordinati per quante corse ci vanno adesso, che è
+   un'informazione che nessun altro geocoder ha
+3. **gli indirizzi** — la rete di sicurezza, e si chiama solo se le prime due
+   non bastano: una chiamata in meno su una quota che finisce
+
 ## Le sei invarianti
 
 Non sono linee guida: sono test che rompono la build.

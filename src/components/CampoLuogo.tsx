@@ -17,7 +17,28 @@ import { Mappa } from './Mappa.tsx'
  *    sono coordinate, e senza coordinate non si può pubblicare.
  */
 
-export interface LuogoScelto { etichetta: string; lat: number; lng: number }
+export interface LuogoScelto {
+  etichetta: string
+  lat: number
+  lng: number
+  comune?: string
+  fonte?: 'salvato' | 'posto' | 'indirizzo'
+  corse?: number
+}
+
+/**
+ * Il segno accanto a ciascun suggerimento.
+ *
+ * Non è decorazione: dice da dove viene la risposta. Un luogo salvato, un
+ * locale conosciuto e un indirizzo qualsiasi si scelgono con fiducia
+ * diversa, e distinguerli con un colore o un peso sarebbe più debole di
+ * distinguerli con un segno.
+ */
+const SEGNO: Record<string, string> = {
+  salvato: '★',
+  posto: '◆',
+  indirizzo: '·',
+}
 
 export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, mappa = false }: {
   etichetta: string
@@ -40,9 +61,31 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
   const attesa = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [mappaAperta, setMappaAperta] = useState(false)
 
+  /**
+   * A campo vuoto e appena toccato si mostrano i luoghi salvati.
+   *
+   * Chi va al lavoro scrive lo stesso indirizzo ogni giorno: la risposta
+   * giusta esiste già prima che cominci a digitare, e farla comparire al
+   * primo tocco è la differenza fra un'applicazione che si usa una volta e
+   * una che si usa tutti i giorni.
+   */
+  async function mostraSalvati() {
+    if (testo.trim().length > 0) return
+    try {
+      const r = await fetch('/api/preferiti')
+      if (!r.ok) return
+      const d = await r.json()
+      const l = (d.luoghi ?? []).map((x: Record<string, unknown>) => ({
+        etichetta: String(x.etichetta), lat: Number(x.lat), lng: Number(x.lng),
+        comune: String(x.indirizzo ?? ''), fonte: 'salvato' as const,
+      }))
+      if (l.length > 0) { setSuggerimenti(l); setAperto(true) }
+    } catch { /* si continua a digitare */ }
+  }
+
   useEffect(() => {
     if (attesa.current) clearTimeout(attesa.current)
-    if (testo.trim().length < 3 || testo === valore?.etichetta) {
+    if (testo.trim().length < 2 || testo === valore?.etichetta) {
       setSuggerimenti([]); return
     }
     setCercando(true)
@@ -76,7 +119,7 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
         <input
           value={testo}
           onChange={(e) => { setTesto(e.target.value); onScegli(null) }}
-          onFocus={() => suggerimenti.length > 0 && setAperto(true)}
+          onFocus={() => { if (suggerimenti.length > 0) setAperto(true); else void mostraSalvati() }}
           onBlur={() => setTimeout(() => setAperto(false), 160)}
           placeholder={segnaposto}
           autoComplete="off"
@@ -101,12 +144,41 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { onScegli(l); setTesto(l.etichetta); setAperto(false) }}
                 style={{
-                  width: '100%', textAlign: 'left', padding: '12px 16px',
+                  width: '100%', textAlign: 'left', padding: '11px 15px',
                   background: 'none', border: 'none',
                   borderBottom: i < suggerimenti.length - 1 ? '1px solid var(--riga-2)' : 'none',
-                  color: 'var(--inchiostro)', fontSize: 15,
+                  color: 'var(--inchiostro)',
+                  display: 'flex', alignItems: 'center', gap: 12,
                 }}
-              >{l.etichetta}</button>
+              >
+                <span style={{
+                  flexShrink: 0, width: 18, textAlign: 'center', fontSize: 13,
+                  color: l.fonte === 'salvato' ? 'var(--accento)' : 'var(--tenue)',
+                }}>{SEGNO[l.fonte ?? 'indirizzo']}</span>
+
+                <span style={{ flexGrow: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: 15, lineHeight: 1.3 }}>
+                    {l.etichetta}
+                  </span>
+                  {l.comune && (
+                    <span style={{
+                      display: 'block', fontSize: 12.5, color: 'var(--tenue)',
+                      lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>{l.comune}</span>
+                  )}
+                </span>
+
+                {/* Quante corse ci vanno adesso: è l'informazione che il
+                    geocoder di chiunque altro non ha, ed è quella che fa
+                    scegliere fra due posti con nomi simili. */}
+                {l.corse ? (
+                  <span style={{
+                    flexShrink: 0, fontSize: 12, fontWeight: 600,
+                    color: 'var(--verde)',
+                  }}>{l.corse} {l.corse === 1 ? 'passaggio' : 'passaggi'}</span>
+                ) : null}
+              </button>
             </li>
           ))}
         </ul>

@@ -1,5 +1,6 @@
 import * as lavori from '../../../server/lavori.ts'
 import { chiudiContestazioni } from '../../../server/liquidazioni.ts'
+import { dimenticaPosizioni } from '../../../server/posizione.ts'
 import { json } from '../_risposta.ts'
 
 /**
@@ -21,6 +22,7 @@ const REGISTRO: Record<string, () => Promise<unknown>> = {
   scadi_proposte: lavori.scadiProposte,
   chiudi_arrivate: lavori.chiudiArrivate,
   chiudi_contestazioni: chiudiContestazioni,
+  dimentica_posizioni: dimenticaPosizioni,
 }
 
 export async function POST(req: Request) {

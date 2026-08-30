@@ -3,6 +3,7 @@ import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
 import { ContoAllaRovescia } from './ContoAllaRovescia.tsx'
 import { EsitoViaggio } from './EsitoViaggio.tsx'
 import { Disdici } from './Disdici.tsx'
+import { QuantoManca } from './InViaggio.tsx'
 import { gratuita, testoDisdetta } from '../lib/disdette.ts'
 
 /**
@@ -78,7 +79,15 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
 
       {!saltata && !arrivata && (
         <div style={{ margin: '22px 0' }}>
-          <ContoAllaRovescia partenza={c.oraPartenza} />
+          {/* Nell'ultima mezz'ora, se chi guida sta condividendo la
+              posizione, «4 minuti» sostituisce il conto alla rovescia: è la
+              stessa domanda, con una risposta vera invece che prevista. */}
+          {minutiAllaPartenza <= 30
+            ? <QuantoManca corsa={c.id} />
+            : null}
+          <div style={{ marginTop: minutiAllaPartenza <= 30 ? 14 : 0 }}>
+            <ContoAllaRovescia partenza={c.oraPartenza} />
+          </div>
         </div>
       )}
 

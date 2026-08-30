@@ -114,11 +114,14 @@ export function datiDemo(): Tabelle {
 
     fermate: [
       { id: 'f1', corsa: 'c-mia', ordine: 0, tipo: 'partenza',
-        etichetta: 'Piazza della Vittoria, Lodi', km_incrementali: 0, ora_stimata: fra(160) },
+        etichetta: 'Piazza della Vittoria, Lodi', km_incrementali: 0, ora_stimata: fra(160),
+        geo: { coordinates: [9.5033, 45.3142] } },
       { id: 'f2', corsa: 'c-mia', ordine: 99, tipo: 'destinazione',
-        etichetta: 'Fabrique, Milano', km_incrementali: 0, ora_stimata: fra(195) },
+        etichetta: 'Fabrique, Milano', km_incrementali: 0, ora_stimata: fra(195),
+        geo: { coordinates: [9.2447, 45.4419] } },
       { id: 'f3', corsa: 'c-mia', ordine: 1, tipo: 'ritiro',
-        etichetta: 'Via Fanfulla 12, Lodi', km_incrementali: 2.4, ora_stimata: fra(166) },
+        etichetta: 'Via Fanfulla 12, Lodi', km_incrementali: 2.4, ora_stimata: fra(166),
+        geo: { coordinates: [9.4998, 45.3168] } },
       { id: 'f4', corsa: 'c-giulia', ordine: 0, tipo: 'partenza',
         etichetta: 'Stazione, Lodi', km_incrementali: 0, ora_stimata: fra(150) },
       { id: 'f5', corsa: 'c-giulia', ordine: 99, tipo: 'destinazione',
@@ -312,6 +315,13 @@ export function funzioniDemo(t: Tabelle): Record<string, (a: Record<string, unkn
     conferma_imbarco_token: () => 'ok',
     assegna_codici_imbarco: () => 0,
     puo_chiamare: () => true,
+    cerca_posti: (a) => {
+      const testo = String(a.p_testo ?? '').toLowerCase()
+      return (t.posti ?? []).filter((x) =>
+        String(x.nome).toLowerCase().includes(testo))
+    },
+    segna_posizione: () => true,
+    dimentica_posizioni: () => 0,
     caricamenti_del_mese: () => (t.consumo_mappe?.[0]?.caricamenti ?? 0),
     conta_caricamento_mappa: () => {
       const riga = (t.consumo_mappe ??= [{ mese: 'demo', caricamenti: 0 }])[0]!

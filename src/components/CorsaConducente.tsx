@@ -1,6 +1,7 @@
 import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
 import { AzioniConducente, RispondiProposta } from './AzioniConducente.tsx'
 import { Invita } from './Invita.tsx'
+import { InViaggio } from './InViaggio.tsx'
 import { QuotePersonalizzate } from './QuotePersonalizzate.tsx'
 
 /**
@@ -39,6 +40,8 @@ export interface DatiCorsaConducente {
   costoCent: number
   rientroNettoCent: number
   tettoCent: number
+  /** partenza, ritiri nell'ordine, destinazione — per il navigatore */
+  tappe?: Array<{ lat: number; lng: number; etichetta?: string }>
   daConfermare: boolean
   passeggeri: Array<{
     id: string
@@ -54,6 +57,7 @@ export interface DatiCorsaConducente {
 export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const liberi = c.postiOfferti - c.passeggeri.length
   const restaACarico = c.costoCent - c.rientroNettoCent
+  const minutiAllaPartenza = (new Date(c.oraPartenza).getTime() - Date.now()) / 60_000
 
   return (
     <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
@@ -84,6 +88,16 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
             {c.proposte.map((p) => <CartaProposta key={p.id} p={p} />)}
           </div>
+        </section>
+      )}
+
+      {/* ── Si parte ──
+          Nella mezz'ora prima della partenza tutto il resto arretra: quello
+          che serve è il navigatore e niente altro. */}
+      {c.tappe && c.tappe.length >= 2 && minutiAllaPartenza <= 30 && (
+        <section style={{ marginBottom: 18 }}>
+          <InViaggio corsa={c.id} tappe={c.tappe}
+            prossimoRitiro={c.tappe[1]} />
         </section>
       )}
 
