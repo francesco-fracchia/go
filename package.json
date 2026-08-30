@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit",
-    "dev": "npm run prepara && next dev",
+    "dev": "npm run prepara && next dev --webpack",
     "build": "npm run prepara && next build",
     "start": "next start",
     "demo": "npm run prepara && DEMO=1 next dev --webpack",
