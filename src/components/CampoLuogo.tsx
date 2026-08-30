@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Mappa } from './Mappa.tsx'
+import { Mappa, MAPPA_ATTIVA } from './Mappa.tsx'
 
 /**
  * Un campo che sa dove sono i posti.
@@ -108,16 +108,18 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino }: 
       {/* Molti punti di ritrovo non hanno un indirizzo che qualcuno saprebbe
           scrivere: «il parcheggio dietro la chiesa», «l'uscita del casello».
           La ricerca copre la metà facile, la mappa l'altra. */}
-      <button
-        type="button"
-        onClick={() => setMappaAperta(true)}
-        style={{
-          background: 'none', border: 'none', color: 'var(--accento)',
-          fontSize: 13, fontWeight: 600, padding: '6px 4px 0',
-        }}
-      >Scegli sulla mappa</button>
+      {MAPPA_ATTIVA && (
+        <button
+          type="button"
+          onClick={() => setMappaAperta(true)}
+          style={{
+            background: 'none', border: 'none', color: 'var(--accento)',
+            fontSize: 13, fontWeight: 600, padding: '6px 4px 0',
+          }}
+        >Scegli sulla mappa</button>
+      )}
 
-      {mappaAperta && (
+      {mappaAperta && MAPPA_ATTIVA && (
         <Mappa
           centro={valore ?? vicino ?? { lat: 45.3142, lng: 9.5033 }}
           iniziale={valore ? { ...valore } : undefined}

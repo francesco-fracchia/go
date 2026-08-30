@@ -79,20 +79,34 @@ Le sole schermate che diventano davvero larghe sono quelle a **elenco**
 ridefinendo `--colonna`, non sovrascrivendo la larghezza: le schermate la
 leggono da uno stile in linea, che batterebbe qualunque classe.
 
-## Le piastrelle della mappa
+## La mappa è spenta finché non serve
 
-**MapTiler**, con la chiave in `NEXT_PUBLIC_MAPTILER_KEY`. Centomila
-caricamenti al mese gratis: dieci volte la soglia di Google, e un decimo del
-prezzo oltre.
+`NEXT_PUBLIC_MAPTILER_KEY` accende la scelta del punto sulla mappa. **Senza,
+il pulsante «Scegli sulla mappa» non compare affatto** — meglio non
+prometterla che mostrarla con una filigrana addosso.
 
-Il conto che decide non è il prezzo unitario ma **cosa conta come
-caricamento**: ogni apertura della mappa, anche di chi poi non prenota. A
-cinquantamila aperture al mese Google costa 280 $ — con un netto di 2 € a
-corsa sono 140 corse al mese solo per pagare la mappa.
+La ragione è economica, non tecnica. Non esiste un fornitore gratuito
+utilizzabile da un prodotto che incassa: il piano gratuito di MapTiler è
+dichiarato *personal or non-commercial*, CARTO stampa la filigrana,
+OpenStreetMap ed Esri non mandano le intestazioni CORS che MapLibre richiede.
+Il primo piano usabile costa **30 $ al mese**.
 
-Senza chiave si ripiega su CARTO, che funziona ma stampa «API KEY REQUIRED»
-sopra la mappa: si vede qualcosa e si capisce che manca la configurazione,
-che è meglio di un rettangolo grigio.
+Trenta dollari sono **quindici corse al mese di solo margine**, spese per una
+comodità: poter indicare «il parcheggio dietro la chiesa» invece di
+scriverlo. La ricerca per indirizzo copre lo stesso bisogno e non costa
+niente.
+
+| | costo | licenza |
+|---|---|---|
+| **ricerca per indirizzo** (ORS) | 0 € | commerciale, 2.000 chiamate al giorno |
+| Google Maps | 10.000 caricamenti gratis, poi 7 $/1.000 | commerciale anche nel gratuito |
+| MapTiler Flex | 30 $/mese | commerciale |
+| Protomaps auto-ospitato | pochi € di archiviazione | nessun costo per caricamento |
+
+Sotto i 14.000 caricamenti al mese **Google costa meno di MapTiler** ed è
+licenziato per l'uso commerciale anche nella soglia gratuita. Sopra, si
+ribalta. Se un giorno il volume lo giustifica, la strada che non ha costo per
+caricamento è **Protomaps** su archiviazione a oggetti.
 
 ## I posti
 

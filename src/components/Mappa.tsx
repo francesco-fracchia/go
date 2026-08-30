@@ -22,32 +22,31 @@ import { Bottone } from './base.tsx'
 /**
  * Le piastrelle della mappa.
  *
- * MapTiler: centomila caricamenti al mese gratis, dieci volte la soglia di
- * Google, e un decimo del prezzo oltre. Il conto che decide è che ogni
- * APERTURA della mappa conta — anche di chi poi non prenota — e con un netto
- * di due euro a corsa un fornitore caro si mangia il margine prima di
- * portare un solo passeggero.
+ * La mappa è SPENTA finché non c'è una chiave, e la scelta è economica.
  *
- * Raster e non vettoriale: il vettoriale disegna dentro un Web Worker che
- * con Next non si carica, e fallisce in silenzio — la mappa monta, i
- * controlli compaiono, e resta grigia. Per scegliere un punto il vettoriale
- * non porta niente in cambio.
+ * Non esiste un fornitore gratuito utilizzabile da un prodotto che incassa:
+ * il piano gratuito di MapTiler è dichiarato «personal or non-commercial»,
+ * CARTO stampa la filigrana, OpenStreetMap ed Esri non mandano le
+ * intestazioni CORS che MapLibre richiede. Il primo piano che si può usare
+ * costa 30 $ al mese.
  *
- * Senza chiave si ripiega su CARTO, che funziona ma stampa «API KEY
- * REQUIRED» sopra la mappa: si vede qualcosa e si capisce subito che manca
- * la configurazione, che è meglio di un rettangolo grigio.
+ * Trenta dollari sono quindici corse al mese di solo margine, spese per una
+ * comodità: scegliere «il parcheggio dietro la chiesa» invece di scriverlo.
+ * La ricerca per indirizzo copre lo stesso bisogno e non costa niente.
+ *
+ * Quindi: senza chiave la mappa non si offre affatto — meglio non
+ * prometterla che mostrarla con una filigrana addosso. Si accende quando il
+ * volume la giustifica, ed è una variabile d'ambiente.
  */
-const CHIAVE = process.env.NEXT_PUBLIC_MAPTILER_KEY
+export const MAPPA_ATTIVA = !!process.env.NEXT_PUBLIC_MAPTILER_KEY
 
-const PIASTRELLE = CHIAVE
-  ? [`https://api.maptiler.com/maps/dataviz-light/{z}/{x}/{y}@2x.png?key=${CHIAVE}`]
-  : ['a', 'b', 'c'].map(
-      (s) => `https://${s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png`,
-    )
+const PIASTRELLE = [
+  `https://api.maptiler.com/maps/dataviz-light/{z}/{x}/{y}@2x.png?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`,
+]
 
-const ATTRIBUZIONE = CHIAVE
-  ? '<a href="https://www.maptiler.com/copyright/">© MapTiler</a> · <a href="https://www.openstreetmap.org/copyright">© contributori OpenStreetMap</a>'
-  : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'
+const ATTRIBUZIONE =
+  '<a href="https://www.maptiler.com/copyright/">© MapTiler</a> · ' +
+  '<a href="https://www.openstreetmap.org/copyright">© contributori OpenStreetMap</a>'
 
 const STILE: import('maplibre-gl').StyleSpecification = {
   version: 8,
