@@ -5,6 +5,8 @@ import type { Categoria } from '../../lib/flessibilita.ts'
 
 export const dynamic = 'force-dynamic'
 
+import { Telaio } from '../../components/Telaio.tsx'
+
 export default async function Pagina({ searchParams }: {
   searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string; cat?: string }>
 }) {
@@ -23,7 +25,7 @@ export default async function Pagina({ searchParams }: {
     .eq('proprietario', utente)
     .eq('attivo', true)
 
-  return <FormPubblica destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
+  return <Telaio attiva="/pubblica"><FormPubblica destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
     id: v.id, marca: v.marca, modello: v.modello, postiTotali: v.posti_totali,
-  }))} />
+  }))} /></Telaio>
 }

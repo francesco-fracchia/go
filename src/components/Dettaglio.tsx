@@ -45,7 +45,7 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
   const risparmio = c.confrontoTaxiCent ? c.confrontoTaxiCent - c.totaleCent : 0
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '18px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
       {/* ── Il percorso, con le fermate in mezzo ── */}
       <Riquadro stile={{ marginBottom: 14 }}>
         {c.fermate.map((f, i) => (

@@ -1,4 +1,3 @@
-@import "./temi.css";
 
 /* ═══════════════════════════════════════════════════════════════════════
    GO — fondamenta visive.
@@ -10,77 +9,99 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --carta:        #FAF8F6;
+  /* Carta bianca, inchiostro quasi nero, un solo colore che parla.
+     Niente sfumature calde: l'applicazione si usa di notte, e il caldo
+     artigianale è il registro sbagliato per «sali in macchina con uno
+     sconosciuto alle due». */
+  --carta:        #FFFFFF;
   --superficie:   #FFFFFF;
-  --superficie-2: #F4F1ED;
-  --inchiostro:   #1A1714;
-  --inchiostro-2: #4A423B;
-  --tenue:        #948A80;
-  --riga:         #E4DED8;
-  --riga-2:       #F0ECE8;
+  --superficie-2: #F4F4F6;
+  --inchiostro:   #0B0B0F;
+  --inchiostro-2: #3C3C46;
+  --tenue:        #78788A;
+  --riga:         #E3E3E9;
+  --riga-2:       #F0F0F4;
 
-  --accento:      #C85A2A;
-  --accento-vivo: #F2915E;
-  --accento-velo: #FBEDE4;
-  --accento-riga: #E8C4AA;
+  /* Indaco elettrico. Non è il blu istituzionale di chi fa trasporti né
+     l'arancione di chi fa mercatini: è un colore che si vede e si ricorda,
+     e regge sia sul bianco che sul nero. */
+  --accento:      #4F35F5;
+  --accento-vivo: #7A66FF;
+  --accento-velo: #F0EDFF;
+  --accento-riga: #D5CCFF;
+  --su-accento:   #FFFFFF;
+  --marchio-luce: #C9BEFF;
+  --marchio-alone: rgba(79,53,245,.30);
 
-  --verde:        #1F7A52;
-  --verde-velo:   #EDF6F1;
-  --rosso:        #B33A2B;
-  --rosso-velo:   #FBEDEB;
+  --verde:        #0E7A52;
+  --verde-velo:   #E9F6F0;
+  --rosso:        #C42A1C;
+  --rosso-velo:   #FDEEEC;
 
-  --raggio:   14px;
-  --raggio-s: 10px;
-  --ombra:    0 1px 2px rgba(26,23,20,.05), 0 4px 16px rgba(26,23,20,.05);
-  --ombra-alta: 0 2px 6px rgba(26,23,20,.07), 0 12px 32px rgba(26,23,20,.09);
+  --raggio:   12px;
+  --raggio-s: 9px;
+  --ombra:    0 1px 2px rgba(11,11,15,.04), 0 4px 14px rgba(11,11,15,.05);
+  --ombra-alta: 0 2px 6px rgba(11,11,15,.06), 0 14px 36px rgba(11,11,15,.10);
 
-  --testo: "Public Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --titoli: "Familjen Grotesk", var(--testo);
+  /* Un carattere solo, in due pesi. Accoppiare due famiglie è la scelta
+     comoda; usarne una sola bene è quella che si nota. */
+  --testo: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --titoli: "Instrument Sans", -apple-system, system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Larghezze: la colonna del telefono e quella del desktop. */
+  --colonna: 460px;
+  --largo: 1180px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="chiaro"]) {
-    --carta:        #0E1116;
-    --superficie:   #171C23;
-    --superficie-2: #1F262E;
-    --inchiostro:   #EEF2F5;
-    --inchiostro-2: #C3CDD5;
-    --tenue:        #7E8B96;
-    --riga:         #2A333D;
-    --riga-2:       #222930;
-    --accento:      #F2915E;
-    --accento-vivo: #FFB98A;
-    --accento-velo: #2A2019;
-    --accento-riga: #3A2A20;
-    --verde:        #63C79B;
-    --verde-velo:   #13291F;
-    --rosso:        #E8705F;
-    --rosso-velo:   #2B1917;
-    --ombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.35);
-    --ombra-alta: 0 2px 6px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+    --carta:        #0A0A0F;
+    --superficie:   #14141C;
+    --superficie-2: #1D1D28;
+    --inchiostro:   #F2F2F6;
+    --inchiostro-2: #C2C2CE;
+    --tenue:        #85859A;
+    --riga:         #272733;
+    --riga-2:       #1E1E28;
+    --accento:      #8A78FF;
+    --accento-vivo: #AFA2FF;
+    --accento-velo: #1A1730;
+    --accento-riga: #322B57;
+    --su-accento:   #0A0A0F;
+    --marchio-luce: #D6CEFF;
+    --marchio-alone: rgba(138,120,255,.32);
+    --verde:        #4ED69C;
+    --verde-velo:   #11271D;
+    --rosso:        #FF7365;
+    --rosso-velo:   #2A1614;
+    --ombra: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+    --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 14px 36px rgba(0,0,0,.5);
   }
 }
 
 :root[data-tema="scuro"] {
-  --carta:        #0E1116;
-  --superficie:   #171C23;
-  --superficie-2: #1F262E;
-  --inchiostro:   #EEF2F5;
-  --inchiostro-2: #C3CDD5;
-  --tenue:        #7E8B96;
-  --riga:         #2A333D;
-  --riga-2:       #222930;
-  --accento:      #F2915E;
-  --accento-vivo: #FFB98A;
-  --accento-velo: #2A2019;
-  --accento-riga: #3A2A20;
-  --verde:        #63C79B;
-  --verde-velo:   #13291F;
-  --rosso:        #E8705F;
-  --rosso-velo:   #2B1917;
-  --ombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.35);
-  --ombra-alta: 0 2px 6px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+  --carta:        #0A0A0F;
+  --superficie:   #14141C;
+  --superficie-2: #1D1D28;
+  --inchiostro:   #F2F2F6;
+  --inchiostro-2: #C2C2CE;
+  --tenue:        #85859A;
+  --riga:         #272733;
+  --riga-2:       #1E1E28;
+  --accento:      #8A78FF;
+  --accento-vivo: #AFA2FF;
+  --accento-velo: #1A1730;
+  --accento-riga: #322B57;
+  --su-accento:   #0A0A0F;
+  --marchio-luce: #D6CEFF;
+  --marchio-alone: rgba(138,120,255,.32);
+  --verde:        #4ED69C;
+  --verde-velo:   #11271D;
+  --rosso:        #FF7365;
+  --rosso-velo:   #2A1614;
+  --ombra: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+  --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 14px 36px rgba(0,0,0,.5);
 }
 
 * { box-sizing: border-box; }
@@ -101,7 +122,10 @@ html, body {
 h1, h2, h3 {
   font-family: var(--titoli);
   font-weight: 600;
-  letter-spacing: -.02em;
+  /* Crenatura stretta: è quello che distingue un titolo composto da uno
+     lasciato ai valori predefiniti del carattere. */
+  letter-spacing: -.033em;
+  line-height: 1.12;
   margin: 0;
   text-wrap: balance;
 }
@@ -125,4 +149,106 @@ a { color: var(--accento); }
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Il telaio: telefono e scrivania.
+
+   La colonna resta stretta perché è la larghezza giusta per leggere. Quello
+   che cambia sul desktop è il contorno — barra in cima invece che in fondo,
+   sfondo sotto la colonna — e le schermate a elenco, che guadagnano colonne.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.telaio { min-height: 100dvh; display: flex; flex-direction: column; }
+
+.intestazione { display: none; }
+
+.contenuto {
+  flex-grow: 1;
+  width: 100%;
+  /* Spazio per la navigazione bassa e per la barra di sistema di iPhone. */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+.navigazione-bassa {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; justify-content: space-around;
+  background: var(--superficie);
+  border-top: 1px solid var(--riga);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+
+.voce-bassa {
+  flex: 1; text-align: center; padding: 9px 2px;
+  font-size: 11.5px; font-weight: 500; line-height: 1.25;
+  color: var(--tenue); text-decoration: none;
+  border-radius: var(--raggio-s);
+}
+.voce-bassa-attiva { color: var(--accento); font-weight: 600; }
+
+@media (min-width: 860px) {
+  .navigazione-bassa { display: none; }
+  .contenuto { padding-bottom: 60px; }
+
+  .telaio { background: var(--superficie-2); }
+
+  .intestazione {
+    display: block;
+    position: sticky; top: 0; z-index: 30;
+    background: var(--carta);
+    border-bottom: 1px solid var(--riga);
+  }
+  .intestazione-dentro {
+    max-width: var(--largo); margin: 0 auto;
+    padding: 0 28px; height: 62px;
+    display: flex; align-items: center; gap: 34px;
+  }
+  .marchio-collegamento {
+    display: flex; align-items: center; gap: 9px;
+    text-decoration: none; color: var(--inchiostro);
+  }
+  .marchio-testo {
+    font-family: var(--titoli); font-weight: 700;
+    font-size: 18px; letter-spacing: -.04em;
+  }
+  .navigazione { display: flex; gap: 4px; flex-grow: 1; }
+  .voce {
+    padding: 8px 13px; border-radius: var(--raggio-s);
+    font-size: 14.5px; font-weight: 500;
+    color: var(--inchiostro-2); text-decoration: none;
+  }
+  .voce:hover { background: var(--superficie-2); color: var(--inchiostro); }
+  .voce-attiva { color: var(--accento); font-weight: 600; }
+  .voce-profilo { flex-shrink: 0; }
+
+  /* La colonna si appoggia su una superficie invece di galleggiare nel
+     bianco: senza, su uno schermo grande sembra una pagina non finita. */
+  .contenuto > main {
+    background: var(--carta);
+    border: 1px solid var(--riga);
+    border-radius: 16px;
+    margin: 28px auto;
+    box-shadow: var(--ombra);
+  }
+
+  /* Le schermate a elenco guadagnano colonne: è l'unico posto dove la
+     larghezza serve davvero, perché fa vedere più opzioni insieme.
+     Si ridefinisce la VARIABILE invece di sovrascrivere la larghezza: le
+     schermate la usano nello stile in linea, e uno stile in linea batte
+     qualunque classe. Cambiando la variabile si cambia il valore che quello
+     stile legge, senza dover togliere la larghezza da quindici file. */
+  .contenuto-largo { --colonna: var(--largo); }
+  .contenuto-largo > main {
+    padding-left: 28px; padding-right: 28px;
+  }
+  .contenuto-largo .griglia-elenco {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+}
+
+@media (min-width: 1200px) {
+  .intestazione-dentro { padding: 0 40px; }
 }

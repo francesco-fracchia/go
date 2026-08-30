@@ -87,7 +87,7 @@ export function Posti({ iniziali, categoriaIniziale }: {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 0 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 0 40px' }}>
       <div style={{ padding: '0 20px' }}>
         <h1 style={{ fontSize: 26, marginBottom: 6 }}>Dove si va</h1>
         <p style={{ margin: '0 0 18px', color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.55 }}>
@@ -131,7 +131,7 @@ export function Posti({ iniziali, categoriaIniziale }: {
           </p>
         )}
 
-        <div style={{ display: 'grid', gap: 10 }}>
+        <div className="griglia-elenco" style={{ display: 'grid', gap: 10 }}>
           {posti.map((p) => <Carta key={p.id} p={p} />)}
         </div>
 

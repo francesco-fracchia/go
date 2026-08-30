@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAF8F6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0E1116' },
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A0A0F' },
   ],
   // Il pizzico per ingrandire resta attivo: disattivarlo è un danno di
   // accessibilità che nessun guadagno estetico compensa.
@@ -31,14 +31,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           rel="stylesheet"
           href={
             'https://fonts.googleapis.com/css2' +
-            '?family=Familjen+Grotesk:wght@500;600;700' +
-            '&family=Public+Sans:wght@400;500;600' +
-            '&family=Space+Grotesk:wght@500;600;700' +
-            '&family=Inter:wght@400;500;600' +
-            '&family=Instrument+Sans:wght@400;500;600;700' +
-            '&family=Manrope:wght@400;500;600;700;800' +
-            '&family=Bricolage+Grotesque:opsz,wght@12..96,400..800' +
-            '&family=JetBrains+Mono:wght@500' +
+            '?family=Instrument+Sans:wght@400;500;600;700' +
+            '&family=JetBrains+Mono:wght@400;500' +
             '&display=swap'
           }
         />

@@ -33,7 +33,7 @@ export function Cerca({ serate = [], destinazione }: {
   const [quando, setQuando] = useState('')
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
         <Marchio dimensione={36} />
         <div>

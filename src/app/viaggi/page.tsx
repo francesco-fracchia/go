@@ -5,6 +5,8 @@ import { preventivo, type Corsa } from '../../lib/pricing.ts'
 
 export const dynamic = 'force-dynamic'
 
+import { Telaio } from '../../components/Telaio.tsx'
+
 export default async function Pagina() {
   const utente = await richiediUtente()
   const adesso = Date.now()
@@ -105,7 +107,7 @@ export default async function Pagina() {
     .filter((v) => new Date(v.oraPartenza).getTime() <= adesso - 3 * 3600_000)
     .sort((a, b) => new Date(b.oraPartenza).getTime() - new Date(a.oraPartenza).getTime())
 
-  return <IMieiViaggi prossimi={futuri} passati={passati} />
+  return <Telaio larga attiva="/viaggi"><IMieiViaggi prossimi={futuri} passati={passati} /></Telaio>
 }
 
 interface RigaCorsa {

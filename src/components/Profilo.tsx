@@ -34,7 +34,7 @@ export interface DatiProfilo {
 
 export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '24px 20px 40px' }}>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 22 }}>
         <div style={{
           width: 72, height: 72, borderRadius: 36, flexShrink: 0,

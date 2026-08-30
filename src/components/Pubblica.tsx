@@ -40,7 +40,7 @@ export function Pubblica({ b }: { b: Bozza }) {
   const restaACarico = b.costoCent - b.rientroNettoCent
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '18px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
       <h1 style={{ fontSize: 26, marginBottom: 6 }}>Vai a {b.destinazione}?</h1>
       <p style={{ margin: '0 0 22px', color: 'var(--inchiostro-2)', fontSize: 15 }}>
         Offri i posti vuoti. Se non li prende nessuno, parti come avresti fatto

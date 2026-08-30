@@ -66,6 +66,19 @@ supabase/migrations/    schema, RLS, trigger di conformità
 /legale/privacy      bozza da rivedere con l'avvocato
 ```
 
+## Telefono e scrivania
+
+La colonna resta stretta anche sul desktop: un elenco di passaggi largo 1200
+pixel si legge peggio, non meglio — l'occhio deve attraversare mezzo schermo
+per collegare l'orario al prezzo. Quello che cambia è il **contorno**: barra
+di navigazione in cima invece che in fondo, e la colonna appoggiata su uno
+sfondo invece che sospesa nel bianco.
+
+Le sole schermate che diventano davvero larghe sono quelle a **elenco**
+(`Telaio larga`), dove più colonne fanno vedere più opzioni insieme. Lo fanno
+ridefinendo `--colonna`, non sovrascrivendo la larghezza: le schermate la
+leggono da uno stile in linea, che batterebbe qualunque classe.
+
 ## Le piastrelle della mappa
 
 MapLibre carica le immagini con `crossOrigin`, quindi servono le intestazioni

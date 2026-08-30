@@ -34,7 +34,7 @@ export function IMieiViaggi({ prossimi, passati }: {
 }) {
   if (prossimi.length === 0 && passati.length === 0) {
     return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
         <h1 style={{ fontSize: 24, marginBottom: 10 }}>Nessun viaggio</h1>
         <p style={{ color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
           Quando prenoti o pubblichi un passaggio lo trovi qui.
@@ -45,13 +45,13 @@ export function IMieiViaggi({ prossimi, passati }: {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
       <h1 style={{ fontSize: 26, marginBottom: 22 }}>I tuoi viaggi</h1>
 
       {prossimi.length > 0 && (
         <section style={{ marginBottom: 30 }}>
           <Etichetta>in programma</Etichetta>
-          <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+          <div className="griglia-elenco" style={{ display: 'grid', gap: 10, marginTop: 10 }}>
             {prossimi.map((v) => <Riga key={v.id} v={v} />)}
           </div>
         </section>

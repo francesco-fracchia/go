@@ -4,6 +4,8 @@ import { Conto } from '../../components/Conto.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { Telaio } from '../../components/Telaio.tsx'
+
 export default async function Pagina() {
-  return <Conto c={await riepilogo(await richiediUtente())} />
+  return <Telaio attiva="/profilo"><Conto c={await riepilogo(await richiediUtente())} /></Telaio>
 }

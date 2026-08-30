@@ -2,26 +2,24 @@
 import { useEffect, useState } from 'react'
 
 const TEMI = [
-  { id: '', nome: 'Terracotta', nota: 'quello di adesso — caldo, artigiano' },
-  { id: 'notte', nome: 'Notte', nota: 'indaco su quasi-nero · Space Grotesk' },
-  { id: 'segnale', nome: 'Segnale', nota: 'bianco, nero, un rosso che urla · Instrument Sans' },
-  { id: 'nebbia', nome: 'Nebbia', nota: 'blu freddo, morbido, rassicurante · Manrope' },
-  { id: 'acido', nome: 'Acido', nota: 'lime su carbone · Bricolage Grotesque' },
+  { id: '', nome: 'Come il telefono', nota: 'segue le impostazioni di sistema' },
+  { id: 'chiaro', nome: 'Chiaro', nota: 'bianco, inchiostro quasi nero, indaco' },
+  { id: 'scuro', nome: 'Scuro', nota: 'la stessa palette, rovesciata' },
 ]
 
 export function SceltaTema() {
   const [attivo, setAttivo] = useState('')
 
   useEffect(() => {
-    const salvato = localStorage.getItem('palette') ?? ''
+    const salvato = localStorage.getItem('tema') ?? ''
     applica(salvato)
     setAttivo(salvato)
   }, [])
 
   function applica(id: string) {
-    if (id) document.documentElement.dataset.palette = id
-    else delete document.documentElement.dataset.palette
-    try { localStorage.setItem('palette', id) } catch { /* finestra privata */ }
+    if (id) document.documentElement.dataset.tema = id
+    else delete document.documentElement.dataset.tema
+    try { localStorage.setItem('tema', id) } catch { /* finestra privata */ }
   }
 
   return (

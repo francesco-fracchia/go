@@ -41,7 +41,7 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '24px 20px 40px' }}>
       <h1 style={{ fontSize: 26, marginBottom: 24 }}>Impostazioni</h1>
 
       <Etichetta>come ti raggiungiamo</Etichetta>

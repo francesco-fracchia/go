@@ -53,7 +53,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
 
   if (veicoli.length === 0) {
     return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         <h1 style={{ fontSize: 24, marginBottom: 10 }}>Prima la macchina</h1>
         <p style={{ color: 'var(--inchiostro-2)', marginBottom: 22, lineHeight: 1.55 }}>
           Ci servono marca, modello e alimentazione per calcolare quanto ti
@@ -67,7 +67,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
       <Progresso passo={passo} />
 
       {passo === 'dove' && (

@@ -41,7 +41,7 @@ export function Risultati({ risultati, allargati }: {
   if (risultati.length === 0) return <Vuoto allargati={allargati} />
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
+    <div className="griglia-elenco" style={{ display: 'grid', gap: 12 }}>
       {subito.map((r) => <Riga key={r.corsaId} r={r} />)}
 
       {daChiedere.length > 0 && (

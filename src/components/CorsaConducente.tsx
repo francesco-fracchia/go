@@ -56,7 +56,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const restaACarico = c.costoCent - c.rientroNettoCent
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '18px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
       {/* ── La conferma. Prima di tutto, se serve. ── */}
       {c.daConfermare && (
         <Riquadro tono="accento" stile={{ marginBottom: 18 }}>

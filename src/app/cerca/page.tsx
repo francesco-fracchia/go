@@ -6,6 +6,8 @@ import { Etichetta } from '../../components/base.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { Telaio } from '../../components/Telaio.tsx'
+
 export default async function Pagina({ searchParams }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
@@ -24,7 +26,7 @@ export default async function Pagina({ searchParams }: {
 
   if (!Number.isFinite(num('olat')) || !Number.isFinite(num('dlat'))) {
     return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         <p style={{ color: 'var(--tenue)' }}>Dicci da dove parti e dove vai.</p>
         <a href="/" style={{ fontWeight: 600 }}>Torna alla ricerca</a>
       </main>
@@ -45,7 +47,8 @@ export default async function Pagina({ searchParams }: {
   const chiaviTrovate = new Set(trovati.map((r) => r.corsaId))
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <Telaio larga attiva="/">
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
       <a href="/" style={{ fontSize: 14, textDecoration: 'none' }}>← Cambia ricerca</a>
       <div style={{ margin: '16px 0 18px' }}>
         <Etichetta>
@@ -59,6 +62,7 @@ export default async function Pagina({ searchParams }: {
         allargati={risultati.filter((r) => !chiaviTrovate.has(r.corsaId))}
       />
     </main>
+    </Telaio>
   )
 }
 

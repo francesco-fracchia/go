@@ -3,6 +3,8 @@ import { prossimeSerate } from '../server/serate.ts'
 
 export const revalidate = 300
 
+import { Telaio } from '../components/Telaio.tsx'
+
 export default async function Home({ searchParams }: {
   searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string }>
 }) {
@@ -16,5 +18,5 @@ export default async function Home({ searchParams }: {
   // serate sono un contorno, la ricerca no.
   let serate: Awaited<ReturnType<typeof prossimeSerate>> = []
   try { serate = await prossimeSerate() } catch { /* si mostra senza */ }
-  return <Cerca serate={serate} destinazione={destinazione} />
+  return <Telaio attiva="/"><Cerca serate={serate} destinazione={destinazione} /></Telaio>
 }

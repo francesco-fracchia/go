@@ -5,6 +5,8 @@ export const revalidate = 120
 
 const CASA = { lat: 45.3142, lng: 9.5033 }
 
+import { Telaio } from '../../components/Telaio.tsx'
+
 export default async function Pagina({ searchParams }: {
   searchParams: Promise<{ lat?: string; lng?: string; categoria?: string }>
 }) {
@@ -21,5 +23,5 @@ export default async function Pagina({ searchParams }: {
     })
   } catch { /* si mostra il vuoto */ }
 
-  return <Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} />
+  return <Telaio larga attiva="/posti"><Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} /></Telaio>
 }

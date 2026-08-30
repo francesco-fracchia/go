@@ -37,7 +37,7 @@ export function CercoPassaggio() {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
       <h1 style={{ fontSize: 26, marginBottom: 6 }}>Cerchi un passaggio?</h1>
       <p style={{ margin: '0 0 24px', color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.55 }}>
         Dillo. Chi guida su quella tratta lo vede, e ti avvisiamo appena

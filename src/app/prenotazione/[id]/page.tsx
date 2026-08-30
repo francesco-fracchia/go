@@ -6,6 +6,8 @@ import {
 } from '../../../components/SchermataPrenotazione.tsx'
 
 /** Carica i dati e li passa alla vista, che non sa nulla del database. */
+import { Telaio } from '../../../components/Telaio.tsx'
+
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const utente = await richiediUtente()
@@ -48,7 +50,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     veicolo: c.veicoli,
   }
 
-  return <SchermataPrenotazione p={p} />
+  return <Telaio><SchermataPrenotazione p={p} /></Telaio>
 }
 
 interface RigaCorsa {

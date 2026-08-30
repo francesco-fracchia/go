@@ -7,6 +7,8 @@ import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { Telaio } from '../../../components/Telaio.tsx'
+
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const io = await utenteCorrente()
@@ -40,7 +42,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     })),
   }
 
-  return <Profilo p={dati} mio={io === id} />
+  return <Telaio attiva="/profilo"><Profilo p={dati} mio={io === id} /></Telaio>
 }
 
 const eta = (n: string) => {

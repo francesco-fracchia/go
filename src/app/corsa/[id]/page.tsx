@@ -20,6 +20,8 @@ export const dynamic = 'force-dynamic'
  * evita che qualcuno mandi a un amico un indirizzo che l'amico non può
  * aprire.
  */
+import { Telaio } from '../../../components/Telaio.tsx'
+
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const utente = await utenteCorrente()
@@ -115,7 +117,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         }
       }),
     }
-    return <CorsaConducente c={dati} />
+    return <Telaio><CorsaConducente c={dati} /></Telaio>
   }
 
   // ── La vista di chi cerca un passaggio ─────────────────────────────────
@@ -177,7 +179,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   // Se la carta è già salvata il pannello di prenotazione la mostra invece
   // di chiedere di nuovo i sedici numeri.
   const metodo = utente ? await metodoAttuale(utente).catch(() => null) : null
-  return <Dettaglio c={dati} metodo={metodo} />
+  return <Telaio><Dettaglio c={dati} metodo={metodo} /></Telaio>
 }
 
 const fermataDi = (x: { fermate?: unknown }) =>

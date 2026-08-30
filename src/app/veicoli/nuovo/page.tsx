@@ -1,2 +1,4 @@
 import { FormVeicolo } from '../../../components/FormVeicolo.tsx'
-export default function Pagina() { return <FormVeicolo /> }
+import { Telaio } from '../../../components/Telaio.tsx'
+
+export default function Pagina() { return <Telaio attiva="/pubblica"><FormVeicolo /></Telaio> }

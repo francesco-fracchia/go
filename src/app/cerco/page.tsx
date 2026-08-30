@@ -1,2 +1,4 @@
 import { CercoPassaggio } from '../../components/CercoPassaggio.tsx'
-export default function Pagina() { return <CercoPassaggio /> }
+import { Telaio } from '../../components/Telaio.tsx'
+
+export default function Pagina() { return <Telaio attiva="/"><CercoPassaggio /></Telaio> }

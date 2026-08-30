@@ -56,7 +56,7 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
   const daSegnalare = arrivata && p.esito === 'atteso'
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '18px 20px 60px' }}>
+    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 60px' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
         <Marchio dimensione={30} />
         <Etichetta tono={saltata ? 'tenue' : 'tenue'}>
