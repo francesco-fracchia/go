@@ -111,6 +111,7 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                   <Voce href="/conto" testo="Il tuo conto" nota="incassi e liquidazioni" />
                   <Voce href="/veicoli/nuovo" testo="Aggiungi un'auto" nota="serve per pubblicare" />
                   <Voce href="/impostazioni" testo="Notifiche, carta, aspetto" />
+                  <Voce href="/come-funziona" testo="Come funziona GO" nota="e perché costa così poco" />
                   <Voce href="/legale/termini" testo="Condizioni d'uso" />
                   <Voce href="/legale/privacy" testo="Come trattiamo i tuoi dati" />
                   <Voce href="/legale/contatto" testo="Contatti" />

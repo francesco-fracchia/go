@@ -20,26 +20,47 @@ import { quotaApplicata, feePasseggero, type Corsa } from '../lib/pricing.ts'
  * campi qui la nasconde sotto una domanda che viene dopo.
  */
 
-export function Racconto() {
+/**
+ * Dove portano i due inviti.
+ *
+ * Chi non è ancora entrato passa dall'accesso e ci torna dopo; chi è già
+ * dentro va dritto dove voleva andare. Mandare un utente collegato su una
+ * schermata di accesso che lo rimbalza indietro è il modo più veloce di
+ * fargli pensare che qualcosa si sia rotto.
+ */
+function inviti(entrato?: boolean) {
+  return entrato
+    ? { cerco: '/', offro: '/pubblica', posti: '/posti' }
+    : {
+        cerco: '/entra?ritorno=%2F',
+        offro: '/entra?ritorno=%2Fpubblica',
+        posti: '/entra?ritorno=%2Fposti',
+      }
+}
+
+export function Racconto({ entrato }: { entrato?: boolean }) {
+  const v = inviti(entrato)
   return (
     <>
-      <Apertura />
+      <Apertura v={v} />
       <ComeFunziona />
-      <DueStrade />
-      <QuattroDiNotte />
+      <DueStrade v={v} />
+      <QuattroDiNotte v={v} />
       <NonStaiPagando />
       <Fiducia />
       <Esempi />
-      <Chiusura />
+      <Chiusura v={v} />
     </>
   )
 }
+
+type Inviti = ReturnType<typeof inviti>
 
 /* ══ 1. L'apertura ═════════════════════════════════════════════════════
    A tutta larghezza, alta quanto lo schermo. A sinistra il marchio e la
    promessa, a destra il disegno di quello che succede. */
 
-function Apertura() {
+function Apertura({ v }: { v: Inviti }) {
   return (
     <section className="fascia apertura">
       <div className="dentro apertura-dentro">
@@ -60,8 +81,8 @@ function Apertura() {
           </p>
 
           <div className="azioni apertura-azioni">
-            <a href="/entra?ritorno=%2F" className="azione azione-piena">Trova un posto</a>
-            <a href="/entra?ritorno=%2Fpubblica" className="azione azione-vuota">Offri un posto</a>
+            <a href={v.cerco} className="azione azione-piena">Trova un posto</a>
+            <a href={v.offro} className="azione azione-vuota">Offri un posto</a>
           </div>
 
           <p className="t-nota apertura-nota">
@@ -118,13 +139,13 @@ function ComeFunziona() {
    sono due pannelli grandi, uno per situazione, scritti come le direbbe
    chi ci si trova dentro. */
 
-function DueStrade() {
+function DueStrade({ v }: { v: Inviti }) {
   return (
     <section className="fascia sezione sezione-velo">
       <div className="dentro">
         <p className="occhiello" style={{ marginBottom: 'var(--s6)' }}>Tu cosa devi fare?</p>
         <div className="strade">
-          <a href="/entra?ritorno=%2F" className="strada">
+          <a href={v.cerco} className="strada">
             <span className="strada-situazione">Devo andare</span>
             <span className="strada-testo">
               da qualche parte, e non ho la macchina — o non ho voglia di guidare.
@@ -134,7 +155,7 @@ function DueStrade() {
             </span>
           </a>
 
-          <a href="/entra?ritorno=%2Fpubblica" className="strada strada-guida">
+          <a href={v.offro} className="strada strada-guida">
             <span className="strada-situazione">Ci vado comunque</span>
             <span className="strada-testo">
               e in macchina ho dei posti liberi. Tanto vale dividere quello che spendo.
@@ -152,7 +173,7 @@ function DueStrade() {
 /* ══ 4. Le quattro di notte ════════════════════════════════════════════
    La sezione è scura in tutti i temi: è una scena, non una superficie. */
 
-function QuattroDiNotte() {
+function QuattroDiNotte({ v }: { v: Inviti }) {
   return (
     <section className="fascia sezione sezione-scura">
       <div className="dentro notte-dentro">
@@ -167,7 +188,7 @@ function QuattroDiNotte() {
             <span className="notte-svolta">Ma qualcuno sta già tornando dalla tua parte.</span>
           </p>
           <div className="azioni" style={{ marginTop: 'var(--s6)' }}>
-            <a href="/entra?ritorno=%2Fposti" className="azione azione-chiara">Guarda chi torna</a>
+            <a href={v.posti} className="azione azione-chiara">Guarda chi torna</a>
           </div>
         </div>
         <div className="notte-disegno"><Notte /></div>
@@ -319,7 +340,7 @@ function CartaEsempio({ e }: { e: Esempio }) {
 
 /* ══ 8. La chiusura ════════════════════════════════════════════════════ */
 
-function Chiusura() {
+function Chiusura({ v }: { v: Inviti }) {
   return (
     <section className="fascia sezione chiusura">
       <div className="dentro chiusura-dentro">
@@ -328,8 +349,8 @@ function Chiusura() {
           <em className="viola">Devi solo trovarlo.</em>
         </h2>
         <div className="azioni" style={{ justifyContent: 'center' }}>
-          <a href="/entra?ritorno=%2F" className="azione azione-piena">Trova un posto</a>
-          <a href="/entra?ritorno=%2Fpubblica" className="azione azione-vuota">Offri un posto</a>
+          <a href={v.cerco} className="azione azione-piena">Trova un posto</a>
+          <a href={v.offro} className="azione azione-vuota">Offri un posto</a>
         </div>
         <p className="t-nota" style={{ maxWidth: '52ch', margin: '0 auto' }}>
           GO mette in contatto privati che condividono le spese di un viaggio

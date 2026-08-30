@@ -140,6 +140,7 @@ function Piede() {
         </div>
         <p className="piede-claim">Se vai comunque, vai insieme.</p>
         <nav className="piede-voci" aria-label="Informazioni">
+          <a href="/come-funziona">Come funziona</a>
           <a href="/legale/termini">Condizioni d&apos;uso</a>
           <a href="/legale/privacy">Privacy</a>
           <a href="/legale/contatto">Contatti</a>
