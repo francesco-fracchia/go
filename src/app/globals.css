@@ -345,24 +345,203 @@ a { color: var(--accento); }
   .conversazione-piede { padding: 10px 16px 14px; }
 }
 
-/* ─── La prima schermata sulla scrivania ───────────────────────────────
-   Il modulo di ricerca e l'invito a offrire un passaggio stanno affiancati
-   invece che incolonnati: su uno schermo largo mettere in fila due blocchi
-   corti lascia metà pagina vuota e fa scorrere per niente. */
-
-@media (min-width: 860px) {
-  .prima {
-    --colonna: 880px;
-  }
-  .prima-titolo { font-size: 34px; }
-  .prima-affiancate {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-}
-
 /* Elementi che esistono solo su uno dei due formati. */
 @media (min-width: 860px) { .solo-telefono { display: none !important; } }
 @media (max-width: 859px) { .solo-scrivania { display: none !important; } }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   La prima schermata.
+
+   L'ordine di lettura è deciso, non emerso: marchio, promessa, azione. Il
+   modulo di ricerca resta il punto operativo ma smette di essere l'unica
+   cosa che si vede — prima bisogna capire cosa si sta usando.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.casa { --colonna: 1120px; }
+.casa main, .casa { max-width: none; }
+
+.apertura {
+  display: grid;
+  gap: 34px;
+  padding: 22px 0 8px;
+}
+
+/* Il marchio come elemento di marca, non come icona accanto a una parola.
+   Crenatura molto stretta: due lettere larghe che si toccano quasi. */
+.marchio-grande {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--titoli); font-weight: 700;
+  font-size: 40px; letter-spacing: -.055em; line-height: 1;
+  color: var(--inchiostro);
+}
+
+.promessa {
+  font-family: var(--titoli); font-weight: 600;
+  font-size: clamp(2.1rem, 7vw, 3.1rem);
+  letter-spacing: -.04em; line-height: 1.04;
+  margin: 16px 0 0; text-wrap: balance;
+}
+.promessa em { font-style: normal; color: var(--accento); }
+
+.spiegazione {
+  margin: 16px 0 0; max-width: 34ch;
+  font-size: 17px; line-height: 1.55; color: var(--inchiostro-2);
+}
+
+/* Sul telefono le due azioni prendono tutta la larghezza e si impilano:
+   affiancate su 360 pixel diventano due bottoni stretti e uno va a capo da
+   solo, che è peggio di due righe pulite. */
+.azioni { display: grid; gap: 10px; margin-top: 26px; }
+@media (min-width: 460px) {
+  .azioni { display: flex; flex-wrap: wrap; }
+}
+
+.azione {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 50px; padding: 0 24px; border-radius: 999px;
+  font-size: 16px; font-weight: 600; text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform .12s ease, box-shadow .16s ease, background .16s ease;
+}
+.azione-piena { background: var(--accento); color: var(--su-accento); }
+.azione-piena:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--marchio-alone); }
+.azione-piena:active { transform: translateY(0); }
+.azione-vuota { background: var(--carta); color: var(--inchiostro); border-color: var(--riga); }
+.azione-vuota:hover { border-color: var(--inchiostro-2); }
+.azione:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
+
+/* ── La carta della ricerca ── */
+.ricerca {
+  background: var(--carta);
+  border: 1px solid var(--riga);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--ombra);
+}
+.ricerca-titolo {
+  font-family: var(--titoli); font-weight: 600; font-size: 17px;
+  letter-spacing: -.02em; margin: 0 0 3px;
+}
+.ricerca-sotto { font-size: 13.5px; color: var(--tenue); margin: 0 0 16px; }
+
+/* ── Il suggerimento sotto la carta ── */
+.indizio {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 12px; padding: 15px 18px;
+  border-radius: 16px; text-decoration: none;
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+  transition: transform .12s ease;
+}
+.indizio:hover { transform: translateY(-1px); }
+.indizio-testo { flex-grow: 1; min-width: 0; }
+.indizio-forte {
+  display: block;
+  font-weight: 600; font-size: 15.5px; color: var(--inchiostro);
+}
+.indizio-debole {
+  display: block;
+  font-size: 13.5px; color: var(--inchiostro-2); margin-top: 3px; line-height: 1.45;
+}
+.indizio-freccia { flex-shrink: 0; color: var(--accento); font-size: 19px; }
+
+/* ── Le sezioni sotto ── */
+.sezione { padding: 56px 0 0; }
+.sezione-etichetta {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--tenue); margin: 0 0 20px;
+}
+
+/* Tre passaggi, senza scatole colorate: numero, titolo, riga. */
+.passaggi { display: grid; gap: 26px; }
+.passo-numero {
+  font-family: var(--mono); font-size: 12.5px; color: var(--accento);
+  font-weight: 500; letter-spacing: .06em;
+}
+.passo-titolo {
+  font-family: var(--titoli); font-weight: 600; font-size: 18px;
+  letter-spacing: -.025em; margin: 7px 0 5px;
+}
+.passo-testo { font-size: 15px; line-height: 1.55; color: var(--inchiostro-2); margin: 0; }
+
+/* La frase che spiega il prodotto meglio di qualunque elenco. */
+.dichiarazione {
+  font-family: var(--titoli); font-weight: 600;
+  font-size: clamp(1.5rem, 4.2vw, 2.05rem);
+  letter-spacing: -.032em; line-height: 1.24;
+  margin: 0; max-width: 22ch; text-wrap: balance;
+}
+.dichiarazione em { font-style: normal; color: var(--accento); }
+
+.punti { display: grid; gap: 13px; margin: 26px 0 0; padding: 0; list-style: none; }
+.punto { display: flex; gap: 12px; font-size: 15.5px; line-height: 1.5; color: var(--inchiostro-2); }
+.punto::before {
+  content: ''; flex-shrink: 0; width: 6px; height: 6px; margin-top: 9px;
+  border-radius: 3px; background: var(--accento);
+}
+
+/* La notte: composizione astratta, non una mappa finta. */
+.notte {
+  margin-top: 56px; padding: 34px 26px;
+  border-radius: 22px; background: var(--superficie-2);
+  display: grid; gap: 28px;
+}
+.notte-ora {
+  font-family: var(--titoli); font-weight: 600;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
+  letter-spacing: -.032em; line-height: 1.2; margin: 0;
+}
+.notte-testo { margin: 14px 0 0; font-size: 16px; line-height: 1.6; color: var(--inchiostro-2); }
+.notte-testo span { display: block; }
+.tracciato { width: 100%; height: auto; display: block; }
+
+@media (min-width: 860px) {
+  .apertura {
+    grid-template-columns: 1.05fr .95fr;
+    gap: 56px;
+    /* Centrato, non allineato in alto: la colonna destra è più alta e
+       lasciare la sinistra appesa in cima le dà un'aria di incompiuto. */
+    align-items: center;
+    padding: 46px 0 12px;
+  }
+  .marchio-grande { font-size: 58px; gap: 16px; }
+  .sezione { padding: 78px 0 0; }
+  .passaggi { grid-template-columns: repeat(3, 1fr); gap: 34px; }
+  .perche { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .notte { grid-template-columns: 1fr 1fr; align-items: center; padding: 44px; gap: 44px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Rifiniture: il marchio in barra, gli stati attivi, il fuoco.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 860px) {
+  /* La voce attiva non è solo di un altro colore: ha un fondo. Il colore
+     da solo si perde su chi distingue male le tinte, e in barra ci sono
+     cinque voci quasi identiche per forma. */
+  .voce-attiva { background: var(--accento-velo); }
+  /* In barra resta il solo segno. «GO» scritto due volte nello stesso
+     schermo è una ripetizione, e il posto dove il marchio deve vincere è
+     l'apertura, non l'intestazione. */
+  .marchio-testo { display: none; }
+  .marchio-collegamento { padding-right: 10px; }
+  .intestazione-dentro { height: 58px; }
+}
+
+/* Il fuoco da tastiera si vede ovunque, e si vede uguale. */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Un campo a fuoco cambia bordo, non salta: il colore basta a dire dove
+   sei senza spostare di un pixel quello che c'è sotto. */
+label:focus-within {
+  border-color: var(--accento) !important;
+  box-shadow: 0 0 0 3px var(--accento-velo);
+  transition: border-color .14s ease, box-shadow .14s ease;
+}
+
+.voce-bassa-attiva { background: var(--accento-velo); }
