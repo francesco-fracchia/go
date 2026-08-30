@@ -5,6 +5,7 @@ import type { Categoria } from '../../lib/flessibilita.ts'
 
 export const dynamic = 'force-dynamic'
 
+import { guscio } from '../../server/guscio.ts'
 import { Telaio } from '../../components/Telaio.tsx'
 
 import { statoMappa } from '../../server/mappe.ts'
@@ -23,6 +24,7 @@ export default async function Pagina({ searchParams }: {
     : undefined
 
   const utente = await richiediUtente()
+  const g = await guscio()
   const { attiva: mappa } = await statoMappa().catch(() => ({ attiva: false }))
   const vicino = await centroPer(utente)
   const { data } = await db
@@ -31,7 +33,7 @@ export default async function Pagina({ searchParams }: {
     .eq('proprietario', utente)
     .eq('attivo', true)
 
-  return <Telaio attiva="/pubblica"><FormPubblica mappa={mappa} vicino={vicino} destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
+  return <Telaio attiva="/pubblica" {...g} modo="conducente"><FormPubblica mappa={mappa} vicino={vicino} destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
     id: v.id, marca: v.marca, modello: v.modello, postiTotali: v.posti_totali,
   }))} /></Telaio>
 }

@@ -1,149 +1,196 @@
-
 /* ═══════════════════════════════════════════════════════════════════════
-   GO — fondamenta visive.
+   GO — fondamenta.
 
-   Il tema chiaro è il predefinito. Il buio non è una preferenza estetica
-   ma un caso d'uso: si usa questa applicazione di notte, in macchina, con
-   gli occhi stanchi. Chi lo vuole lo accende, e la schermata della notte
-   resta scura comunque.
+   Tre cose che questo foglio deve fare, e che una raccolta di classi non fa
+   da sola:
+
+   1. Reggere DUE prodotti. Chi cerca un posto e chi ne offre uno usano la
+      stessa applicazione con due mestieri opposti. La differenza non è un
+      secondo colore di marca — è l'ambiente: il fondo cambia, le carte no.
+   2. Usare lo schermo. Non «allargare tutto»: sezioni che sanguinano da
+      bordo a bordo, con dentro colonne larghe quanto si legge.
+   3. Restare leggibile di notte, in macchina, con gli occhi stanchi.
+
+   Il tema chiaro è il predefinito. Il buio non è una preferenza estetica ma
+   un caso d'uso.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ─── 1. Materia ────────────────────────────────────────────────────── */
+
 :root {
-  /* Carta bianca, inchiostro quasi nero, un solo colore che parla.
-     Niente sfumature calde: l'applicazione si usa di notte, e il caldo
-     artigianale è il registro sbagliato per «sali in macchina con uno
-     sconosciuto alle due». */
+  /* Bianco, inchiostro quasi nero, grigi chiarissimi. Niente sfumature
+     calde: «sali in macchina con uno sconosciuto alle due di notte» non si
+     racconta in beige artigianale. */
   --carta:        #FFFFFF;
   --superficie:   #FFFFFF;
-  --superficie-2: #F4F4F6;
-  --inchiostro:   #0B0B0F;
-  --inchiostro-2: #3C3C46;
-  --tenue:        #78788A;
-  --riga:         #E3E3E9;
+  --superficie-2: #F4F4F7;
+  --superficie-3: #ECECF1;
+  --inchiostro:   #0A0A0E;
+  --inchiostro-2: #3A3A45;
+  --tenue:        #75758A;
+  --riga:         #E4E4EB;
   --riga-2:       #F0F0F4;
 
-  /* Indaco elettrico. Non è il blu istituzionale di chi fa trasporti né
-     l'arancione di chi fa mercatini: è un colore che si vede e si ricorda,
-     e regge sia sul bianco che sul nero. */
+  /* Il fondo della pagina. È la sola cosa che cambia fra le due modalità:
+     il resto del linguaggio resta identico, ed è quello che le tiene
+     riconoscibili come lo stesso prodotto. */
+  --foglio:       #FFFFFF;
+  /* Il corpo delle strade disegnate: deve avere peso su carta bianca. */
+  --strada:       #DFDFEA;
+
+  /* Indaco elettrico. Accento, non fondo: colora quello che si tocca. */
   --accento:      #4F35F5;
-  --accento-vivo: #7A66FF;
-  --accento-velo: #F0EDFF;
-  --accento-riga: #D5CCFF;
+  --accento-vivo: #6E56FF;
+  --accento-cupo: #3D26C9;
+  --accento-velo: #F1EEFF;   /* lavanda: superfici secondarie */
+  --accento-riga: #D8D0FF;
   --su-accento:   #FFFFFF;
-  --marchio-luce: #C9BEFF;
-  --marchio-alone: rgba(79,53,245,.30);
+  --marchio-alone: rgba(79,53,245,.28);
 
-  --verde:        #0E7A52;
-  --verde-velo:   #E9F6F0;
-  --rosso:        #C42A1C;
-  --rosso-velo:   #FDEEEC;
+  --verde:      #0C7A50;
+  --verde-velo: #E7F5EF;
+  --rosso:      #C22A1C;
+  --rosso-velo: #FDEDEB;
+  --ambra:      #8A5A00;
+  --ambra-velo: #FBF1DC;
 
-  --raggio:   12px;
-  --raggio-s: 9px;
-  --ombra:    0 1px 2px rgba(11,11,15,.04), 0 4px 14px rgba(11,11,15,.05);
-  --ombra-alta: 0 2px 6px rgba(11,11,15,.06), 0 14px 36px rgba(11,11,15,.10);
+  /* La notte è sempre scura, in tutti i temi: è una scena, non una
+     superficie, e cambiarle il fondo le toglie il senso. */
+  --notte-fondo: #0A0A12;
+  --notte-carta: #16161F;
+  --notte-testo: #F2F2F6;
+  --notte-tenue: #8C8CA3;
+  --notte-riga:  #262633;
 
-  /* Un carattere solo, in due pesi. Accoppiare due famiglie è la scelta
-     comoda; usarne una sola bene è quella che si nota. */
+  /* ── Spazio: otto passi, niente valori a mano ── */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --s9: 96px; --s10: 128px;
+
+  /* ── Raggi ── */
+  --r-s: 10px; --r-m: 14px; --r-l: 20px; --r-xl: 28px;
+  --raggio: var(--r-m); --raggio-s: var(--r-s);
+
+  /* ── Ombre: due, e si vedono appena ── */
+  --ombra:      0 1px 2px rgba(10,10,14,.04), 0 4px 14px rgba(10,10,14,.05);
+  --ombra-alta: 0 2px 6px rgba(10,10,14,.06), 0 18px 44px rgba(10,10,14,.12);
+
+  /* ── Carattere: uno solo, usato bene ── */
   --testo: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --titoli: "Instrument Sans", -apple-system, system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --titoli: var(--testo);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Larghezze: la colonna del telefono e quella del desktop. */
-  --colonna: 460px;
-  /* Largo davvero: su un portatile da 1440 la pagina usa lo schermo invece
-     di lasciare due bande grigie ai lati. Il limite serve solo a impedire
-     che su un monitor da 27 pollici una riga di testo diventi illeggibile. */
-  --largo: 1400px;
+  /* ── Misure ──
+     Tre, non una. La riga di testo non cresce mai oltre la leggibilità;
+     l'applicazione usa lo schermo; le sezioni di racconto usano tutto. */
+  --misura-testo:  64ch;
+  --misura-app:    1320px;
+  --misura-larga:  1680px;
+  --colonna:       520px;   /* moduli e schermate di lettura */
+  --largo:         var(--misura-app);
+
+  /* Il respiro laterale cresce con lo schermo invece di restare a 20px. */
+  --bordo: 20px;
+
+  --barra: 56px;  /* altezza dell'intestazione */
 }
+
+@media (min-width: 720px)  { :root { --bordo: 32px; --barra: 64px; } }
+@media (min-width: 1200px) { :root { --bordo: 48px; } }
+@media (min-width: 1680px) { :root { --bordo: 72px; } }
+
+/* ─── Il buio ────────────────────────────────────────────────────────── */
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="chiaro"]) {
-    --carta:        #0A0A0F;
+    --carta:        #14141C;
     --superficie:   #14141C;
     --superficie-2: #1D1D28;
+    --superficie-3: #262633;
     --inchiostro:   #F2F2F6;
-    --inchiostro-2: #C2C2CE;
-    --tenue:        #85859A;
-    --riga:         #272733;
-    --riga-2:       #1E1E28;
+    --inchiostro-2: #C0C0CE;
+    --tenue:        #85859B;
+    --riga:         #282835;
+    --riga-2:       #1E1E29;
+    --foglio:       #0A0A0F;
+    --strada:       #22222E;
     --accento:      #8A78FF;
-    --accento-vivo: #AFA2FF;
+    --accento-vivo: #A897FF;
+    --accento-cupo: #6D5BE8;
     --accento-velo: #1A1730;
-    --accento-riga: #322B57;
+    --accento-riga: #332C59;
     --su-accento:   #0A0A0F;
-    --marchio-luce: #D6CEFF;
     --marchio-alone: rgba(138,120,255,.32);
-    --verde:        #4ED69C;
-    --verde-velo:   #11271D;
-    --rosso:        #FF7365;
-    --rosso-velo:   #2A1614;
-    --ombra: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
-    --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 14px 36px rgba(0,0,0,.5);
+    --verde:      #4ED69C; --verde-velo: #10261C;
+    --rosso:      #FF7365; --rosso-velo: #2A1614;
+    --ambra:      #E8B44A; --ambra-velo: #2A2213;
+    --ombra:      0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+    --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
   }
 }
 
 :root[data-tema="scuro"] {
-  --carta:        #0A0A0F;
+  --carta:        #14141C;
   --superficie:   #14141C;
   --superficie-2: #1D1D28;
+  --superficie-3: #262633;
   --inchiostro:   #F2F2F6;
-  --inchiostro-2: #C2C2CE;
-  --tenue:        #85859A;
-  --riga:         #272733;
-  --riga-2:       #1E1E28;
+  --inchiostro-2: #C0C0CE;
+  --tenue:        #85859B;
+  --riga:         #282835;
+  --riga-2:       #1E1E29;
+  --foglio:       #0A0A0F;
+  --strada:       #22222E;
   --accento:      #8A78FF;
-  --accento-vivo: #AFA2FF;
+  --accento-vivo: #A897FF;
+  --accento-cupo: #6D5BE8;
   --accento-velo: #1A1730;
-  --accento-riga: #322B57;
+  --accento-riga: #332C59;
   --su-accento:   #0A0A0F;
-  --marchio-luce: #D6CEFF;
   --marchio-alone: rgba(138,120,255,.32);
-  --verde:        #4ED69C;
-  --verde-velo:   #11271D;
-  --rosso:        #FF7365;
-  --rosso-velo:   #2A1614;
-  --ombra: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
-  --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 14px 36px rgba(0,0,0,.5);
+  --verde:      #4ED69C; --verde-velo: #10261C;
+  --rosso:      #FF7365; --rosso-velo: #2A1614;
+  --ambra:      #E8B44A; --ambra-velo: #2A2213;
+  --ombra:      0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+  --ombra-alta: 0 2px 6px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
 }
+
+/* ─── 2. Fondamenta ─────────────────────────────────────────────────── */
 
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0;
-  background: var(--carta);
+  background: var(--foglio);
   color: var(--inchiostro);
   font-family: var(--testo);
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  /* Su iOS il rimbalzo elastico sotto una schermata a tutto schermo
-     scopre il bianco del browser: si toglie. */
+  text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-family: var(--titoli);
   font-weight: 600;
-  /* Crenatura stretta: è quello che distingue un titolo composto da uno
-     lasciato ai valori predefiniti del carattere. */
-  letter-spacing: -.033em;
-  line-height: 1.12;
+  letter-spacing: -.035em;
+  line-height: 1.1;
   margin: 0;
   text-wrap: balance;
 }
 
+p { text-wrap: pretty; }
 button { font-family: inherit; font-size: inherit; cursor: pointer; }
 a { color: var(--accento); }
+img, svg { max-width: 100%; }
 
-/* Il pollice deve arrivarci al buio, in movimento, con una mano sola. */
 .tocco { min-height: 48px; }
 
-/* Area sicura: la barra di sistema di iPhone mangia i pulsanti in fondo. */
 .fondo-fisso {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
-  background: var(--superficie);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+  padding: var(--s3) var(--bordo) calc(var(--s3) + env(safe-area-inset-bottom));
+  background: var(--carta);
   border-top: 1px solid var(--riga);
 }
 
@@ -151,427 +198,271 @@ a { color: var(--accento); }
   *, *::before, *::after {
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Il telaio: telefono e scrivania.
+/* ─── 3. Scala tipografica ──────────────────────────────────────────────
+   Quattro livelli, non nove. Una gerarchia si costruisce con salti grandi
+   fra pochi gradini: quindici corpi di testo che differiscono di due pixel
+   non sono una gerarchia, sono rumore. */
 
-   La colonna resta stretta perché è la larghezza giusta per leggere. Quello
-   che cambia sul desktop è il contorno — barra in cima invece che in fondo,
-   sfondo sotto la colonna — e le schermate a elenco, che guadagnano colonne.
-   ═══════════════════════════════════════════════════════════════════════ */
+.t-monumento {
+  font-size: clamp(2.6rem, 7.2vw, 6rem);
+  font-weight: 600; letter-spacing: -.045em; line-height: .96;
+}
+.t-titolo {
+  font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+  font-weight: 600; letter-spacing: -.038em; line-height: 1.06;
+}
+.t-sezione {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 600; letter-spacing: -.03em; line-height: 1.18;
+}
+.t-guida {
+  font-size: clamp(1.05rem, 1.5vw, 1.28rem);
+  line-height: 1.55; color: var(--inchiostro-2); font-weight: 400;
+}
+.t-corpo { font-size: 1rem; line-height: 1.6; color: var(--inchiostro-2); }
+.t-nota  { font-size: .84rem; line-height: 1.5; color: var(--tenue); }
 
-.telaio { min-height: 100dvh; display: flex; flex-direction: column; }
+.occhiello {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--tenue);
+  margin: 0;
+}
+.occhiello-accento { color: var(--accento); }
 
-.intestazione { display: none; }
+.misura { max-width: var(--misura-testo); }
+.viola  { color: var(--accento); font-style: normal; }
+
+/* ─── 4. Impaginato ─────────────────────────────────────────────────────
+   `.fascia` sanguina da bordo a bordo. `.dentro` è la colonna che ci vive.
+   Separarli è tutto: senza, «pieno schermo» diventa testo largo duemila
+   pixel, che è peggio della colonna stretta. */
+
+.fascia { width: 100%; }
+.dentro {
+  width: 100%;
+  max-width: var(--misura-larga);
+  margin: 0 auto;
+  padding-left: var(--bordo);
+  padding-right: var(--bordo);
+}
+.dentro-app { max-width: var(--misura-app); }
+.dentro-stretto { max-width: 780px; }
+
+/* ─── 5. Telaio ─────────────────────────────────────────────────────── */
+
+.telaio {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--foglio);
+}
+
+/* La modalità conducente cambia il TERRENO, non la marca. È il segnale che
+   si legge da lontano, senza parole e senza un secondo colore: sei in un
+   posto diverso dell'applicazione. */
+.telaio[data-modo="conducente"] { --foglio: var(--superficie-2); }
+.telaio[data-modo="conducente"] .intestazione { background: var(--foglio); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] { --foglio: #101019; }
+}
+:root[data-tema="scuro"] .telaio[data-modo="conducente"] { --foglio: #101019; }
 
 .contenuto {
-  flex-grow: 1;
-  width: 100%;
-  /* Spazio per la navigazione bassa e per la barra di sistema di iPhone. */
-  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  flex-grow: 1; width: 100%;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+@media (min-width: 900px) { .contenuto { padding-bottom: var(--s7); } }
+
+/* ── L'intestazione ── */
+
+.intestazione {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--foglio) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--riga);
+}
+.intestazione-dentro {
+  max-width: var(--misura-larga); margin: 0 auto;
+  padding: 0 var(--bordo); height: var(--barra);
+  display: flex; align-items: center; gap: var(--s4);
 }
 
-.navigazione-bassa {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: flex; justify-content: space-around;
-  background: var(--superficie);
+.marchio-collegamento {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; color: var(--inchiostro); flex-shrink: 0;
+}
+/* Il riquadro del marchio contiene già la parola: scriverla accanto
+   sarebbe dirla due volte nello stesso centimetro. */
+.marchio-testo { display: none; }
+
+.navigazione { display: none; }
+@media (min-width: 900px) {
+  .navigazione { display: flex; gap: 2px; margin-left: auto; }
+}
+.voce {
+  padding: 9px 14px; border-radius: var(--r-s);
+  font-size: 14.5px; font-weight: 500;
+  color: var(--inchiostro-2); text-decoration: none;
+  transition: background .13s ease, color .13s ease;
+  white-space: nowrap;
+}
+.voce:hover { background: var(--superficie-2); color: var(--inchiostro); }
+.voce-attiva { color: var(--accento); font-weight: 600; background: var(--accento-velo); }
+
+.pastiglia-profilo {
+  flex-shrink: 0; margin-left: var(--s2);
+  width: 34px; height: 34px; border-radius: 999px;
+  background: var(--superficie-2); border: 1px solid var(--riga);
+  background-size: cover; background-position: center;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 600; color: var(--inchiostro-2);
+  text-decoration: none;
+}
+.pastiglia-profilo:hover { border-color: var(--accento); }
+
+.entra-barra {
+  flex-shrink: 0; margin-left: auto;
+  padding: 9px 18px; border-radius: 999px;
+  background: var(--accento); color: var(--su-accento);
+  font-size: 14.5px; font-weight: 600; text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ── L'interruttore di modalità ──
+   Il controllo più importante dell'applicazione: sta accanto al marchio,
+   perché è lì che si guarda per capire dove si è. */
+
+.modo {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--superficie-2); border: 1px solid var(--riga);
+  border-radius: 999px; flex-shrink: 0;
+}
+.modo-voce {
+  border: none; background: transparent;
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 600; letter-spacing: -.01em;
+  color: var(--tenue); white-space: nowrap;
+  transition: background .16s ease, color .16s ease;
+}
+.modo-voce:hover { color: var(--inchiostro-2); }
+.modo-voce[aria-pressed="true"] {
+  background: var(--carta); color: var(--inchiostro);
+  box-shadow: 0 1px 2px rgba(10,10,14,.10);
+}
+.telaio[data-modo="conducente"] .modo-voce[aria-pressed="true"] { color: var(--accento); }
+
+/* Su schermo stretto l'interruttore perde le parole lunghe. */
+.modo-lungo { display: none; }
+@media (min-width: 560px) {
+  .modo-lungo { display: inline; }
+  .modo-corto { display: none; }
+}
+
+/* ── Le schede in basso, sul telefono ──
+   Cambiano con la modalità: è metà della distinzione fra i due prodotti. */
+
+.schede {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex;
+  background: color-mix(in srgb, var(--carta) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
   border-top: 1px solid var(--riga);
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
 }
+@media (min-width: 900px) { .schede { display: none; } }
 
-.voce-bassa {
-  flex: 1; text-align: center; padding: 9px 2px;
-  font-size: 11.5px; font-weight: 500; line-height: 1.25;
+.scheda {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 7px 2px 5px;
+  font-size: 11px; font-weight: 500; line-height: 1.2;
   color: var(--tenue); text-decoration: none;
-  border-radius: var(--raggio-s);
+  border-radius: var(--r-s);
 }
-.voce-bassa-attiva { color: var(--accento); font-weight: 600; }
+.scheda svg { display: block; }
+.scheda-attiva { color: var(--accento); font-weight: 600; }
 
-@media (min-width: 860px) {
-  .navigazione-bassa { display: none; }
-  .contenuto { padding-bottom: 60px; }
-
-  .telaio { background: var(--superficie-2); }
-
-  .intestazione {
-    display: block;
-    position: sticky; top: 0; z-index: 30;
-    background: var(--carta);
-    border-bottom: 1px solid var(--riga);
-  }
-  .intestazione-dentro {
-    max-width: var(--largo); margin: 0 auto;
-    padding: 0 32px; height: 62px;
-    display: flex; align-items: center; gap: 34px;
-  }
-  .marchio-collegamento {
-    display: flex; align-items: center; gap: 9px;
-    text-decoration: none; color: var(--inchiostro);
-  }
-  .marchio-testo {
-    font-family: var(--titoli); font-weight: 700;
-    font-size: 18px; letter-spacing: -.04em;
-  }
-  .navigazione { display: flex; gap: 4px; flex-grow: 1; }
-  .voce {
-    padding: 8px 13px; border-radius: var(--raggio-s);
-    font-size: 14.5px; font-weight: 500;
-    color: var(--inchiostro-2); text-decoration: none;
-  }
-  .voce:hover { background: var(--superficie-2); color: var(--inchiostro); }
-  .voce-attiva { color: var(--accento); font-weight: 600; }
-  .voce-profilo { flex-shrink: 0; }
-
-  /* La colonna si appoggia su una superficie invece di galleggiare nel
-     bianco: senza, su uno schermo grande sembra una pagina non finita. */
-  .contenuto > main {
-    background: var(--carta);
-    border: 1px solid var(--riga);
-    border-radius: 16px;
-    margin: 28px auto;
-    box-shadow: var(--ombra);
-  }
-
-  /* Le schermate a elenco guadagnano colonne: è l'unico posto dove la
-     larghezza serve davvero, perché fa vedere più opzioni insieme.
-     Si ridefinisce la VARIABILE invece di sovrascrivere la larghezza: le
-     schermate la usano nello stile in linea, e uno stile in linea batte
-     qualunque classe. Cambiando la variabile si cambia il valore che quello
-     stile legge, senza dover togliere la larghezza da quindici file. */
-  .contenuto-largo { --colonna: var(--largo); }
-  .contenuto-largo > main {
-    padding-left: 28px; padding-right: 28px;
-  }
-  .contenuto-largo .griglia-elenco {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-    gap: 14px;
-    align-items: start;
-  }
-}
-
-@media (min-width: 1200px) {
-  .intestazione-dentro { padding: 0 44px; }
-  .casa { padding-left: 44px !important; padding-right: 44px !important; }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Pannelli sovrapposti.
-
-   Sul telefono salgono dal basso e riempiono lo schermo: è il gesto giusto
-   per un pollice. Sul desktop diventano riquadri centrati — un foglio a
-   tutto schermo su un monitor da ventisette pollici non è immersivo, è una
-   pagina che ha perso il contesto.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-.sovrapposto {
-  position: fixed; inset: 0; z-index: 60;
-  display: flex; flex-direction: column;
-  background: var(--carta);
-}
-
-.pannello-mappa {
-  flex-grow: 1; display: flex; flex-direction: column; min-height: 0;
-}
-
-.foglio {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
-  background: var(--carta);
-  border-radius: 18px 18px 0 0;
-  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
-  max-height: 88dvh; overflow-y: auto;
-  box-shadow: var(--ombra-alta);
-}
-
-.velo { position: fixed; inset: 0; z-index: 40; background: rgba(11,11,15,.45); }
-
-.maniglia {
-  width: 40px; height: 4px; border-radius: 2px;
-  background: var(--riga); margin: 0 auto 18px;
-}
-
-@media (min-width: 860px) {
-  .sovrapposto {
-    background: rgba(11,11,15,.45);
-    align-items: center; justify-content: center;
-    padding: 40px;
-  }
-  .pannello-mappa {
-    flex-grow: 0;
-    width: min(920px, 100%); height: min(680px, 100%);
-    background: var(--carta);
-    border-radius: 16px; overflow: hidden;
-    box-shadow: var(--ombra-alta);
-  }
-
-  /* Il foglio smette di salire dal basso e diventa una finestra. */
-  .foglio {
-    left: 50%; right: auto; bottom: auto; top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(460px, calc(100vw - 80px));
-    border-radius: 16px;
-    padding: 24px 26px 26px;
-    max-height: 84vh;
-  }
-  .maniglia { display: none; }
-}
-
-/* ─── La conversazione ─────────────────────────────────────────────────
-   Sul telefono occupa lo schermo: è l'unica cosa che si sta facendo.
-   Sul desktop diventa un riquadro alto quanto serve — una chat di quattro
-   messaggi stirata su milleduecento pixel di altezza è tre quarti di vuoto
-   con due frasi in cima. */
-
-.conversazione {
-  display: flex; flex-direction: column;
-  min-height: 100dvh;
-}
-.conversazione-testa {
-  padding: 14px 20px; border-bottom: 1px solid var(--riga);
-  background: var(--superficie); position: sticky; top: 0; z-index: 2;
-}
-.conversazione-piede {
-  position: sticky; bottom: 0; background: var(--superficie);
-  border-top: 1px solid var(--riga);
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-}
-
-@media (min-width: 860px) {
-  .conversazione {
-    min-height: 0; height: min(640px, calc(100dvh - 160px));
-    max-width: var(--colonna); margin: 28px auto;
-    background: var(--carta); border: 1px solid var(--riga);
-    border-radius: 16px; overflow: hidden; box-shadow: var(--ombra);
-  }
-  .conversazione-testa { border-radius: 16px 16px 0 0; }
-  .conversazione-piede { padding: 10px 16px 14px; }
-}
-
-/* Elementi che esistono solo su uno dei due formati. */
-@media (min-width: 860px) { .solo-telefono { display: none !important; } }
-@media (max-width: 859px) { .solo-scrivania { display: none !important; } }
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   La prima schermata.
-
-   L'ordine di lettura è deciso, non emerso: marchio, promessa, azione. Il
-   modulo di ricerca resta il punto operativo ma smette di essere l'unica
-   cosa che si vede — prima bisogna capire cosa si sta usando.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-.casa { --colonna: var(--largo); }
-.casa main, .casa { max-width: none; }
-
-.apertura {
-  display: grid;
-  gap: 34px;
-  padding: 22px 0 8px;
-}
-
-/* Il marchio come elemento di marca, non come icona accanto a una parola.
-   Crenatura molto stretta: due lettere larghe che si toccano quasi. */
-.marchio-grande {
-  display: flex; align-items: center; gap: 12px;
-  font-family: var(--titoli); font-weight: 700;
-  font-size: 40px; letter-spacing: -.055em; line-height: 1;
-  color: var(--inchiostro);
-}
-
-.promessa {
-  font-family: var(--titoli); font-weight: 600;
-  font-size: clamp(2.1rem, 7vw, 3.1rem);
-  letter-spacing: -.04em; line-height: 1.04;
-  margin: 16px 0 0; text-wrap: balance;
-}
-.promessa em { font-style: normal; color: var(--accento); }
-
-.spiegazione {
-  margin: 16px 0 0; max-width: 34ch;
-  font-size: 17px; line-height: 1.55; color: var(--inchiostro-2);
-}
-
-/* Sul telefono le due azioni prendono tutta la larghezza e si impilano:
-   affiancate su 360 pixel diventano due bottoni stretti e uno va a capo da
-   solo, che è peggio di due righe pulite. */
-.azioni { display: grid; gap: 10px; margin-top: 26px; }
-@media (min-width: 460px) {
-  .azioni { display: flex; flex-wrap: wrap; }
-}
+/* ─── 6. Comandi ────────────────────────────────────────────────────── */
 
 .azione {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 50px; padding: 0 24px; border-radius: 999px;
-  font-size: 16px; font-weight: 600; text-decoration: none;
-  border: 1px solid transparent;
-  transition: transform .12s ease, box-shadow .16s ease, background .16s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 26px; border-radius: 999px;
+  font-size: 16px; font-weight: 600; letter-spacing: -.012em;
+  text-decoration: none; border: 1px solid transparent;
+  transition: transform .12s ease, box-shadow .18s ease,
+              background .16s ease, border-color .16s ease;
 }
 .azione-piena { background: var(--accento); color: var(--su-accento); }
-.azione-piena:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--marchio-alone); }
-.azione-piena:active { transform: translateY(0); }
+.azione-piena:hover { background: var(--accento-vivo); transform: translateY(-1px); box-shadow: 0 8px 22px var(--marchio-alone); }
+.azione-piena:active { transform: translateY(0); box-shadow: none; }
 .azione-vuota { background: var(--carta); color: var(--inchiostro); border-color: var(--riga); }
-.azione-vuota:hover { border-color: var(--inchiostro-2); }
+.azione-vuota:hover { border-color: var(--inchiostro-2); transform: translateY(-1px); }
+.azione-scura { background: var(--inchiostro); color: var(--carta); }
+.azione-scura:hover { transform: translateY(-1px); }
+.azione-chiara { background: #FFFFFF; color: #0A0A12; }
+.azione-chiara:hover { transform: translateY(-1px); }
+.azione-piccola { min-height: 42px; padding: 0 18px; font-size: 14.5px; }
 .azione:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 
-/* ── La carta della ricerca ── */
-.ricerca {
-  background: var(--carta);
-  border: 1px solid var(--riga);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: var(--ombra);
-}
-.ricerca-titolo {
-  font-family: var(--titoli); font-weight: 600; font-size: 17px;
-  letter-spacing: -.02em; margin: 0 0 3px;
-}
-.ricerca-sotto { font-size: 13.5px; color: var(--tenue); margin: 0 0 16px; }
-
-/* ── Il suggerimento sotto la carta ── */
-.indizio {
-  display: flex; align-items: center; gap: 14px;
-  margin-top: 12px; padding: 15px 18px;
-  border-radius: 16px; text-decoration: none;
-  background: var(--accento-velo); border: 1px solid var(--accento-riga);
-  transition: transform .12s ease;
-}
-.indizio:hover { transform: translateY(-1px); }
-.indizio-testo { flex-grow: 1; min-width: 0; }
-.indizio-forte {
-  display: block;
-  font-weight: 600; font-size: 15.5px; color: var(--inchiostro);
-}
-.indizio-debole {
-  display: block;
-  font-size: 13.5px; color: var(--inchiostro-2); margin-top: 3px; line-height: 1.45;
-}
-.indizio-freccia { flex-shrink: 0; color: var(--accento); font-size: 19px; }
-
-/* ── Le sezioni sotto ── */
-.sezione { padding: 56px 0 0; }
-.sezione-etichetta {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--tenue); margin: 0 0 20px;
+.azioni { display: flex; flex-wrap: wrap; gap: var(--s3); }
+@media (max-width: 419px) {
+  .azioni { display: grid; }
+  .azioni .azione { width: 100%; }
 }
 
-/* Tre passaggi, senza scatole colorate: numero, titolo, riga. */
-.passaggi { display: grid; gap: 26px; }
-.passo-numero {
-  font-family: var(--mono); font-size: 12.5px; color: var(--accento);
-  font-weight: 500; letter-spacing: .06em;
-}
-.passo-titolo {
-  font-family: var(--titoli); font-weight: 600; font-size: 18px;
-  letter-spacing: -.025em; margin: 7px 0 5px;
-}
-.passo-testo { font-size: 15px; line-height: 1.55; color: var(--inchiostro-2); margin: 0; }
+/* ── Campi ── */
 
-/* La frase che spiega il prodotto meglio di qualunque elenco. */
-.dichiarazione {
-  font-family: var(--titoli); font-weight: 600;
-  font-size: clamp(1.5rem, 4.2vw, 2.05rem);
-  letter-spacing: -.032em; line-height: 1.24;
-  margin: 0; max-width: 22ch; text-wrap: balance;
+.campo {
+  display: block; width: 100%;
+  padding: 11px 15px;
+  border: 1px solid var(--riga); border-radius: var(--r-s);
+  background: var(--superficie);
+  transition: border-color .14s ease, box-shadow .14s ease;
 }
-.dichiarazione em { font-style: normal; color: var(--accento); }
-
-.punti { display: grid; gap: 13px; margin: 26px 0 0; padding: 0; list-style: none; }
-.punto { display: flex; gap: 12px; font-size: 15.5px; line-height: 1.5; color: var(--inchiostro-2); }
-.punto::before {
-  content: ''; flex-shrink: 0; width: 6px; height: 6px; margin-top: 9px;
-  border-radius: 3px; background: var(--accento);
+.campo-nome { display: block; font-size: 12px; color: var(--tenue); font-weight: 500; }
+.campo input, .campo textarea {
+  width: 100%; border: none; background: transparent; padding: 2px 0 0;
+  font-size: 16px; font-family: var(--testo); color: var(--inchiostro);
+  outline: none;
 }
-
-/* La notte: composizione astratta, non una mappa finta. */
-.notte {
-  margin-top: 56px; padding: 34px 26px;
-  border-radius: 22px; background: var(--superficie-2);
-  display: grid; gap: 28px;
-}
-.notte-ora {
-  font-family: var(--titoli); font-weight: 600;
-  font-size: clamp(1.5rem, 4.5vw, 2rem);
-  letter-spacing: -.032em; line-height: 1.2; margin: 0;
-}
-.notte-testo { margin: 14px 0 0; font-size: 16px; line-height: 1.6; color: var(--inchiostro-2); }
-.notte-testo span { display: block; }
-.tracciato { width: 100%; height: auto; display: block; }
-
-@media (min-width: 860px) {
-  .apertura {
-    /* La colonna del testo non cresce con lo schermo: oltre una certa
-       larghezza una riga smette di essere leggibile. Cresce lo spazio fra
-       le due, che è quello che fa respirare. */
-    grid-template-columns: minmax(0, 560px) minmax(380px, 480px);
-    justify-content: space-between;
-    gap: 72px;
-    /* Centrato, non allineato in alto: la colonna destra è più alta e
-       lasciare la sinistra appesa in cima le dà un'aria di incompiuto. */
-    align-items: center;
-    padding: 46px 0 12px;
-  }
-  .marchio-grande { font-size: 58px; gap: 16px; }
-  .sezione { padding: 78px 0 0; }
-  .passaggi { grid-template-columns: repeat(3, 1fr); gap: 34px; }
-  .perche { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
-  .notte { grid-template-columns: 1fr 1fr; align-items: center; padding: 44px; gap: 44px; }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Rifiniture: il marchio in barra, gli stati attivi, il fuoco.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-@media (min-width: 860px) {
-  /* La voce attiva non è solo di un altro colore: ha un fondo. Il colore
-     da solo si perde su chi distingue male le tinte, e in barra ci sono
-     cinque voci quasi identiche per forma. */
-  .voce-attiva { background: var(--accento-velo); }
-  /* In barra resta il solo segno. «GO» scritto due volte nello stesso
-     schermo è una ripetizione, e il posto dove il marchio deve vincere è
-     l'apertura, non l'intestazione. */
-  .marchio-testo { display: none; }
-  .marchio-collegamento { padding-right: 10px; }
-  .intestazione-dentro { height: 58px; }
-}
-
-/* Il fuoco da tastiera si vede ovunque, e si vede uguale. */
-a:focus-visible, button:focus-visible, input:focus-visible,
-select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
-  outline: 2px solid var(--accento);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Un campo a fuoco cambia bordo, non salta: il colore basta a dire dove
-   sei senza spostare di un pixel quello che c'è sotto. */
+.campo:focus-within,
 label:focus-within {
   border-color: var(--accento) !important;
   box-shadow: 0 0 0 3px var(--accento-velo);
-  transition: border-color .14s ease, box-shadow .14s ease;
 }
 
-.voce-bassa-attiva { background: var(--accento-velo); }
+.campo-data {
+  width: 100%; padding: 12px 14px; font-size: 16px;
+  font-family: var(--testo); color: var(--inchiostro);
+  border: 1px solid var(--riga); border-radius: var(--r-s);
+  background: var(--superficie); outline: none;
+}
 
-/* ─── Scelte rapide: giorno e ora ──────────────────────────────────────
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
+  outline: 2px solid var(--accento); outline-offset: 2px; border-radius: 4px;
+}
+
+/* ── Scelte rapide: giorno e ora ──
    Pulsanti invece di un calendario. Chi esce il sabato non pensa
    «30 agosto 2026 ore 23:30»: pensa «stasera verso le undici e mezza». */
 
 .scelte {
   display: flex; gap: 6px;
   overflow-x: auto; scrollbar-width: none;
-  padding-bottom: 2px;
+  padding-bottom: 2px; scroll-snap-type: x proximity;
 }
 .scelte::-webkit-scrollbar { display: none; }
 
 .scelta {
-  flex-shrink: 0;
+  flex-shrink: 0; scroll-snap-align: start;
   display: inline-flex; align-items: baseline; gap: 5px;
   min-height: 40px; padding: 0 13px;
-  border-radius: 10px; border: 1px solid var(--riga);
+  border-radius: var(--r-s); border: 1px solid var(--riga);
   background: var(--superficie); color: var(--inchiostro);
-  font-size: 14.5px; font-weight: 500; font-family: var(--testo);
+  font-size: 14.5px; font-weight: 500;
   white-space: nowrap;
   transition: background .12s ease, border-color .12s ease, color .12s ease;
 }
@@ -581,17 +472,1033 @@ label:focus-within {
   color: var(--su-accento); font-weight: 600;
 }
 .scelta-numero { font-size: 12px; opacity: .6; }
-.scelta-attiva .scelta-numero { opacity: .75; }
-
-.campo-data {
-  width: 100%; padding: 12px 14px; font-size: 16px;
-  font-family: var(--testo); color: var(--inchiostro);
-  border: 1px solid var(--riga); border-radius: var(--raggio-s);
-  background: var(--superficie); outline: none;
-}
+.scelta-attiva .scelta-numero { opacity: .78; }
 
 .collegamento-piccolo {
   background: none; border: none; padding: 2px 0;
   color: var(--tenue); font-size: 13px; font-family: var(--testo);
 }
 .collegamento-piccolo:hover { color: var(--accento); }
+
+/* ─── 7. Superfici ──────────────────────────────────────────────────── */
+
+.carta {
+  background: var(--carta);
+  border: 1px solid var(--riga);
+  border-radius: var(--r-l);
+  padding: var(--s5);
+}
+.carta-tocco { transition: border-color .14s ease, transform .14s ease, box-shadow .18s ease; }
+.carta-tocco:hover { border-color: var(--accento-riga); transform: translateY(-2px); box-shadow: var(--ombra); }
+
+.pastiglia {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: -.005em;
+  background: var(--superficie-2); color: var(--inchiostro-2);
+}
+.pastiglia-verde  { background: var(--verde-velo);  color: var(--verde); }
+.pastiglia-viola  { background: var(--accento-velo); color: var(--accento); }
+.pastiglia-ambra  { background: var(--ambra-velo);  color: var(--ambra); }
+
+.faccia {
+  border-radius: 999px; flex-shrink: 0;
+  background: var(--superficie-2) center/cover no-repeat;
+  display: grid; place-items: center;
+  font-weight: 600; color: var(--inchiostro-2);
+}
+
+/* ─── 8. Sezioni di racconto ────────────────────────────────────────── */
+
+.sezione { padding: var(--s8) 0; }
+@media (min-width: 900px) { .sezione { padding: var(--s9) 0; } }
+
+.sezione-scura {
+  background: var(--notte-fondo); color: var(--notte-testo);
+}
+.sezione-scura h1, .sezione-scura h2, .sezione-scura h3 { color: var(--notte-testo); }
+.sezione-scura .t-guida, .sezione-scura .t-corpo { color: var(--notte-tenue); }
+.sezione-scura .occhiello { color: var(--notte-tenue); }
+
+.sezione-velo { background: var(--accento-velo); }
+.sezione-riga { border-top: 1px solid var(--riga); }
+
+.testa-sezione { display: grid; gap: var(--s3); margin-bottom: var(--s7); }
+@media (min-width: 1000px) {
+  .testa-sezione {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    align-items: end; gap: var(--s7);
+  }
+}
+
+/* ─── 9. Griglie ────────────────────────────────────────────────────── */
+
+.griglia { display: grid; gap: var(--s4); }
+.griglia-2 { grid-template-columns: 1fr; }
+.griglia-3 { grid-template-columns: 1fr; }
+.griglia-4 { grid-template-columns: 1fr 1fr; }
+@media (min-width: 720px) {
+  .griglia-2 { grid-template-columns: repeat(2, 1fr); }
+  .griglia-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1000px) {
+  .griglia { gap: var(--s5); }
+  .griglia-3 { grid-template-columns: repeat(3, 1fr); }
+  .griglia-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Le schermate a elenco guadagnano colonne: è l'unico posto dove la
+   larghezza serve davvero, perché fa vedere più opzioni insieme. */
+.griglia-elenco {
+  display: grid; gap: var(--s3); align-items: start;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 720px) {
+  .griglia-elenco { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+}
+
+/* ─── 10. Pannelli sovrapposti ──────────────────────────────────────── */
+
+.sovrapposto {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column;
+  background: var(--carta);
+}
+.pannello-mappa { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.foglio {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 55;
+  background: var(--carta);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 10px var(--s5) calc(var(--s5) + env(safe-area-inset-bottom));
+  max-height: 88dvh; overflow-y: auto;
+  box-shadow: var(--ombra-alta);
+  animation: sali .22s cubic-bezier(.32,.72,0,1);
+}
+@keyframes sali { from { transform: translateY(14px); opacity: .6 } to { transform: none; opacity: 1 } }
+
+.velo { position: fixed; inset: 0; z-index: 54; background: rgba(10,10,14,.5); }
+.maniglia { width: 40px; height: 4px; border-radius: 2px; background: var(--riga); margin: 0 auto 18px; }
+
+@media (min-width: 900px) {
+  .sovrapposto {
+    background: rgba(10,10,14,.5);
+    align-items: center; justify-content: center; padding: var(--s7);
+  }
+  .pannello-mappa {
+    flex-grow: 0;
+    width: min(1000px, 100%); height: min(720px, 100%);
+    background: var(--carta); border-radius: var(--r-l);
+    overflow: hidden; box-shadow: var(--ombra-alta);
+  }
+  .foglio {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(500px, calc(100vw - 80px));
+    border-radius: var(--r-l); padding: var(--s5) var(--s5) var(--s5);
+    max-height: 84vh; animation: none;
+  }
+  .maniglia { display: none; }
+}
+
+/* ─── 11. La conversazione ──────────────────────────────────────────── */
+
+.conversazione { display: flex; flex-direction: column; min-height: 100dvh; }
+.conversazione-testa {
+  padding: var(--s3) var(--s5); border-bottom: 1px solid var(--riga);
+  background: var(--superficie); position: sticky; top: 0; z-index: 2;
+}
+.conversazione-piede {
+  position: sticky; bottom: 0; background: var(--superficie);
+  border-top: 1px solid var(--riga);
+  padding: 10px var(--s4) calc(10px + env(safe-area-inset-bottom));
+}
+@media (min-width: 900px) {
+  .conversazione {
+    min-height: 0; height: min(660px, calc(100dvh - 180px));
+    max-width: 620px; margin: var(--s6) auto;
+    background: var(--carta); border: 1px solid var(--riga);
+    border-radius: var(--r-l); overflow: hidden; box-shadow: var(--ombra);
+  }
+  .conversazione-piede { padding: 10px var(--s4) var(--s3); }
+}
+
+/* ─── 12. Presenza / assenza ────────────────────────────────────────── */
+
+@media (min-width: 900px) { .solo-telefono { display: none !important; } }
+@media (max-width: 899px) { .solo-scrivania { display: none !important; } }
+
+/* ─── 13. Microinterazioni ──────────────────────────────────────────────
+   Solo dove chiariscono. Niente decorazione: il prodotto deve sembrare
+   veloce, e ogni animazione che non spiega qualcosa lo rallenta. */
+
+@keyframes affiora { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+.affiora { animation: affiora .42s cubic-bezier(.22,.7,.25,1) both; }
+.affiora-2 { animation-delay: .06s }
+.affiora-3 { animation-delay: .12s }
+.affiora-4 { animation-delay: .18s }
+
+@keyframes pulsa { 0%,100% { opacity: .25; transform: scale(1) } 50% { opacity: .05; transform: scale(1.9) } }
+.pulsa { animation: pulsa 2.8s ease-in-out infinite; transform-origin: center; }
+
+@keyframes scorri { to { stroke-dashoffset: 0 } }
+.tratteggio {
+  stroke-dasharray: 6 10; stroke-dashoffset: 320;
+  animation: scorri 9s linear infinite;
+}
+
+@keyframes disegna { to { stroke-dashoffset: 0 } }
+.disegna { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: disegna 1.9s cubic-bezier(.4,0,.2,1) .2s forwards; }
+
+/* ─── 14. Utilità minime ────────────────────────────────────────────── */
+
+.pila { display: grid; gap: var(--s4); }
+.pila-s { display: grid; gap: var(--s2); }
+.fila { display: flex; align-items: center; gap: var(--s3); }
+.fila-fra { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.cresci { flex-grow: 1; min-width: 0; }
+.numero { font-family: var(--titoli); font-weight: 700; letter-spacing: -.03em; }
+.nascosto {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Il linguaggio visivo.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.visivo { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* Il gettone percorre la strada disegnata. `offset-path` fa esattamente
+   quello che serve — seguire una curva — senza una riga di JavaScript e
+   senza fermare il resto della pagina. */
+.gettone {
+  offset-path: path('M 62 392 C 150 392 168 322 236 300 S 366 268 420 196 S 506 96 566 74');
+  offset-rotate: auto;
+  animation: viaggia 13s cubic-bezier(.5,0,.5,1) infinite;
+}
+.gettone-notte {
+  offset-path: path('M 74 322 C 190 322 214 214 330 190 S 470 150 552 92');
+  animation-duration: 11s;
+}
+@keyframes viaggia {
+  0%   { offset-distance: 0%;   opacity: 0 }
+  6%   { opacity: 1 }
+  84%  { opacity: 1 }
+  92%  { offset-distance: 100%; opacity: 0 }
+  100% { offset-distance: 100%; opacity: 0 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gettone { animation: none; offset-distance: 46%; }
+  .tratteggio { animation: none; stroke-dashoffset: 0; }
+  .pulsa { animation: none; }
+}
+
+/* ── Le spese ── */
+
+.spese { display: grid; gap: var(--s5); }
+.spese-voci { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.spese-voce { display: flex; gap: var(--s3); align-items: baseline; }
+.spese-piu {
+  flex-shrink: 0; width: 18px; font-family: var(--mono);
+  font-size: 18px; color: var(--accento);
+}
+.spese-nome { display: block; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+.spese-nota { display: block; font-size: 14px; color: var(--tenue); margin-top: 1px; }
+.spese-riga { height: 2px; background: var(--inchiostro); border-radius: 1px; }
+.spese-fondo { display: grid; gap: var(--s3); }
+.spese-teste { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.spese-testa {
+  width: 38px; height: 38px; border-radius: 999px;
+  background: var(--superficie-2); border: 1px solid var(--riga);
+}
+.spese-testa-guida {
+  width: auto; padding: 0 16px; display: grid; place-items: center;
+  background: var(--accento); border-color: transparent; color: var(--su-accento);
+  font-size: 13px; font-weight: 600;
+}
+.spese-chiusa { margin: 0; font-size: 16px; line-height: 1.55; color: var(--inchiostro-2); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Il racconto: la prima schermata di chi non sa ancora cos'è GO.
+
+   Ogni sezione sanguina da bordo a bordo; dentro, la colonna è larga
+   quanto si legge. È la sola combinazione che usa uno schermo grande senza
+   stirare il testo.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.apertura {
+  padding: var(--s7) 0 var(--s8);
+  overflow: hidden;
+}
+.apertura-dentro { display: grid; gap: var(--s7); align-items: center; }
+
+.apertura-marchio { margin-bottom: var(--s5); }
+.apertura-promessa { margin: 0; }
+.apertura-guida { margin: var(--s5) 0 0; max-width: 34ch; }
+.apertura-azioni { margin-top: var(--s6); }
+.apertura-nota { margin: var(--s4) 0 0; }
+.apertura-disegno { margin: 0 calc(var(--bordo) * -.5); }
+
+@media (min-width: 900px) {
+  .apertura {
+    padding: var(--s6) 0 var(--s7);
+    /* Alta quanto lo schermo meno la barra: l'apertura È la schermata,
+       non la prima fetta di una pagina che scorre. */
+    min-height: calc(100dvh - var(--barra));
+    display: grid; align-items: center;
+  }
+  .apertura-dentro {
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: var(--s8);
+  }
+  .apertura-marchio { margin-bottom: var(--s6); }
+  .apertura-disegno { margin: 0; }
+}
+@media (min-width: 1400px) {
+  .apertura-dentro { gap: var(--s10); }
+}
+
+/* ── I quattro passi ── */
+
+.passi {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: var(--s6);
+  counter-reset: passo;
+}
+@media (min-width: 700px)  { .passi { grid-template-columns: repeat(2, 1fr); gap: var(--s7); } }
+@media (min-width: 1100px) {
+  .passi { grid-template-columns: repeat(4, 1fr); gap: var(--s5); }
+  /* Una riga sottile che lega i quattro passi: dice «è una sequenza»
+     senza disegnare frecce. */
+  .passo { padding-top: var(--s5); border-top: 1px solid var(--riga); }
+  .passo:first-child { border-top-color: var(--accento); }
+}
+.passo-numero {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 500;
+  letter-spacing: .1em; color: var(--accento);
+}
+.passo-titolo { font-size: 19px; margin: var(--s2) 0 var(--s2); letter-spacing: -.025em; }
+.passo-testo { margin: 0; font-size: 15px; line-height: 1.55; color: var(--inchiostro-2); }
+
+/* ── Le due strade ── */
+
+.strade { display: grid; gap: var(--s4); }
+@media (min-width: 860px) { .strade { grid-template-columns: 1fr 1fr; gap: var(--s5); } }
+
+.strada {
+  display: grid; align-content: start; gap: var(--s3);
+  padding: var(--s6); border-radius: var(--r-xl);
+  background: var(--carta); border: 1px solid var(--riga);
+  text-decoration: none; color: var(--inchiostro);
+  transition: transform .16s cubic-bezier(.22,.7,.25,1), box-shadow .2s ease, border-color .16s ease;
+}
+.strada:hover { transform: translateY(-3px); box-shadow: var(--ombra-alta); border-color: var(--accento-riga); }
+@media (min-width: 860px) { .strada { padding: var(--s7); min-height: 260px; } }
+
+.strada-situazione {
+  font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 600;
+  letter-spacing: -.035em; line-height: 1.1;
+}
+.strada-testo { font-size: 16px; line-height: 1.55; color: var(--inchiostro-2); max-width: 30ch; }
+.strada-azione {
+  display: inline-flex; align-items: center; gap: 9px;
+  margin-top: auto; padding-top: var(--s4);
+  font-size: 16.5px; font-weight: 600; color: var(--accento);
+}
+.strada:hover .strada-azione svg { transform: translateX(4px); }
+.strada-azione svg { transition: transform .16s ease; }
+/* Chi offre sta in un posto diverso dell'applicazione, e la carta lo dice
+   già qui: fondo scuro, come il terreno della modalità conducente. */
+.strada-guida { background: var(--inchiostro); border-color: transparent; color: var(--carta); }
+.strada-guida .strada-testo { color: rgba(255,255,255,.72); }
+.strada-guida .strada-azione { color: #C9BEFF; }
+:root[data-tema="scuro"] .strada-guida,
+:root:not([data-tema="chiaro"]) .strada-guida { color: var(--inchiostro); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) .strada-guida { background: #F2F2F6; }
+  :root:not([data-tema="chiaro"]) .strada-guida .strada-testo { color: rgba(10,10,14,.68); }
+  :root:not([data-tema="chiaro"]) .strada-guida .strada-azione { color: #4F35F5; }
+}
+:root[data-tema="scuro"] .strada-guida { background: #F2F2F6; }
+:root[data-tema="scuro"] .strada-guida .strada-testo { color: rgba(10,10,14,.68); }
+:root[data-tema="scuro"] .strada-guida .strada-azione { color: #4F35F5; }
+
+/* ── La notte ── */
+
+.notte-dentro { display: grid; gap: var(--s7); align-items: center; }
+@media (min-width: 900px) { .notte-dentro { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--s8); } }
+.notte-testo span { display: block; }
+.notte-svolta { color: var(--notte-testo) !important; font-weight: 500; margin-top: var(--s3); }
+
+/* ── Perché costa poco ── */
+
+.perche-dentro { display: grid; gap: var(--s7); }
+@media (min-width: 900px) {
+  .perche-dentro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s8); align-items: center; }
+}
+.perche-disegno {
+  padding: var(--s6); border-radius: var(--r-xl);
+  background: var(--superficie-2);
+}
+@media (min-width: 900px) { .perche-disegno { padding: var(--s7); } }
+
+/* ── I fatti ── */
+
+.fatto { padding-top: var(--s4); border-top: 1px solid var(--riga); }
+.fatto-titolo { font-size: 17px; letter-spacing: -.025em; margin: 0 0 var(--s2); }
+.fatto-testo { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2); }
+
+/* ── Gli esempi ── */
+
+.esempio {
+  display: grid; gap: var(--s3); align-content: start;
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.esempio-marchio {
+  justify-self: start;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.esempio-tratta { display: grid; gap: 2px; }
+.esempio-da { font-size: 14.5px; color: var(--tenue); }
+.esempio-freccia { display: none; }
+.esempio-a { font-size: 21px; font-weight: 600; letter-spacing: -.03em; }
+.esempio-dati { font-size: 13.5px; color: var(--tenue); }
+.esempio-prezzo { display: flex; align-items: baseline; gap: 8px; margin-top: var(--s2); }
+.esempio-prezzo .numero { font-size: 34px; }
+.esempio-unita { font-size: 14px; color: var(--tenue); }
+.esempio-nota {
+  margin: 0; padding-top: var(--s3); border-top: 1px solid var(--riga-2);
+  font-size: 13px; line-height: 1.5; color: var(--tenue);
+}
+
+/* ── La chiusura ── */
+
+.chiusura { text-align: center; padding-bottom: var(--s9); }
+.chiusura-dentro { display: grid; gap: var(--s6); justify-items: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Le due case.
+
+   Stessa impalcatura, due compiti opposti: una fa una domanda («dove
+   vai?»), l'altra risponde a tre («cosa devo fare, come vanno le mie
+   corse, vale la pena pubblicarne un'altra»).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.casa-dentro { padding-top: var(--s6); padding-bottom: var(--s9); display: grid; gap: var(--s7); }
+@media (min-width: 900px) { .casa-dentro { padding-top: var(--s8); gap: var(--s8); } }
+
+.casa-testa { display: grid; gap: var(--s3); }
+.casa-sezione { display: block; }
+.casa-tutti {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600; color: var(--accento); text-decoration: none;
+}
+
+/* ── Il pannello di ricerca ──
+   Non è più una cartolina da 460 pixel appoggiata a destra: è il comando
+   principale della schermata e ne occupa la larghezza. */
+
+.pannello-ricerca {
+  background: var(--carta);
+  border: 1px solid var(--riga);
+  border-radius: var(--r-xl);
+  padding: var(--s5);
+  box-shadow: var(--ombra);
+  display: grid; gap: var(--s2);
+  max-width: 940px;
+}
+@media (min-width: 720px) {
+  .pannello-ricerca { padding: var(--s6); }
+  .ricerca-luoghi { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+}
+.ricerca-quando { padding-top: var(--s2); }
+.ricerca-fondo {
+  display: grid; gap: var(--s3); align-items: center;
+  padding-top: var(--s4); margin-top: var(--s2);
+  border-top: 1px solid var(--riga-2);
+}
+@media (min-width: 560px) {
+  .ricerca-fondo { grid-template-columns: 1fr auto; }
+}
+.ricerca-manca { margin: 0; font-size: 14px; color: var(--tenue); }
+.ricerca-invia { width: 100%; }
+@media (min-width: 560px) { .ricerca-invia { width: auto; min-width: 160px; } }
+.ricerca-invia[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+
+.pannello-ricerca-compatto {
+  padding: var(--s4); border-radius: var(--r-l); box-shadow: none; max-width: none;
+}
+
+/* ── Il prossimo viaggio ── */
+
+.prossimo {
+  display: flex; align-items: center; gap: var(--s5);
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+  text-decoration: none; color: var(--inchiostro);
+  transition: transform .14s ease;
+}
+.prossimo:hover { transform: translateY(-2px); }
+.prossimo-dove { font-size: 21px; font-weight: 600; letter-spacing: -.03em; margin-top: 6px; }
+.prossimo-quando { font-size: 14.5px; color: var(--inchiostro-2); margin-top: 2px; }
+.prossimo-dafare {
+  display: inline-block; margin-top: var(--s3);
+  font-size: 13.5px; font-weight: 600; color: var(--accento);
+}
+.prossimo-prezzo .numero { font-size: 24px; }
+
+/* ── I posti qui intorno ── */
+
+.posti-fila {
+  display: flex; gap: var(--s3); overflow-x: auto;
+  scrollbar-width: none; padding-bottom: 4px; scroll-snap-type: x proximity;
+}
+.posti-fila::-webkit-scrollbar { display: none; }
+.posto-gettone {
+  flex-shrink: 0; scroll-snap-align: start;
+  display: grid; gap: 2px; min-width: 170px;
+  padding: var(--s4); border-radius: var(--r-m);
+  background: var(--carta); border: 1px solid var(--riga);
+  text-decoration: none; color: var(--inchiostro);
+  transition: border-color .14s ease, transform .14s ease;
+}
+.posto-gettone:hover { border-color: var(--accento); transform: translateY(-2px); }
+.posto-nome { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; }
+.posto-sotto { font-size: 13px; color: var(--tenue); }
+
+/* ── L'invito a dire che cerchi ── */
+
+.invito {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--superficie-2); border: 1px solid transparent;
+  text-decoration: none; color: var(--inchiostro);
+  transition: border-color .14s ease, transform .14s ease;
+}
+.invito:hover { border-color: var(--accento-riga); transform: translateY(-2px); }
+.invito-forte { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.025em; }
+.invito-debole {
+  display: block; margin-top: 5px; font-size: 14px;
+  line-height: 1.5; color: var(--inchiostro-2); max-width: 62ch;
+}
+.invito svg { flex-shrink: 0; color: var(--accento); }
+
+/* ═══ La casa di chi guida ═════════════════════════════════════════════ */
+
+.guida-testa { display: grid; gap: var(--s6); align-items: center; }
+@media (min-width: 900px) {
+  .guida-testa { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: var(--s8); }
+}
+.guida-disegno { display: none; }
+@media (min-width: 900px) { .guida-disegno { display: block; } }
+
+.sospeso {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s4) var(--s5); border-radius: var(--r-m);
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+  text-decoration: none; color: var(--inchiostro);
+}
+.sospeso:hover { border-color: var(--accento); }
+.sospeso-cosa { display: block; font-size: 16px; font-weight: 600; color: var(--accento); }
+.sospeso-dove { display: block; font-size: 13.5px; color: var(--inchiostro-2); margin-top: 2px; }
+.sospeso svg { flex-shrink: 0; color: var(--accento); }
+
+.corsa-carta {
+  display: grid; gap: var(--s2); align-content: start;
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+  text-decoration: none; color: var(--inchiostro);
+}
+.corsa-quando { font-size: 13.5px; color: var(--tenue); }
+.corsa-dove { font-size: 19px; font-weight: 600; letter-spacing: -.028em; line-height: 1.25; }
+.corsa-da { font-size: 13.5px; color: var(--tenue); }
+.corsa-piede {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3);
+  margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--riga-2);
+}
+.corsa-persone { font-size: 13.5px; color: var(--inchiostro-2); }
+.corsa-rientro { text-align: right; }
+.corsa-rientro .numero { display: block; font-size: 18px; }
+.corsa-rientro-nota { display: block; font-size: 11.5px; color: var(--tenue); }
+
+.cerca-riga {
+  display: grid; gap: 4px;
+  padding: var(--s4) var(--s5); border-radius: var(--r-m);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.cerca-tratta { display: grid; gap: 1px; }
+.cerca-da { font-size: 13px; color: var(--tenue); }
+.cerca-da::after { content: ' →'; }
+.cerca-a { font-size: 17px; font-weight: 600; letter-spacing: -.025em; }
+.cerca-dati { font-size: 13.5px; color: var(--tenue); }
+.cerca-azione {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: var(--s2);
+  font-size: 14px; font-weight: 600; color: var(--accento); text-decoration: none;
+}
+
+.vuoto-leggero {
+  padding: var(--s6); border-radius: var(--r-l);
+  background: var(--superficie-2); border: 1px dashed var(--riga);
+}
+.vuoto-titolo { margin: 0 0 var(--s2); font-size: 16.5px; font-weight: 600; letter-spacing: -.02em; }
+.vuoto-testo { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2); max-width: 62ch; }
+
+.nota-guida {
+  padding: var(--s6); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.nota-guida-testo {
+  margin: var(--s3) 0 0; font-size: 16px; line-height: 1.6;
+  color: var(--inchiostro-2); max-width: 68ch;
+}
+
+/* ── Il piede della vetrina ── */
+.piede { border-top: 1px solid var(--riga); padding: var(--s7) 0 var(--s8); }
+.piede-dentro { display: grid; gap: var(--s4); }
+@media (min-width: 760px) {
+  .piede-dentro { grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s6); }
+}
+.piede-marca { display: flex; align-items: center; }
+.piede-claim { margin: 0; font-size: 14.5px; color: var(--tenue); }
+.piede-voci { display: flex; flex-wrap: wrap; gap: var(--s4); }
+.piede-voci a { font-size: 14px; color: var(--inchiostro-2); text-decoration: none; }
+.piede-voci a:hover { color: var(--accento); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   I risultati: si CONFRONTANO, quindi si incolonnano.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.risultati-dentro { padding: var(--s5) 0 var(--s9); }
+.risultati-testa {
+  display: flex; align-items: flex-start; gap: var(--s4);
+  flex-wrap: wrap; margin-bottom: var(--s6);
+}
+.verso { color: var(--accento); font-weight: 400; padding: 0 2px; }
+
+.risultati-corpo { display: grid; gap: var(--s6); }
+@media (min-width: 1080px) {
+  .risultati-corpo {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: var(--s7); align-items: start;
+  }
+  .colonna-decisione { position: sticky; top: calc(var(--barra) + var(--s5)); }
+}
+
+.elenco { display: grid; gap: var(--s5); }
+.elenco-comandi {
+  display: flex; align-items: center; gap: var(--s4);
+  flex-wrap: wrap; padding-bottom: var(--s2);
+}
+.elenco-parte { display: grid; gap: var(--s3); }
+.elenco-spiega { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--tenue); max-width: 62ch; }
+
+.segmenti {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--superficie-2); border: 1px solid var(--riga); border-radius: 999px;
+}
+.segmento {
+  border: none; background: transparent; padding: 7px 14px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 600; color: var(--tenue);
+  transition: background .14s ease, color .14s ease;
+}
+.segmento[aria-pressed="true"] { background: var(--carta); color: var(--inchiostro); box-shadow: 0 1px 2px rgba(10,10,14,.1); }
+
+.spunta {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13.5px; color: var(--inchiostro-2); cursor: pointer;
+}
+.spunta input { width: 17px; height: 17px; accent-color: var(--accento); }
+
+/* ── La riga ──
+   Tre colonne fisse: ore, tratta, soldi. Sono sempre nello stesso posto in
+   ogni riga, ed è quello che rende scorrere un elenco un'operazione da
+   mezzo secondo invece che da tre. */
+
+.righe {
+  display: grid; gap: 0;
+  border: 1px solid var(--riga); border-radius: var(--r-l);
+  overflow: hidden; background: var(--carta);
+}
+.riga {
+  display: grid; gap: var(--s4);
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  padding: var(--s4) var(--s5);
+  text-decoration: none; color: var(--inchiostro);
+  border-top: 1px solid var(--riga-2);
+  transition: background .12s ease;
+}
+.riga:first-child { border-top: none; }
+.riga:hover { background: var(--superficie-2); }
+@media (min-width: 720px) { .riga { padding: var(--s5); gap: var(--s5); } }
+
+.riga-ore { display: grid; justify-items: start; align-content: start; }
+.riga-partenza { font-family: var(--titoli); font-weight: 700; font-size: 20px; letter-spacing: -.03em; line-height: 1.15; }
+.riga-filo { width: 1px; height: 14px; background: var(--riga); margin: 3px 0 3px 9px; }
+.riga-arrivo { font-size: 15px; color: var(--tenue); line-height: 1.15; }
+.riga-flex { font-size: 11px; color: var(--tenue); margin-top: 4px; }
+
+.riga-tratta { display: grid; gap: 1px; align-content: start; min-width: 0; }
+.riga-dove { font-size: 15.5px; font-weight: 600; line-height: 1.3; }
+.riga-verso { font-size: 14px; color: var(--tenue); line-height: 1.3; }
+.riga-verso::before { content: '→ '; }
+.riga-chi { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: var(--s3); }
+.riga-faccia { width: 24px; height: 24px; font-size: 11px; }
+.riga-nome { font-size: 14px; font-weight: 500; }
+.riga-auto { font-size: 13px; color: var(--tenue); }
+@media (max-width: 519px) { .riga-auto { display: none; } }
+
+.riga-soldi { display: grid; justify-items: end; align-content: start; gap: 2px; }
+.riga-prezzo { font-size: 21px; white-space: nowrap; }
+.riga-posti { font-size: 12px; color: var(--tenue); }
+.riga-deviazione { font-size: 11.5px; font-weight: 600; color: var(--accento); margin-top: 4px; }
+
+/* ── Il vuoto ──
+   È lo stato più frequente del primo anno: si tratta come una schermata,
+   non come un errore. */
+
+.vuoto {
+  padding: var(--s7) var(--s6);
+  border: 1px dashed var(--riga); border-radius: var(--r-xl);
+  background: var(--superficie-2);
+}
+.vuoto .vuoto-testo { max-width: 54ch; }
+
+/* ── La colonna che aiuta a decidere ── */
+
+.decisione {
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.decisione-testo { margin: var(--s3) 0 0; font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2); }
+.decisione-riga { height: 1px; background: var(--riga-2); margin: var(--s4) 0; }
+.decisione-voce { margin: 0 0 var(--s3); font-size: 14px; line-height: 1.55; color: var(--inchiostro-2); }
+.decisione-voce:last-child { margin-bottom: 0; }
+.decisione-voce strong { color: var(--inchiostro); font-weight: 600; }
+
+.decisione-uscita {
+  display: block; margin-top: var(--s4);
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+  text-decoration: none; color: var(--inchiostro);
+  transition: transform .14s ease;
+}
+.decisione-uscita:hover { transform: translateY(-2px); }
+
+.foglio-ricerca { max-width: 640px; }
+@media (min-width: 900px) { .foglio-ricerca { width: min(680px, calc(100vw - 80px)); } }
+
+/* ── I miei viaggi ── */
+.viaggi-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s6); }
+.viaggi-sospesi { display: block; }
+.viaggi-schede { align-self: start; }
+.segmento-conta {
+  margin-left: 6px; font-family: var(--mono); font-size: 11px; opacity: .6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Il dettaglio di una corsa: due colonne, e l'azione sempre visibile.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dettaglio-dentro { padding: var(--s5) 0 var(--s9); display: grid; gap: var(--s6); }
+.dettaglio-testa { max-width: 46ch; }
+
+.dettaglio-corpo { display: grid; gap: var(--s5); }
+@media (min-width: 1000px) {
+  .dettaglio-corpo {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    gap: var(--s7); align-items: start;
+  }
+  .colonna-azione { position: sticky; top: calc(var(--barra) + var(--s5)); }
+}
+
+.riquadro {
+  display: block; padding: var(--s5);
+  background: var(--carta); border: 1px solid var(--riga); border-radius: var(--r-l);
+  text-decoration: none; color: var(--inchiostro);
+}
+.riquadro-tocco { transition: border-color .14s ease; }
+.riquadro-tocco:hover { border-color: var(--accento); }
+
+/* ── Le tappe ── */
+.tappe { margin-top: var(--s4); display: grid; }
+.tappa { display: grid; grid-template-columns: 48px 14px minmax(0, 1fr); gap: var(--s3); }
+.tappa-ora { font-weight: 600; font-size: 15px; text-align: right; padding-top: 1px; }
+.tappa-filo { display: flex; flex-direction: column; align-items: center; }
+.tappa-punto {
+  width: 10px; height: 10px; border-radius: 5px; margin-top: 6px;
+  background: var(--accento); border: 2px solid var(--accento);
+}
+.tappa-punto-vuoto { background: var(--carta); }
+.tappa-linea { width: 2px; flex-grow: 1; min-height: 28px; background: var(--riga); }
+.tappa-dove { padding-bottom: var(--s4); }
+.tappa-nome { display: block; font-size: 16px; font-weight: 600; line-height: 1.35; }
+.tappa-nome-minore { display: block; font-size: 14.5px; color: var(--inchiostro-2); line-height: 1.35; }
+.tappa-nota { display: block; font-size: 12px; color: var(--tenue); }
+.tappa:last-child .tappa-dove { padding-bottom: 0; }
+
+/* ── Chi guida ── */
+.guidatore { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); }
+.guidatore-faccia { width: 52px; height: 52px; font-size: 19px; }
+.guidatore-nome { display: block; font-size: 18px; font-weight: 600; letter-spacing: -.025em; }
+.guidatore-auto { display: block; font-size: 14px; color: var(--tenue); }
+.guidatore-note {
+  margin: var(--s4) 0 0; padding-top: var(--s4); border-top: 1px solid var(--riga-2);
+  font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2);
+}
+.preferenze {
+  display: flex; gap: var(--s4); flex-wrap: wrap;
+  margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--riga-2);
+}
+.preferenza { font-size: 13px; color: var(--inchiostro-2); }
+.preferenza-no { color: var(--tenue); }
+
+.avvertenze { margin: var(--s4) 0 0; padding: 0; list-style: none; display: grid; gap: var(--s3); }
+.avvertenze li {
+  display: flex; gap: var(--s3); font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2);
+}
+.avvertenze li::before {
+  content: ''; flex-shrink: 0; width: 6px; height: 6px; margin-top: 9px;
+  border-radius: 3px; background: var(--accento);
+}
+
+.ritorno-titolo { margin: var(--s3) 0 var(--s2); font-size: 16.5px; font-weight: 600; letter-spacing: -.02em; }
+.dettaglio-legale { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--tenue); max-width: 74ch; }
+
+/* ── Il prezzo e l'azione ── */
+.scatola-prezzo {
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga); box-shadow: var(--ombra);
+}
+.prezzo-grande { font-size: 40px; line-height: 1.05; margin-top: 4px; }
+.prezzo-confronto { text-align: right; }
+.prezzo-taxi { display: block; font-size: 12px; color: var(--tenue); text-decoration: line-through; }
+.prezzo-risparmio { display: block; font-size: 14px; font-weight: 600; color: var(--verde); }
+.prezzo-posti { margin: var(--s3) 0 0; font-size: 13.5px; color: var(--tenue); }
+
+.scomposizione { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--riga-2); }
+.scomposizione summary { font-size: 13.5px; color: var(--tenue); cursor: pointer; }
+.scomposizione-corpo { margin-top: var(--s3); }
+.scomposizione-voce { font-size: 14px; padding: 3px 0; color: var(--inchiostro-2); }
+.scomposizione-cifra { font-family: var(--mono); font-size: 13px; color: var(--inchiostro); }
+
+/* Su telefono l'azione non scorre via: resta in fondo, dove arriva il
+   pollice, con il prezzo accanto perché si decide guardando quello.
+   Ma diventa una BARRA, non il riquadro del desktop: un riquadro alto
+   duecento pixel appiccicato in fondo copre metà di quello che si sta
+   leggendo, ed è il contenuto che fa decidere. */
+@media (max-width: 999px) {
+  .colonna-azione {
+    position: sticky; bottom: calc(62px + env(safe-area-inset-bottom));
+    z-index: 20;
+  }
+  .scatola-prezzo {
+    display: flex; align-items: center; gap: var(--s4);
+    padding: var(--s3) var(--s4);
+    box-shadow: var(--ombra-alta); border-radius: 999px;
+  }
+  .scatola-prezzo > .fila-fra { display: block; flex-shrink: 0; }
+  .scatola-prezzo .occhiello { display: none; }
+  .prezzo-grande { font-size: 26px; margin-top: 0; }
+  .prezzo-posti, .prezzo-confronto { display: none; }
+  .scatola-prezzo > div:nth-child(3) { flex-grow: 1; margin-top: 0 !important; }
+  .scomposizione { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Pubblicare: una domanda per volta, e il numero sempre accanto.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pubblica-dentro { padding: var(--s5) 0 var(--s9); display: grid; gap: var(--s6); }
+
+/* La spina: quattro passi con il nome. Sapere quanti ne restano è la
+   differenza fra compilare e abbandonare. */
+.spina {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2);
+}
+.spina-passo {
+  display: grid; gap: 6px; padding-top: var(--s3);
+  border-top: 2px solid var(--riga);
+  font-size: 13px; color: var(--tenue);
+}
+.spina-fatto { border-top-color: var(--accento); }
+.spina-qui { border-top-color: var(--accento); color: var(--inchiostro); }
+.spina-numero { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; }
+.spina-qui .spina-numero, .spina-fatto .spina-numero { color: var(--accento); }
+.spina-nome { font-weight: 500; }
+@media (max-width: 559px) { .spina-nome { display: none; } }
+
+.pubblica-corpo { display: grid; gap: var(--s6); }
+@media (min-width: 1000px) {
+  .pubblica-corpo {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: var(--s7); align-items: start;
+  }
+  .colonna-conto { position: sticky; top: calc(var(--barra) + var(--s5)); }
+}
+.pubblica-domanda { max-width: 620px; }
+.pubblica-guida { margin: var(--s3) 0 var(--s5); max-width: 42ch; }
+
+.pubblica-piede {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4); margin-top: var(--s6);
+}
+.pubblica-piede .azione { margin-left: auto; }
+.pubblica-piede .azione[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+
+/* ── Le opzioni ── */
+.scelte-blocco { display: grid; gap: var(--s2); margin-top: var(--s3); }
+.scelte-fila { display: flex; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap; }
+.opzione {
+  text-align: left; display: grid; gap: 2px;
+  padding: var(--s3) var(--s4); border-radius: var(--r-s);
+  border: 1px solid var(--riga); background: var(--superficie);
+  color: var(--inchiostro);
+  transition: border-color .14s ease, background .14s ease;
+}
+.opzione:hover { border-color: var(--inchiostro-2); }
+.opzione-scelta { border-color: var(--accento); background: var(--accento-velo); }
+.opzione-titolo { font-size: 15.5px; font-weight: 600; }
+.opzione-nota { font-size: 12.5px; line-height: 1.45; color: var(--tenue); }
+
+.riquadro-spunta {
+  display: flex; gap: var(--s3); align-items: flex-start; cursor: pointer;
+}
+.riquadro-spunta input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 3px; accent-color: var(--accento); }
+.dichiarazione { font-size: 13.5px; line-height: 1.6; color: var(--inchiostro-2); }
+
+.posti-scelta { display: flex; gap: var(--s2); }
+.posto-numero {
+  flex: 1; padding: var(--s5) 0; border-radius: var(--r-m);
+  border: 1px solid var(--riga); background: var(--superficie);
+  color: var(--inchiostro);
+  font-family: var(--titoli); font-weight: 700; font-size: 22px; letter-spacing: -.03em;
+  transition: transform .12s ease, background .14s ease, border-color .14s ease;
+}
+.posto-numero:hover { border-color: var(--inchiostro-2); }
+.posto-numero-scelto {
+  background: var(--accento); border-color: transparent; color: var(--su-accento);
+  transform: translateY(-2px);
+}
+
+.avviso-morbido {
+  margin: var(--s3) 0 0; padding: var(--s3) var(--s4);
+  border-radius: var(--r-s); background: var(--superficie-2);
+  font-size: 13.5px; line-height: 1.5; color: var(--inchiostro-2);
+}
+.errore { color: var(--rosso); font-size: 14px; margin: var(--s4) 0 0; }
+
+/* ── Il conto ── */
+.scatola-conto {
+  padding: var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga); box-shadow: var(--ombra);
+}
+.conto-attesa { margin: var(--s3) 0 0; font-size: 14px; line-height: 1.55; color: var(--tenue); }
+.conto-percorso {
+  margin-top: var(--s3); font-family: var(--mono); font-size: 12.5px; color: var(--tenue);
+}
+.conto-blocco { display: grid; gap: 3px; margin-top: var(--s4); }
+.conto-etichetta { font-size: 13.5px; color: var(--inchiostro-2); }
+.conto-cifra { font-size: 30px; line-height: 1.1; }
+.conto-cifra-viva { color: var(--accento); }
+.conto-piccola { font-size: 17px; font-weight: 600; }
+.conto-riga { height: 1px; background: var(--riga-2); margin-top: var(--s4); }
+.conto-onesto {
+  margin: var(--s4) 0 0; padding-top: var(--s4); border-top: 1px solid var(--riga-2);
+  font-size: 13px; line-height: 1.55; color: var(--tenue);
+}
+.conto-onesto strong { color: var(--inchiostro); }
+
+/* ── Cerco un passaggio ── */
+.cerco-dentro { padding: var(--s6) 0 var(--s9); }
+.riuscito {
+  padding: var(--s7) var(--s6); border-radius: var(--r-xl);
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+}
+
+/* ── Il profilo ── */
+.profilo-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s5); }
+.profilo-testa { display: flex; gap: var(--s4); align-items: center; }
+.profilo-faccia { width: 76px; height: 76px; font-size: 28px; }
+.profilo-sotto { margin: var(--s2) 0 0; font-size: 14.5px; color: var(--tenue); }
+.profilo-bio { margin: 0; font-size: 16px; line-height: 1.6; color: var(--inchiostro-2); max-width: 64ch; }
+
+.profilo-corpo { display: grid; gap: var(--s5); }
+@media (min-width: 1000px) {
+  .profilo-corpo { grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: var(--s7); align-items: start; }
+}
+
+.recensione { padding: var(--s4) var(--s5); }
+.recensione-autore { font-size: 14.5px; font-weight: 600; }
+.recensione-tag { margin-top: 6px; font-size: 13.5px; color: var(--verde); }
+.recensione-tag-no { color: var(--rosso); }
+.recensione-testo { margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2); }
+
+.verifica { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; font-size: 14.5px; color: var(--tenue); }
+.verifica-ok { color: var(--inchiostro-2); }
+.verifica-segno { color: var(--tenue); }
+.verifica-ok .verifica-segno { color: var(--verde); }
+.verifica-nota { font-size: 12.5px; color: var(--tenue); }
+.profilo-auto { font-size: 15px; padding: 3px 0; }
+
+.elenco-voci { border-top: 1px solid var(--riga-2); }
+.voce-elenco {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s4) 2px; border-bottom: 1px solid var(--riga-2);
+  text-decoration: none; color: var(--inchiostro); font-size: 15.5px;
+}
+.voce-elenco:hover { color: var(--accento); }
+.voce-elenco svg { color: var(--tenue); flex-shrink: 0; }
+
+/* ── Dove si va ── */
+.posti-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s5); }
+.posti-testa { display: flex; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; }
+.posto-carta {
+  display: grid; gap: var(--s2); align-content: start;
+  padding: var(--s4) var(--s5); border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.posto-titolo { font-size: 17px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.posto-cercano { margin: 0; font-size: 13px; color: var(--accento); }
+.posto-azioni { display: flex; gap: var(--s2); margin-top: var(--s3); }
+.posto-azioni .azione { flex: 1; padding: 0 12px; font-size: 14px; }
+
+/* ── Le schermate a colonna sola ──
+   Conto, auto, impostazioni, recensione, prenotazione: un modulo largo
+   milleseicento pixel si compila peggio, non meglio. Quello che cambia
+   rispetto a prima è il respiro laterale, che adesso cresce con lo schermo
+   come nel resto dell'applicazione. */
+.schermo-stretto {
+  width: 100%; max-width: 560px; margin: 0 auto;
+  padding: var(--s6) var(--bordo) var(--s9);
+}
+
+/* ── Entrare ──
+   Su uno schermo grande il modulo non galleggia nel bianco: accanto c'è il
+   motivo per cui uno sta mettendo la propria email. */
+.ingresso {
+  min-height: 100dvh; display: grid; align-content: center;
+  gap: var(--s7); padding: var(--s7) var(--bordo);
+  max-width: 480px; margin: 0 auto;
+}
+@media (min-width: 900px) {
+  .ingresso {
+    max-width: var(--misura-app);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    align-items: center; gap: var(--s9);
+  }
+}
+.ingresso-parola { display: grid; gap: var(--s5); align-content: center; }
+.ingresso-promessa { margin: 0; }
+.ingresso-modulo {
+  width: 100%;
+}
+@media (min-width: 900px) {
+  .ingresso-modulo {
+    padding: var(--s6); border-radius: var(--r-xl);
+    background: var(--carta); border: 1px solid var(--riga); box-shadow: var(--ombra);
+  }
+}

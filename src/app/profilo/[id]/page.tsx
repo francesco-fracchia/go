@@ -7,11 +7,13 @@ import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { guscio } from '../../../server/guscio.ts'
 import { Telaio } from '../../../components/Telaio.tsx'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const io = await utenteCorrente()
+  const g = await guscio()
+  const io = g.utente
 
   const [{ data: p }, d, recensioni] = await Promise.all([
     db.from('profili')
@@ -42,7 +44,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     })),
   }
 
-  return <Telaio attiva="/profilo"><Profilo p={dati} mio={io === id} /></Telaio>
+  return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={io === id} /></Telaio>
 }
 
 const eta = (n: string) => {

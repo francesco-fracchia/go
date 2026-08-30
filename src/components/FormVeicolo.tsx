@@ -44,7 +44,7 @@ export function FormVeicolo() {
   const [invio, setInvio] = useState(false)
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main className="schermo-stretto">
       <h1 style={{ fontSize: 26, marginBottom: 6 }}>La tua auto</h1>
       <p style={{ margin: '0 0 24px', color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.55 }}>
         Serve a due cose: calcolare quanto ti costa un chilometro, e farti

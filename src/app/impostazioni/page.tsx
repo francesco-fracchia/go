@@ -7,6 +7,7 @@ import { Impostazioni } from '../../components/Impostazioni.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { guscio } from '../../server/guscio.ts'
 import { Telaio } from '../../components/Telaio.tsx'
 
 export default async function Pagina() {
@@ -17,7 +18,7 @@ export default async function Pagina() {
     luoghiSalvati(utente).catch(() => []),
     statoMappa().catch(() => ({ attiva: false })),
   ])
-  return <Telaio attiva="/profilo"><Impostazioni iniziali={{
+  return <Telaio attiva="/profilo" {...await guscio()}><Impostazioni iniziali={{
     push: p?.push_attive ?? true, sms: p?.sms_attivi ?? true, metodo,
     luoghi, mappa: mappa.attiva,
   }} /></Telaio>

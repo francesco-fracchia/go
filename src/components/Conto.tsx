@@ -19,7 +19,7 @@ export interface DatiConto {
 
 export function Conto({ c }: { c: DatiConto }) {
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main className="schermo-stretto">
       <h1 style={{ fontSize: 26, marginBottom: 20 }}>Il tuo conto</h1>
 
       {!c.contoCollegato && c.inArrivo > 0 && (

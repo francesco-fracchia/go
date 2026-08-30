@@ -1,13 +1,29 @@
 import { redirect } from 'next/navigation'
 import { cerca, alternativeVicine } from '../../server/ricerca.ts'
 import { db } from '../../server/db.ts'
+import { Telaio } from '../../components/Telaio.tsx'
 import { Risultati, type Risultato } from '../../components/Risultati.tsx'
-import { Etichetta } from '../../components/base.tsx'
+import { RiapriRicerca } from '../../components/RiapriRicerca.tsx'
+import { guscio } from '../../server/guscio.ts'
+import { statoMappa } from '../../server/mappe.ts'
+import { centroPer } from '../../server/centro.ts'
+import { giorno, orario } from '../../lib/tempo.ts'
 
 export const dynamic = 'force-dynamic'
 
-import { Telaio } from '../../components/Telaio.tsx'
-
+/**
+ * I risultati.
+ *
+ * Due colonne sulla scrivania: l'elenco a sinistra, largo quanto serve a
+ * confrontare, e a destra la colonna che aiuta a decidere — cosa hai
+ * chiesto, quanto costerebbe altrimenti, e la via d'uscita se non c'è
+ * niente. Non una mappa: il percorso di una corsa lo sappiamo, ma disegnare
+ * quaranta polilinee su una mappa a pagamento per una schermata di elenco è
+ * spendere dove non serve.
+ *
+ * Su telefono la colonna di destra scende sotto l'elenco, dove diventa la
+ * risposta a «e adesso?» invece di un ingombro prima dei risultati.
+ */
 export default async function Pagina({ searchParams }: {
   searchParams: Promise<Record<string, string | undefined>>
 }) {
@@ -18,18 +34,21 @@ export default async function Pagina({ searchParams }: {
   // alla ricerca con la destinazione già dentro, invece di dire «manca un
   // campo» a chi ha appena toccato un pulsante che credeva completo.
   if (!Number.isFinite(num('olat')) && Number.isFinite(num('dlat'))) {
-    const p = new URLSearchParams({
-      dlat: q.dlat!, dlng: q.dlng!, dove: q.dove ?? '',
-    })
-    redirect(`/?${p}`)
+    redirect(`/?${new URLSearchParams({ dlat: q.dlat!, dlng: q.dlng!, dove: q.dove ?? '' })}`)
   }
+
+  const g = await guscio()
 
   if (!Number.isFinite(num('olat')) || !Number.isFinite(num('dlat'))) {
     return (
-      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
-        <p style={{ color: 'var(--tenue)' }}>Dicci da dove parti e dove vai.</p>
-        <a href="/" style={{ fontWeight: 600 }}>Torna alla ricerca</a>
-      </main>
+      <Telaio attiva="/" {...g}>
+        <div className="dentro dentro-app" style={{ padding: 'var(--s8) 0' }}>
+          <h1 className="t-sezione">Dicci da dove parti e dove vai.</h1>
+          <a href="/" className="azione azione-piena" style={{ marginTop: 'var(--s5)' }}>
+            Torna alla ricerca
+          </a>
+        </div>
+      </Telaio>
     )
   }
 
@@ -41,27 +60,81 @@ export default async function Pagina({ searchParams }: {
     posti: Number(q.posti ?? 1),
   }
 
-  const trovati = await cerca(filtri)
+  const [trovati, { attiva: mappa }, vicino] = await Promise.all([
+    cerca(filtri),
+    statoMappa().catch(() => ({ attiva: false })),
+    centroPer(g.utente),
+  ])
   const allargati = trovati.length === 0 ? await alternativeVicine(filtri) : []
   const risultati = await arricchisci([...trovati, ...allargati])
   const chiaviTrovate = new Set(trovati.map((r) => r.corsaId))
 
+  const dove = q.dove || 'la tua destinazione'
+  const parti = q.parti || 'dove sei'
+
   return (
-    <Telaio larga attiva="/">
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
-      <a href="/" style={{ fontSize: 14, textDecoration: 'none' }}>← Cambia ricerca</a>
-      <div style={{ margin: '16px 0 18px' }}>
-        <Etichetta>
-          {trovati.length === 0
-            ? 'niente a quell’ora'
-            : `${trovati.length} ${trovati.length === 1 ? 'passaggio' : 'passaggi'}`}
-        </Etichetta>
+    <Telaio attiva="/" {...g}>
+      <div className="fascia">
+        <div className="dentro dentro-app risultati-dentro">
+
+          {/* ── Cosa hai chiesto, e come cambiarlo ── */}
+          <div className="risultati-testa">
+            <div className="cresci">
+              <p className="occhiello">
+                {trovati.length === 0
+                  ? 'Nessun passaggio a quell’ora'
+                  : `${trovati.length} ${trovati.length === 1 ? 'passaggio' : 'passaggi'}`}
+              </p>
+              <h1 className="t-sezione" style={{ marginTop: 'var(--s2)' }}>
+                {parti} <span className="verso" aria-label="verso">→</span> {dove}
+              </h1>
+              <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
+                {giorno(filtri.da)}, fra le {orario(filtri.da)} e le {orario(filtri.a)}
+              </p>
+            </div>
+            <RiapriRicerca mappa={mappa} vicino={vicino} />
+          </div>
+
+          <div className="risultati-corpo">
+            <div>
+              <Risultati
+                risultati={risultati.filter((r) => chiaviTrovate.has(r.corsaId))}
+                allargati={risultati.filter((r) => !chiaviTrovate.has(r.corsaId))}
+              />
+            </div>
+
+            <aside className="colonna-decisione">
+              <div className="decisione">
+                <p className="occhiello">Perché conviene</p>
+                <p className="decisione-testo">
+                  Su GO non paghi un passaggio: paghi la tua parte delle spese
+                  di un viaggio che si sarebbe fatto comunque. Per questo le
+                  cifre che vedi non somigliano a una tariffa.
+                </p>
+                <div className="decisione-riga" />
+                <p className="decisione-voce">
+                  <strong>La carta non viene addebitata subito.</strong> La
+                  blocchiamo alla prenotazione e la addebitiamo quando il
+                  viaggio parte davvero.
+                </p>
+                <p className="decisione-voce">
+                  <strong>Il posto è tuo appena prenoti</strong> — o appena chi
+                  guida accetta, se hai chiesto una deviazione.
+                </p>
+              </div>
+
+              <a href="/cerco" className="decisione-uscita">
+                <span className="cresci">
+                  <span className="invito-forte">Non trovi quello che serve?</span>
+                  <span className="invito-debole">
+                    Dicci che stai cercando: ti avvisiamo appena qualcuno pubblica.
+                  </span>
+                </span>
+              </a>
+            </aside>
+          </div>
+        </div>
       </div>
-      <Risultati
-        risultati={risultati.filter((r) => chiaviTrovate.has(r.corsaId))}
-        allargati={risultati.filter((r) => !chiaviTrovate.has(r.corsaId))}
-      />
-    </main>
     </Telaio>
   )
 }
@@ -109,9 +182,7 @@ async function arricchisci(base: Array<{
       corsaId: r.corsaId,
       oraPartenza: r.oraPartenza,
       oraArrivo: r.oraArrivo,
-      partenzaLabel: r.fermataPronta
-        ? c?.origine_label ?? ''
-        : `Passa vicino a te`,
+      partenzaLabel: r.fermataPronta ? c?.origine_label ?? '' : 'Passa vicino a te',
       arrivoLabel: c?.destinazione_label ?? '',
       postiLiberi: r.postiLiberi,
       prezzoDa: r.prezzoDa,

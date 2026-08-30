@@ -103,10 +103,27 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     window.location.href = ritorno
   }
 
+  /**
+   * Su uno schermo grande l'accesso non è un modulo sospeso nel bianco: da
+   * una parte c'è il marchio e la promessa — cioè il motivo per cui uno sta
+   * mettendo la propria email — dall'altra le due righe da compilare.
+   */
   return (
-    <main style={{ maxWidth: 400, margin: '0 auto', padding: '48px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-        <Marchio dimensione={52} />
+    <main className="ingresso">
+      <div className="ingresso-parola solo-scrivania">
+        <Marchio variante="nudo" dimensione={38} />
+        <p className="t-titolo ingresso-promessa">
+          Se vai comunque,<br /><em className="viola">vai insieme.</em>
+        </p>
+        <p className="t-guida" style={{ maxWidth: '30ch' }}>
+          Qualcuno sta già facendo la tua strada. Dividete le spese del
+          viaggio, e basta.
+        </p>
+      </div>
+
+      <div className="ingresso-modulo">
+      <div className="solo-telefono" style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--s6)' }}>
+        <Marchio dimensione={48} />
       </div>
 
       {fase === 'numero' && (
@@ -200,6 +217,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
           </p>
         </>
       )}
+    </div>
     </main>
   )
 }

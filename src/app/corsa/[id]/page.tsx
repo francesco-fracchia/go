@@ -20,11 +20,13 @@ export const dynamic = 'force-dynamic'
  * evita che qualcuno mandi a un amico un indirizzo che l'amico non può
  * aprire.
  */
+import { guscio } from '../../../server/guscio.ts'
 import { Telaio } from '../../../components/Telaio.tsx'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const utente = await utenteCorrente()
+  const g = await guscio()
+  const utente = g.utente
 
   const { data: r } = await db
     .from('corse')
@@ -127,7 +129,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         }
       }),
     }
-    return <Telaio><CorsaConducente c={dati} /></Telaio>
+    return <Telaio {...g} modo="conducente"><CorsaConducente c={dati} /></Telaio>
   }
 
   // ── La vista di chi cerca un passaggio ─────────────────────────────────
@@ -175,6 +177,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
     } : null,
     conducente: {
+      id: r.conducente,
       nome: p?.nome ?? '',
       fotoUrl: p?.foto_url ?? null,
       eta: p?.data_nascita ? eta(p.data_nascita) : undefined,
@@ -189,7 +192,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   // Se la carta è già salvata il pannello di prenotazione la mostra invece
   // di chiedere di nuovo i sedici numeri.
   const metodo = utente ? await metodoAttuale(utente).catch(() => null) : null
-  return <Telaio><Dettaglio c={dati} metodo={metodo} /></Telaio>
+  return <Telaio {...g} modo="passeggero"><Dettaglio c={dati} metodo={metodo} /></Telaio>
 }
 
 const fermataDi = (x: { fermate?: unknown }) =>

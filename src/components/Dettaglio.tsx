@@ -1,17 +1,22 @@
-import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
+import { euro } from './base.tsx'
 import { Prenota, type Metodo } from './Prenota.tsx'
+import { orario, giorno } from '../lib/tempo.ts'
 
 /**
  * Il dettaglio di una corsa: dove si decide.
  *
- * Il prezzo è un numero grande e solo. La scomposizione c'è, ma sotto e
- * chiusa: chi sta decidendo guarda quanto spende e con chi va, non come
- * si divide la cifra. Aperta di default sposterebbe l'attenzione sulla
- * commissione invece che sul risparmio — e non aiuterebbe nessuno.
+ * Prima era una pila: percorso, conducente, prezzo, pulsante, note legali —
+ * e su uno schermo grande il pulsante finiva sotto la piega, cioè la sola
+ * cosa che la schermata esiste per far premere si vedeva solo scorrendo.
  *
- * In fondo, la dichiarazione che questo è un passaggio fra privati. Non è
- * cavillo legale nascosto nelle condizioni: è l'informazione che dice al
- * passeggero con che cosa ha a che fare, e va letta prima di prenotare.
+ * Adesso sono due colonne. A sinistra tutto quello che serve per decidere,
+ * nell'ordine in cui lo si chiede: dove passa, chi guida, cosa aspettarsi.
+ * A destra il prezzo e l'azione, incollati in alto mentre si legge il
+ * resto. Su telefono la stessa cosa diventa una barra fissa in fondo, dove
+ * arriva il pollice.
+ *
+ * Il prezzo è un numero grande e solo. La scomposizione c'è ma chiusa: chi
+ * decide guarda quanto spende e con chi va, non come si divide la cifra.
  */
 
 export interface DatiCorsa {
@@ -32,6 +37,7 @@ export interface DatiCorsa {
   note?: string
   ritorno?: { id: string; orario: string } | null
   conducente: {
+    id?: string
     nome: string; fotoUrl: string | null; eta?: number
     corseConcluse: number; distintivi: string[]
   }
@@ -45,212 +51,206 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
   const risparmio = c.confrontoTaxiCent ? c.confrontoTaxiCent - c.totaleCent : 0
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
-      {/* ── Il percorso, con le fermate in mezzo ── */}
-      <Riquadro stile={{ marginBottom: 14 }}>
-        {c.fermate.map((f, i) => (
-          <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0, width: 46, textAlign: 'right', paddingTop: 1 }}>
-              <span style={{
-                fontFamily: 'var(--titoli)', fontWeight: 600, fontSize: 15,
-                color: f.tipo === 'ritiro' ? 'var(--tenue)' : 'var(--inchiostro)',
-              }}>{f.orario}</span>
-            </div>
-            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{
-                width: 9, height: 9, borderRadius: 5, marginTop: 6,
-                border: '2px solid var(--accento)',
-                background: f.tipo === 'ritiro' ? 'var(--superficie)' : 'var(--accento)',
-              }} />
-              {i < c.fermate.length - 1 && (
-                <div style={{ width: 2, flexGrow: 1, minHeight: 26, background: 'var(--riga)' }} />
-              )}
-            </div>
-            <div style={{ paddingBottom: i < c.fermate.length - 1 ? 14 : 0, minWidth: 0 }}>
-              <div style={{
-                fontSize: f.tipo === 'ritiro' ? 14 : 16,
-                fontWeight: f.tipo === 'ritiro' ? 400 : 600,
-                color: f.tipo === 'ritiro' ? 'var(--inchiostro-2)' : 'var(--inchiostro)',
-                lineHeight: 1.35,
-              }}>{f.etichetta}</div>
-              {f.tipo === 'ritiro' && (
-                <div style={{ fontSize: 12, color: 'var(--tenue)' }}>fermata intermedia</div>
-              )}
-            </div>
-          </div>
-        ))}
-      </Riquadro>
+    <div className="fascia">
+      <div className="dentro dentro-app dettaglio-dentro">
 
-      {/* ── Chi guida ── */}
-      <Riquadro stile={{ marginBottom: 14 }}>
-        <div style={{ display: 'flex', gap: 13, alignItems: 'center' }}>
-          <div style={{
-            width: 50, height: 50, borderRadius: 25, flexShrink: 0,
-            background: 'var(--superficie-2)',
-            backgroundImage: c.conducente.fotoUrl ? `url(${c.conducente.fotoUrl})` : undefined,
-            backgroundSize: 'cover',
-          }} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 18, fontFamily: 'var(--titoli)' }}>
-              {c.conducente.nome}{c.conducente.eta ? `, ${c.conducente.eta}` : ''}
-            </div>
-            <div style={{ fontSize: 14, color: 'var(--tenue)' }}>
-              {c.veicolo.marca} {c.veicolo.modello}
-              {c.veicolo.colore ? ` · ${c.veicolo.colore.toLowerCase()}` : ''}
-            </div>
-          </div>
-        </div>
-
-        {/* I distintivi vengono dai fatti, non dalle stelle. «Non annulla
-            mai» dice quello che al passeggero interessa davvero. */}
-        {c.conducente.distintivi.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 13 }}>
-            {c.conducente.distintivi.map((d) => (
-              <span key={d} style={{
-                fontSize: 12, fontWeight: 600, padding: '4px 9px', borderRadius: 5,
-                background: 'var(--verde-velo)', color: 'var(--verde)',
-              }}>{d}</span>
-            ))}
-          </div>
-        )}
-        <div style={{ fontSize: 13, color: 'var(--tenue)', marginTop: 10 }}>
-          {c.conducente.corseConcluse} passaggi portati a termine
-        </div>
-
-        {c.note && (
-          <p style={{
-            margin: '14px 0 0', paddingTop: 14, borderTop: '1px solid var(--riga-2)',
-            fontSize: 14, color: 'var(--inchiostro-2)', lineHeight: 1.55,
-          }}>{c.note}</p>
-        )}
-
-        {/* Le preferenze si leggono PRIMA di prenotare, non dopo. */}
-        <div style={{
-          display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 14,
-          paddingTop: 14, borderTop: '1px solid var(--riga-2)', fontSize: 13,
-        }}>
-          <Preferenza attiva={c.veicolo.fumo} si="si fuma" no="non si fuma" />
-          <Preferenza attiva={c.veicolo.animali} si="animali ok" no="niente animali" />
-          <Preferenza attiva={c.veicolo.bagagliGrandi} si="bagagli grandi" no="solo borse piccole" />
-        </div>
-      </Riquadro>
-
-      {/* ── Il prezzo. Un numero, il resto se lo chiedi. ── */}
-      <Riquadro stile={{ marginBottom: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <Etichetta>a persona</Etichetta>
-            <div style={{
-              fontFamily: 'var(--titoli)', fontWeight: 700, fontSize: 38,
-              letterSpacing: '-.03em', lineHeight: 1.05, marginTop: 4,
-            }}>{euro(c.totaleCent)}</div>
-          </div>
-          {risparmio > 0 && (
-            <div style={{ textAlign: 'right', paddingBottom: 5 }}>
-              <div style={{ fontSize: 12, color: 'var(--tenue)', textDecoration: 'line-through' }}>
-                {euro(c.confrontoTaxiCent!)} in taxi
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--verde)', fontWeight: 600 }}>
-                risparmi {euro(risparmio)}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <details style={{ marginTop: 14 }}>
-          <summary style={{ fontSize: 13, color: 'var(--tenue)', cursor: 'pointer' }}>
-            Com&apos;è composto
-          </summary>
-          <div style={{ marginTop: 10, fontSize: 14 }}>
-            <Riga nome={`Spese di viaggio a ${c.conducente.nome}`} valore={c.quotaCent} />
-            <Riga nome="Servizio" valore={c.feeCent} />
-            <p style={{ fontSize: 12, color: 'var(--tenue)', margin: '10px 0 0', lineHeight: 1.5 }}>
-              La quota è la tua parte del costo chilometrico dell&apos;auto,
-              sulle tabelle ACI, divisa fra chi viaggia — {c.conducente.nome}
-              {' '}compresa. Non ci guadagna: rientra solo di una parte di quello
-              che spende.
-            </p>
-          </div>
-        </details>
-      </Riquadro>
-
-      {/* ── L'azione ── */}
-      <Prenota
-        corsa={c.id} totaleCent={c.totaleCent} nomeConducente={c.conducente.nome}
-        metodoIniziale={metodo ?? null} prenotaImmediata={c.prenotaImmediata}
-        kmDeviazione={c.kmDeviazione} fermataPronta={c.fermataPronta}
-      />
-      {!c.fermataPronta && (
-        <div>
-          <p style={{
-            fontSize: 13, color: 'var(--tenue)', textAlign: 'center',
-            margin: '10px 0 0', lineHeight: 1.5,
-          }}>
-            Sono {c.kmDeviazione.toFixed(1).replace('.', ',')} km in più, che paghi
-            tu. {c.conducente.nome} può accettare o rifiutare: finché non arriva
-            una risposta non ti addebitiamo niente, e il posto resta
-            prenotabile da altri.
+        <div className="dettaglio-testa">
+          <p className="occhiello">{giorno(c.oraPartenza)}</p>
+          <h1 className="t-titolo" style={{ marginTop: 'var(--s2)' }}>
+            {c.fermate[c.fermate.length - 1]?.etichetta ?? ''}
+          </h1>
+          <p className="t-guida" style={{ marginTop: 'var(--s2)' }}>
+            Si parte alle {orario(c.oraPartenza)} da {c.fermate[0]?.etichetta ?? ''}
+            {' '}· arrivo previsto alle {orario(c.oraArrivo)}
           </p>
         </div>
-      )}
 
-      {/* Il ritorno è una corsa a sé, e va prenotato a parte: legarli
-          prometterebbe un rientro garantito che non diamo. Ma non dirlo
-          affatto lascerebbe a metà chi sa già che dovrà tornare. */}
-      {c.ritorno && (
-        <a href={`/corsa/${c.ritorno.id}`} style={{ textDecoration: 'none' }}>
-          <div style={{
-            marginTop: 14, padding: '14px 16px', borderRadius: 'var(--raggio-s)',
-            border: '1px solid var(--riga)', background: 'var(--superficie)',
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--inchiostro)' }}>
-              {c.conducente.nome} torna alle {c.ritorno.orario}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--tenue)', marginTop: 2, lineHeight: 1.45 }}>
-              È una corsa separata: prenotala a parte, e potrai disdirne una
-              senza toccare l&apos;altra.
-            </div>
+        <div className="dettaglio-corpo">
+          {/* ══ La colonna che fa decidere ══ */}
+          <div className="pila" style={{ gap: 'var(--s5)' }}>
+
+            {/* ── Dove passa ── */}
+            <section className="riquadro">
+              <p className="occhiello">Il percorso</p>
+              <div className="tappe">
+                {c.fermate.map((f, i) => (
+                  <div key={i} className="tappa">
+                    <span className="tappa-ora">{f.orario}</span>
+                    <span className="tappa-filo">
+                      <span className={`tappa-punto${f.tipo === 'ritiro' ? ' tappa-punto-vuoto' : ''}`} />
+                      {i < c.fermate.length - 1 && <span className="tappa-linea" />}
+                    </span>
+                    <span className="tappa-dove">
+                      <span className={f.tipo === 'ritiro' ? 'tappa-nome-minore' : 'tappa-nome'}>
+                        {f.etichetta}
+                      </span>
+                      {f.tipo === 'ritiro' && <span className="tappa-nota">fermata intermedia</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ── Chi guida ── */}
+            <section className="riquadro">
+              <p className="occhiello">Chi guida</p>
+              <div className="guidatore">
+                <span className="faccia guidatore-faccia"
+                  style={c.conducente.fotoUrl ? { backgroundImage: `url(${c.conducente.fotoUrl})` } : undefined}>
+                  {!c.conducente.fotoUrl && c.conducente.nome.charAt(0)}
+                </span>
+                <span className="cresci">
+                  <span className="guidatore-nome">
+                    {c.conducente.nome}{c.conducente.eta ? `, ${c.conducente.eta}` : ''}
+                  </span>
+                  <span className="guidatore-auto">
+                    {c.veicolo.marca} {c.veicolo.modello}
+                    {c.veicolo.colore ? ` · ${c.veicolo.colore.toLowerCase()}` : ''}
+                  </span>
+                </span>
+                {c.conducente.id && (
+                  <a href={`/profilo/${c.conducente.id}`} className="azione azione-vuota azione-piccola">
+                    Il profilo
+                  </a>
+                )}
+              </div>
+
+              {/* I distintivi vengono dai fatti, non dalle stelle: «non
+                  annulla mai» si conta, non si opina. */}
+              {c.conducente.distintivi.length > 0 && (
+                <div className="fila" style={{ flexWrap: 'wrap', marginTop: 'var(--s4)' }}>
+                  {c.conducente.distintivi.map((d) => (
+                    <span key={d} className="pastiglia pastiglia-verde">{d}</span>
+                  ))}
+                </div>
+              )}
+              <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+                {c.conducente.corseConcluse === 0
+                  ? 'Prima corsa su GO'
+                  : `${c.conducente.corseConcluse} passaggi portati a termine`}
+              </p>
+
+              {c.note && <p className="guidatore-note">{c.note}</p>}
+
+              {/* Le preferenze si leggono PRIMA di prenotare, non dopo. */}
+              <div className="preferenze">
+                <Preferenza attiva={c.veicolo.fumo} si="si fuma" no="non si fuma" />
+                <Preferenza attiva={c.veicolo.animali} si="animali ok" no="niente animali" />
+                <Preferenza attiva={c.veicolo.bagagliGrandi} si="bagagli grandi" no="solo borse piccole" />
+              </div>
+            </section>
+
+            {/* ── Cosa aspettarsi ── */}
+            <section className="riquadro">
+              <p className="occhiello">Prima di prenotare</p>
+              <ul className="avvertenze">
+                <li>
+                  {c.prenotaImmediata
+                    ? 'Il posto è tuo appena prenoti: non serve che nessuno accetti.'
+                    : `${c.conducente.nome} riceve la tua richiesta e risponde. Fino ad allora non ti addebitiamo niente.`}
+                </li>
+                <li>
+                  {c.politica === 'flessibile'
+                    ? 'Puoi disdire senza costi fino a un’ora prima della partenza.'
+                    : 'Puoi disdire senza costi fino a sei ore prima della partenza.'}
+                </li>
+                <li>
+                  La carta viene bloccata adesso e addebitata quando il viaggio
+                  parte davvero.
+                </li>
+                {!c.fermataPronta && (
+                  <li>
+                    Non passa dal tuo punto: sono{' '}
+                    {c.kmDeviazione.toFixed(1).replace('.', ',')} km in più, che
+                    paghi tu, e {c.conducente.nome} può accettare o rifiutare.
+                  </li>
+                )}
+              </ul>
+            </section>
+
+            {/* Il ritorno è una corsa a sé: legarli prometterebbe un rientro
+                garantito che non diamo. Ma non dirlo affatto lascia a metà
+                chi sa già che dovrà tornare. */}
+            {c.ritorno && (
+              <a href={`/corsa/${c.ritorno.id}`} className="riquadro riquadro-tocco">
+                <p className="occhiello">E per tornare</p>
+                <p className="ritorno-titolo">
+                  {c.conducente.nome} torna alle {c.ritorno.orario}
+                </p>
+                <p className="t-nota">
+                  È una corsa separata: prenotala a parte, e potrai disdirne una
+                  senza toccare l&apos;altra.
+                </p>
+              </a>
+            )}
+
+            <p className="dettaglio-legale">
+              Questo passaggio è offerto da un privato che stava già andando lì,
+              non da un&apos;impresa di trasporto: non si applica la normativa a
+              tutela del consumatore, in particolare il diritto di recesso.{' '}
+              {c.conducente.nome} è l&apos;unica responsabile del viaggio come
+              descritto. GO mette a disposizione la piattaforma e l&apos;incasso.
+            </p>
           </div>
-        </a>
-      )}
 
-      <p style={{
-        fontSize: 13, color: 'var(--tenue)', textAlign: 'center',
-        margin: '16px 0 0',
-      }}>
-        {c.politica === 'flessibile'
-          ? 'Disdici gratis fino a un’ora prima.'
-          : 'Disdici gratis fino a sei ore prima.'}
-      </p>
+          {/* ══ Il prezzo e l'azione ══ */}
+          <aside className="colonna-azione">
+            <div className="scatola-prezzo">
+              <div className="fila-fra" style={{ alignItems: 'flex-end' }}>
+                <div>
+                  <p className="occhiello">A persona</p>
+                  <div className="numero prezzo-grande">{euro(c.totaleCent)}</div>
+                </div>
+                {risparmio > 0 && (
+                  <div className="prezzo-confronto">
+                    <span className="prezzo-taxi">{euro(c.confrontoTaxiCent!)} in taxi</span>
+                    <span className="prezzo-risparmio">risparmi {euro(risparmio)}</span>
+                  </div>
+                )}
+              </div>
 
-      {/* ── Che cosa è questo, detto chiaramente ── */}
-      <div style={{
-        marginTop: 26, paddingTop: 18, borderTop: '1px solid var(--riga-2)',
-        fontSize: 12, color: 'var(--tenue)', lineHeight: 1.6,
-      }}>
-        Questo passaggio è offerto da un privato che stava già andando lì, non
-        da un&apos;impresa di trasporto: non si applica la normativa a tutela
-        del consumatore, in particolare il diritto di recesso.{' '}
-        {c.conducente.nome} è l&apos;unica responsabile del viaggio come
-        descritto. GO mette a disposizione la piattaforma e l&apos;incasso.
+              <p className="prezzo-posti">
+                {c.postiLiberi === 1 ? 'Resta un posto' : `${c.postiLiberi} posti liberi`}
+              </p>
+
+              <div style={{ marginTop: 'var(--s4)' }}>
+                <Prenota
+                  corsa={c.id} totaleCent={c.totaleCent} nomeConducente={c.conducente.nome}
+                  metodoIniziale={metodo ?? null} prenotaImmediata={c.prenotaImmediata}
+                  kmDeviazione={c.kmDeviazione} fermataPronta={c.fermataPronta}
+                />
+              </div>
+
+              <details className="scomposizione">
+                <summary>Com&apos;è composto</summary>
+                <div className="scomposizione-corpo">
+                  <Voce nome={`Spese di viaggio a ${c.conducente.nome}`} valore={c.quotaCent} />
+                  <Voce nome="Servizio" valore={c.feeCent} />
+                  <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+                    La quota è la tua parte del costo chilometrico dell&apos;auto,
+                    sulle tabelle ACI, divisa fra chi viaggia — {c.conducente.nome}{' '}
+                    compresa. Non ci guadagna: rientra solo di una parte di quello
+                    che spende.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </aside>
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
 
 function Preferenza({ attiva, si, no }: { attiva: boolean; si: string; no: string }) {
-  return (
-    <span style={{ color: attiva ? 'var(--inchiostro-2)' : 'var(--tenue)' }}>
-      {attiva ? si : no}
-    </span>
-  )
+  return <span className={attiva ? 'preferenza' : 'preferenza preferenza-no'}>{attiva ? si : no}</span>
 }
 
-function Riga({ nome, valore }: { nome: string; valore: number }) {
+function Voce({ nome, valore }: { nome: string; valore: number }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-      <span style={{ color: 'var(--inchiostro-2)' }}>{nome}</span>
-      <span style={{ fontFamily: 'var(--mono)', fontSize: 13 }}>{euro(valore)}</span>
+    <div className="fila-fra scomposizione-voce">
+      <span>{nome}</span>
+      <span className="scomposizione-cifra">{euro(valore)}</span>
     </div>
   )
 }

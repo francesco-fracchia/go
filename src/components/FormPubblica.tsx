@@ -1,31 +1,51 @@
 'use client'
-import { useState } from 'react'
-import { Bottone, Etichetta } from './base.tsx'
+import { useEffect, useState } from 'react'
+import { euro } from './base.tsx'
 import { TESTO_DICHIARAZIONE } from './testi.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
-import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '../lib/flessibilita.ts'
+import { Quando } from './Quando.tsx'
 import { AggiungiTelefono } from './AggiungiTelefono.tsx'
+import { SegnoAvanti } from './segni.tsx'
+import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '../lib/flessibilita.ts'
 
 /**
- * Il modulo di pubblicazione.
+ * Pubblicare un viaggio.
  *
- * Tre passi, uno per schermata. Un modulo lungo mostrato tutto insieme fa
- * abbandonare: qui il primo passo chiede due indirizzi e un'ora, e già
- * dopo quello si vede il numero — quanto rientra — che è la ragione per
- * cui qualcuno arriva in fondo.
+ * Prima erano tre passi, ma il secondo era una pila di sei interruttori:
+ * chi può vederla, chi sale, puoi passare a prendere, puoi lasciare
+ * altrove, se disdicono, con quale auto. Sei domande di seguito, tutte
+ * ugualmente importanti, tutte prima del numero — cioè prima della ragione
+ * per cui uno sta compilando.
  *
- * La dichiarazione di privato sta all'ultimo passo, non al primo: chiederla
- * prima che si veda a cosa serve la fa leggere come un ostacolo.
+ * Adesso sono quattro passi, e ciascuno fa UNA domanda: dove vai, quando,
+ * quanti posti, e — solo alla fine — le condizioni, con valori già scelti
+ * che vanno bene per quasi tutti. Il numero compare al terzo passo, appena
+ * ci sono abbastanza dati per calcolarlo: da lì in poi si sta finendo una
+ * cosa che si è già visto valere la pena.
+ *
+ * Il preventivo lo fa il server con lo stesso motore che userà la corsa
+ * vera. Un numero in vetrina diverso da quello finale sarebbe peggio di
+ * nessun numero.
  */
 
-type Passo = 'dove' | 'come' | 'conferma'
+type Passo = 'dove' | 'quando' | 'posti' | 'condizioni'
+const PASSI: Passo[] = ['dove', 'quando', 'posti', 'condizioni']
+const NOMI: Record<Passo, string> = {
+  dove: 'Dove vai', quando: 'Quando', posti: 'I posti', condizioni: 'Le condizioni',
+}
+
+interface Preventivo {
+  km: number; minuti: number
+  costoViaggioCent: number; quotaCent: number; feeCent: number
+  pagaPasseggeroCent: number; rientroPienoCent: number; rientroUnoCent: number
+  postiMassimi: number
+}
 
 export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, categoria, mappa = false, vicino }: {
   veicoli: Array<{ id: string; marca: string; modello: string; postiTotali: number }>
   destinazione?: LuogoScelto
   categoria?: Categoria
   mappa?: boolean
-  /** attorno a cui cercare gli indirizzi: casa, o il centro della zona */
   vicino?: { lat: number; lng: number }
 }) {
   const [passo, setPasso] = useState<Passo>('dove')
@@ -36,344 +56,404 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const [veicolo, setVeicolo] = useState(veicoli[0]?.id ?? '')
   const [modalita, setModalita] = useState<'pubblica' | 'link' | 'privata'>('pubblica')
   const [immediata, setImmediata] = useState(false)
-  const [devRitiro, setDevRitiro] = useState(true)
-  const [devDeposito, setDevDeposito] = useState(true)
+  const [deviazioni, setDeviazioni] = useState(true)
   const [politica, setPolitica] = useState<'flessibile' | 'rigida'>('flessibile')
   const [dichiarato, setDichiarato] = useState(false)
   const [note, setNote] = useState('')
   const [oraRitorno, setOraRitorno] = useState('')
   const [flessibilita, setFlessibilita] = useState<Flessibilita | null>(null)
+  const [invio, setInvio] = useState(false)
+  const [errore, setErrore] = useState<string | null>(null)
+  const [serveNumero, setServeNumero] = useState(false)
+  const [conto, setConto] = useState<Preventivo | null>(null)
+  const [contando, setContando] = useState(false)
 
-  // La proposta si ricalcola con l'orario: la stessa tratta il martedì
-  // mattina e il sabato sera non ha la stessa elasticità.
+  // La proposta di flessibilità si ricalcola con l'orario: la stessa tratta
+  // il martedì mattina e il sabato sera non ha la stessa elasticità.
   const suggerita = oraArrivo && !Number.isNaN(new Date(oraArrivo).getTime())
     ? proponi({ categoria, oraArrivo: new Date(oraArrivo) })
     : null
   const scelta = flessibilita ?? suggerita?.minuti ?? 0
-  const [invio, setInvio] = useState(false)
-  const [errore, setErrore] = useState<string | null>(null)
-  const [serveNumero, setServeNumero] = useState(false)
+  const massimo = conto?.postiMassimi
+    ?? (veicoli.find((v) => v.id === veicolo)?.postiTotali ?? 5) - 1
 
-  const massimo = (veicoli.find((v) => v.id === veicolo)?.postiTotali ?? 5) - 1
+  /**
+   * Il conto si chiede appena ci sono i due punti e l'auto, e si rifà
+   * quando cambiano i posti. È una chiamata sola e in cache lato server:
+   * la stessa tratta chiesta due volte non paga due percorsi.
+   */
+  useEffect(() => {
+    if (!origine || !destinazione || !veicolo) { setConto(null); return }
+    let vivo = true
+    setContando(true)
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/preventivo', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            veicoloId: veicolo,
+            origine: { lat: origine.lat, lng: origine.lng },
+            destinazione: { lat: destinazione.lat, lng: destinazione.lng },
+            postiOfferti: posti,
+          }),
+        })
+        if (!r.ok || !vivo) return
+        setConto(await r.json())
+      } catch { /* il modulo funziona anche senza il numero */ }
+      finally { if (vivo) setContando(false) }
+    }, 250)
+    return () => { vivo = false; clearTimeout(t) }
+  }, [origine, destinazione, veicolo, posti])
 
   if (veicoli.length === 0) {
     return (
-      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 24, marginBottom: 10 }}>Prima la macchina</h1>
-        <p style={{ color: 'var(--inchiostro-2)', marginBottom: 22, lineHeight: 1.55 }}>
-          Ci servono marca, modello e alimentazione per calcolare quanto ti
-          costa un chilometro. È da lì che esce la quota di ciascuno.
+      <div className="fascia"><div className="dentro dentro-stretto pubblica-dentro">
+        <h1 className="t-titolo">Prima la macchina</h1>
+        <p className="t-guida" style={{ margin: 'var(--s4) 0 var(--s6)', maxWidth: '44ch' }}>
+          Ci servono marca, modello e alimentazione per sapere quanto ti costa
+          un chilometro. È da lì che esce la quota di chi sale — e senza, non
+          sapremmo dirti quanto rientra.
         </p>
-        <a href="/veicoli/nuovo" style={{ textDecoration: 'none' }}>
-          <Bottone>Aggiungi la tua auto</Bottone>
+        <a href="/veicoli/nuovo" className="azione azione-piena">
+          Aggiungi la tua auto <SegnoAvanti />
         </a>
-      </main>
+      </div></div>
     )
   }
 
+  const i = PASSI.indexOf(passo)
+  const avanti = () => setPasso(PASSI[Math.min(i + 1, PASSI.length - 1)]!)
+  const indietro = () => setPasso(PASSI[Math.max(i - 1, 0)]!)
+
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
-      <Progresso passo={passo} />
+    <div className="fascia">
+      <div className="dentro dentro-app pubblica-dentro">
 
-      {passo === 'dove' && (
-        <>
-          <h1 style={{ fontSize: 26, margin: '18px 0 20px' }}>Dove vai?</h1>
-          <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Parti da" valore={origine} onScegli={setOrigine}
-            segnaposto="Lodi, piazza della Vittoria" />
-          <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Arrivi a" valore={destinazione} onScegli={setDestinazione}
-            segnaposto="Fabrique, Milano" />
-          <Campo etichetta="Vuoi essere lì alle" valore={oraArrivo} onChange={setOraArrivo}
-            segnaposto="23:45" tipo="datetime-local" />
-          <p style={{ fontSize: 13, color: 'var(--tenue)', margin: '2px 0 18px', lineHeight: 1.5 }}>
-            L&apos;ora di partenza la calcoliamo noi dal percorso, con dieci
-            minuti di margine.
-          </p>
+        {/* La spina: quattro passi con il nome, non quattro trattini.
+            Sapere quanti ne restano è la differenza fra compilare e
+            abbandonare. */}
+        <ol className="spina">
+          {PASSI.map((p, n) => (
+            <li key={p} className={`spina-passo${n < i ? ' spina-fatto' : ''}${n === i ? ' spina-qui' : ''}`}>
+              <span className="spina-numero">{n + 1}</span>
+              <span className="spina-nome">{NOMI[p]}</span>
+            </li>
+          ))}
+        </ol>
 
-          {/* La flessibilità non si chiede a freddo: si propone quella
-              giusta guardando dove si va e quando, e chi vuole la cambia.
-              Il valore proposto è quello che quasi nessuno tocca. */}
-          {suggerita && (
-            <div style={{ marginBottom: 20 }}>
-              <Etichetta>quanto sei preciso</Etichetta>
-              <div style={{ display: 'flex', gap: 8, margin: '10px 0 8px' }}>
-                {SCELTE.map((m) => (
-                  <button key={m} onClick={() => setFlessibilita(m)} className="tocco" style={{
-                    flex: 1, padding: '12px 4px', borderRadius: 'var(--raggio-s)',
-                    border: `1px solid ${scelta === m ? 'transparent' : 'var(--riga)'}`,
-                    background: scelta === m ? 'var(--accento)' : 'var(--superficie)',
-                    color: scelta === m ? 'var(--su-accento)' : 'var(--inchiostro)',
-                    fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap',
-                  }}>{etichetta(m)}</button>
-                ))}
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--tenue)', margin: 0, lineHeight: 1.5 }}>
-                {flessibilita === null && `${suggerita.perche} `}
-                {scelta === 0
-                  ? 'Ti trova solo chi cerca quell’ora.'
-                  : `Ti trova anche chi cerca fino a ${scelta} minuti prima o dopo. Alla prima prenotazione l’orario si fissa.`}
-              </p>
-            </div>
-          )}
+        <div className="pubblica-corpo">
+          <div className="pubblica-domanda">
 
-          {/* Il ritorno è il vero problema della notte: chi cerca un
-              passaggio per andare a ballare sa già che dovrà tornare, e una
-              corsa solo in andata lo lascia a metà. Chiederlo qui, mentre
-              si sta già pubblicando, costa un tocco. */}
-          <div style={{
-            padding: '14px 16px', borderRadius: 'var(--raggio-s)',
-            border: '1px solid var(--riga)', background: 'var(--superficie)',
-            marginBottom: 20,
-          }}>
-            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
-              <input type="checkbox" checked={oraRitorno !== ''}
-                onChange={(e) => setOraRitorno(e.target.checked ? suggerisciRitorno(oraArrivo) : '')}
-                style={{ marginTop: 3, width: 20, height: 20, flexShrink: 0 }} />
-              <span>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>Torni anche?</span>
-                <span style={{ display: 'block', fontSize: 13, color: 'var(--tenue)', marginTop: 2, lineHeight: 1.45 }}>
-                  Pubblichiamo anche il rientro. Restano due corse separate:
-                  puoi disdire una e tenere l&apos;altra.
-                </span>
-              </span>
-            </label>
-            {oraRitorno !== '' && (
-              <div style={{ marginTop: 12 }}>
-                <Campo etichetta="Riparti alle" valore={oraRitorno} onChange={setOraRitorno}
-                  segnaposto="" tipo="datetime-local" />
-              </div>
+            {passo === 'dove' && (
+              <>
+                <h1 className="t-titolo">Dove vai?</h1>
+                <p className="t-guida pubblica-guida">
+                  Il viaggio che faresti comunque. Metti i punti veri di
+                  partenza e arrivo: è da lì che calcoliamo le spese.
+                </p>
+                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Parti da"
+                  valore={origine} onScegli={setOrigine} segnaposto="Lodi, piazza della Vittoria" />
+                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Arrivi a"
+                  valore={destinazione} onScegli={setDestinazione} segnaposto="Fabrique, Milano" />
+
+                {veicoli.length > 1 && (
+                  <div style={{ marginTop: 'var(--s5)' }}>
+                    <p className="occhiello">Con quale auto</p>
+                    <div className="scelte-blocco">
+                      {veicoli.map((v) => (
+                        <button key={v.id} type="button"
+                          className={`opzione${veicolo === v.id ? ' opzione-scelta' : ''}`}
+                          onClick={() => setVeicolo(v.id)}>
+                          <span className="opzione-titolo">{v.marca} {v.modello}</span>
+                          <span className="opzione-nota">{v.postiTotali - 1} posti oltre al tuo</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Piede
+                  avanti={avanti} pronto={!!origine && !!destinazione}
+                  manca="Scegli partenza e arrivo dall’elenco" />
+              </>
+            )}
+
+            {passo === 'quando' && (
+              <>
+                <h1 className="t-titolo">Quando vuoi essere lì?</h1>
+                <p className="t-guida pubblica-guida">
+                  L&apos;ora di partenza la calcoliamo noi dal percorso, con dieci
+                  minuti di margine.
+                </p>
+                <Quando valore={oraArrivo} onCambia={setOraArrivo} />
+
+                {suggerita && (
+                  <div style={{ marginTop: 'var(--s5)' }}>
+                    <p className="occhiello">Quanto sei preciso</p>
+                    <div className="scelte-fila">
+                      {SCELTE.map((m) => (
+                        <button key={m} type="button"
+                          className={`scelta${scelta === m ? ' scelta-attiva' : ''}`}
+                          onClick={() => setFlessibilita(m)}>{etichetta(m)}</button>
+                      ))}
+                    </div>
+                    <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+                      {flessibilita === null && `${suggerita.perche} `}
+                      {scelta === 0
+                        ? 'Ti trova solo chi cerca quell’ora.'
+                        : `Ti trova anche chi cerca fino a ${scelta} minuti prima o dopo. Alla prima prenotazione l’orario si fissa.`}
+                    </p>
+                  </div>
+                )}
+
+                {/* Il ritorno è il vero problema della notte: chi va a
+                    ballare sa già che dovrà tornare, e una corsa di sola
+                    andata lo lascia a metà. */}
+                <label className="riquadro riquadro-spunta" style={{ marginTop: 'var(--s5)' }}>
+                  <input type="checkbox" checked={oraRitorno !== ''}
+                    onChange={(e) => setOraRitorno(e.target.checked ? suggerisciRitorno(oraArrivo) : '')} />
+                  <span>
+                    <span className="opzione-titolo">Torni anche?</span>
+                    <span className="opzione-nota">
+                      Pubblichiamo anche il rientro. Restano due corse separate:
+                      puoi disdire una e tenere l&apos;altra.
+                    </span>
+                  </span>
+                </label>
+                {oraRitorno !== '' && (
+                  <label className="campo" style={{ marginTop: 'var(--s3)' }}>
+                    <span className="campo-nome">Riparti alle</span>
+                    <input type="datetime-local" value={oraRitorno}
+                      onChange={(e) => setOraRitorno(e.target.value)} />
+                  </label>
+                )}
+
+                <Piede avanti={avanti} indietro={indietro} pronto={!!oraArrivo}
+                  manca="Scegli il giorno e l’ora" />
+              </>
+            )}
+
+            {passo === 'posti' && (
+              <>
+                <h1 className="t-titolo">Quanti posti hai?</h1>
+                <p className="t-guida pubblica-guida">
+                  Oltre al tuo. Il costo del viaggio si divide fra tutti quelli
+                  che sono in macchina, te compresa.
+                </p>
+                <div className="posti-scelta">
+                  {Array.from({ length: Math.min(massimo, 5) }, (_, n) => n + 1).map((n) => (
+                    <button key={n} type="button"
+                      className={`posto-numero${posti === n ? ' posto-numero-scelto' : ''}`}
+                      onClick={() => setPosti(n)} aria-pressed={posti === n}>{n}</button>
+                  ))}
+                </div>
+
+                <Piede avanti={avanti} indietro={indietro} pronto manca="" />
+              </>
+            )}
+
+            {passo === 'condizioni' && (
+              <>
+                <h1 className="t-titolo">Ultime cose</h1>
+                <p className="t-guida pubblica-guida">
+                  Sono già impostate come vanno bene quasi sempre. Cambia solo
+                  quello che ti riguarda.
+                </p>
+
+                <Opzioni titolo="Chi può vederla" valore={modalita}
+                  onCambia={(v) => setModalita(v as typeof modalita)}
+                  opzioni={[
+                    { v: 'pubblica', t: 'Tutti', n: 'Compare nelle ricerche' },
+                    { v: 'link', t: 'Chi ha il link', n: 'Non compare, ma chi ha il link prenota' },
+                    { v: 'privata', t: 'Chi invito io', n: 'Solo le persone che aggiungi tu' },
+                  ]} />
+
+                <Opzioni titolo="Chi sale" valore={immediata ? 'si' : 'no'}
+                  onCambia={(v) => setImmediata(v === 'si')}
+                  opzioni={[
+                    { v: 'no', t: 'Decido io', n: 'Ricevi una richiesta e rispondi' },
+                    { v: 'si', t: 'Chiunque', n: 'Si riempie prima, ma non scegli chi' },
+                  ]} />
+
+                <Opzioni titolo="Puoi fare qualche deviazione?" valore={deviazioni ? 'si' : 'no'}
+                  onCambia={(v) => setDeviazioni(v === 'si')}
+                  opzioni={[
+                    { v: 'si', t: 'Sì, se è di strada', n: 'Riempie molto di più: ti chiedono, decidi tu, e i km in più li pagano loro' },
+                    { v: 'no', t: 'No, parto e arrivo dove ho detto', n: 'Salgono e scendono solo ai punti che hai indicato' },
+                  ]} />
+
+                {!deviazioni && (
+                  <p className="avviso-morbido">
+                    Va benissimo, ma sappilo: la maggior parte di chi cerca un
+                    passaggio non abita esattamente sul tuo percorso.
+                  </p>
+                )}
+
+                <Opzioni titolo="Se disdicono" valore={politica}
+                  onCambia={(v) => setPolitica(v as typeof politica)}
+                  opzioni={[
+                    { v: 'flessibile', t: 'Fino a un’ora prima', n: 'Più gente prenota, ma può saltare' },
+                    { v: 'rigida', t: 'Fino a sei ore prima', n: 'Posto più sicuro, meno prenotazioni' },
+                  ]} />
+
+                <div style={{ marginTop: 'var(--s5)' }}>
+                  <p className="occhiello">Vuoi dire qualcosa a chi sale</p>
+                  <label className="campo" style={{ marginTop: 'var(--s3)' }}>
+                    <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
+                      placeholder="Parto puntuale · musica alta · niente bagagli grandi" />
+                  </label>
+                </div>
+
+                <label className="riquadro riquadro-spunta" style={{ marginTop: 'var(--s5)' }}>
+                  <input type="checkbox" checked={dichiarato}
+                    onChange={(e) => setDichiarato(e.target.checked)} />
+                  <span className="dichiarazione">{TESTO_DICHIARAZIONE}</span>
+                </label>
+
+                {/* Quando manca il numero non si mostra un rimprovero: si
+                    mostra il campo per metterlo, qui, senza perdere il
+                    modulo compilato. */}
+                {serveNumero && <AggiungiTelefono suSalvato={() => { setServeNumero(false); setErrore(null) }} />}
+                {errore && !serveNumero && <p className="errore">{errore}</p>}
+
+                <div className="pubblica-piede">
+                  <button type="button" className="collegamento-piccolo" onClick={indietro}>
+                    Indietro
+                  </button>
+                  <button type="button" className="azione azione-piena"
+                    aria-disabled={!dichiarato || invio}
+                    onClick={pubblica}>
+                    {invio ? 'Un attimo…' : 'Pubblica il viaggio'}
+                  </button>
+                </div>
+                <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+                  Puoi annullarla quando vuoi. Se nessuno prenota, sparisce da sola.
+                </p>
+              </>
             )}
           </div>
-          <Bottone
-            disabled={!origine || !destinazione || !oraArrivo}
-            onClick={() => setPasso('come')}
-          >Avanti</Bottone>
-        </>
-      )}
 
-      {passo === 'come' && (
-        <>
-          <h1 style={{ fontSize: 26, margin: '18px 0 20px' }}>Quanti posti?</h1>
+          {/* ══ Le spese, sempre accanto ══
+              Il numero per cui uno pubblica non sta in fondo a un modulo:
+              sta accanto a ogni domanda, e si aggiorna mentre si risponde. */}
+          <aside className="colonna-conto">
+            <div className="scatola-conto">
+              <p className="occhiello">Le spese del viaggio</p>
 
-          <div style={{ display: 'flex', gap: 9, marginBottom: 24 }}>
-            {Array.from({ length: Math.min(massimo, 5) }, (_, i) => i + 1).map((n) => (
-              <button key={n} onClick={() => setPosti(n)} className="tocco" style={{
-                flex: 1, padding: '16px 0', borderRadius: 'var(--raggio-s)',
-                border: `1px solid ${posti === n ? 'transparent' : 'var(--riga)'}`,
-                background: posti === n ? 'var(--accento)' : 'var(--superficie)',
-                color: posti === n ? 'var(--su-accento)' : 'var(--inchiostro)',
-                fontWeight: 700, fontSize: 19, fontFamily: 'var(--titoli)',
-              }}>{n}</button>
-            ))}
-          </div>
+              {!conto ? (
+                <p className="conto-attesa">
+                  {contando
+                    ? 'Calcoliamo…'
+                    : 'Appena metti partenza e arrivo ti diciamo quanto costa il viaggio e quanto ti rientra.'}
+                </p>
+              ) : (
+                <>
+                  <div className="conto-percorso">
+                    {conto.km.toFixed(0)} km · {Math.round(conto.minuti)} minuti
+                  </div>
 
-          {veicoli.length > 1 && (
-            <>
-              <Etichetta>con quale auto</Etichetta>
-              <div style={{ display: 'grid', gap: 8, margin: '10px 0 24px' }}>
-                {veicoli.map((v) => (
-                  <button key={v.id} onClick={() => setVeicolo(v.id)} style={{
-                    textAlign: 'left', padding: '13px 16px', borderRadius: 'var(--raggio-s)',
-                    border: `1px solid ${veicolo === v.id ? 'var(--accento)' : 'var(--riga)'}`,
-                    background: 'var(--superficie)', color: 'var(--inchiostro)', fontSize: 15,
-                  }}>{v.marca} {v.modello}</button>
-                ))}
-              </div>
-            </>
-          )}
+                  <div className="conto-blocco">
+                    <span className="conto-etichetta">Ti costa</span>
+                    <span className="numero conto-cifra">{euro(conto.costoViaggioCent)}</span>
+                    <span className="t-nota">
+                      benzina, gomme, tagliandi e usura, sulle tabelle ACI della tua auto
+                    </span>
+                  </div>
 
-          <Interruttore titolo="Chi può vederla"
-            opzioni={[
-              { v: 'pubblica', t: 'Tutti', n: 'Compare nelle ricerche' },
-              { v: 'link', t: 'Con il link', n: 'Non compare, ma chi ha il link prenota' },
-              { v: 'privata', t: 'Chi invito', n: 'Solo le persone che aggiungi tu' },
-            ]}
-            valore={modalita} onChange={(v) => setModalita(v as typeof modalita)} />
+                  <div className="conto-riga" />
 
-          <Interruttore titolo="Chi sale"
-            opzioni={[
-              { v: 'no', t: 'Decido io', n: 'Ricevi una richiesta e rispondi' },
-              { v: 'si', t: 'Chiunque', n: 'Si riempie prima, ma non scegli chi' },
-            ]}
-            valore={immediata ? 'si' : 'no'} onChange={(v) => setImmediata(v === 'si')} />
+                  <div className="conto-blocco">
+                    <span className="conto-etichetta">Ti rientrano</span>
+                    <span className="numero conto-cifra conto-cifra-viva">
+                      {euro(conto.rientroPienoCent)}
+                    </span>
+                    <span className="t-nota">
+                      se si riempie. Con una persona sola, {euro(conto.rientroUnoCent)}.
+                    </span>
+                  </div>
 
-          {/* Due domande, non una. Chi ha tempo prima di partire ma è di
-              fretta all'arrivo, con un interruttore solo spegne tutto — e
-              perde i passeggeri che avrebbe potuto caricare comunque. */}
-          <Interruttore titolo="Puoi passare a prendere qualcuno?"
-            opzioni={[
-              { v: 'si', t: 'Sì, se è di strada', n: 'Riempie molto di più. Ti chiedono e decidi tu, e i km in più li pagano loro' },
-              { v: 'no', t: 'No, parto da qui', n: 'Salgono solo al tuo punto di partenza' },
-            ]}
-            valore={devRitiro ? 'si' : 'no'} onChange={(v) => setDevRitiro(v === 'si')} />
+                  <div className="conto-riga" />
 
-          <Interruttore titolo="Puoi lasciarli altrove?"
-            opzioni={[
-              { v: 'si', t: 'Sì, se è di strada', n: 'Utile quando la destinazione è larga: un locale, una stazione, un aeroporto' },
-              { v: 'no', t: 'No, arrivo e basta', n: 'Scendono solo alla destinazione indicata' },
-            ]}
-            valore={devDeposito ? 'si' : 'no'} onChange={(v) => setDevDeposito(v === 'si')} />
+                  <div className="conto-blocco">
+                    <span className="conto-etichetta">Chi sale paga</span>
+                    <span className="conto-piccola">{euro(conto.pagaPasseggeroCent)} a testa</span>
+                  </div>
 
-          {!devRitiro && !devDeposito && (
-            <p style={{
-              fontSize: 13, color: 'var(--tenue)', margin: '-8px 0 18px',
-              padding: '10px 14px', borderRadius: 'var(--raggio-s)',
-              background: 'var(--superficie-2)', lineHeight: 1.5,
-            }}>
-              Va benissimo, ma sappilo: la maggior parte di chi cerca un
-              passaggio non abita esattamente sul tuo percorso. Aprendone
-              anche solo una si riempie molto più spesso.
-            </p>
-          )}
-
-          <Interruttore titolo="Se disdicono"
-            opzioni={[
-              { v: 'flessibile', t: 'Fino a un’ora prima', n: 'Più gente prenota, ma può saltare' },
-              { v: 'rigida', t: 'Fino a sei ore prima', n: 'Posto più sicuro, meno prenotazioni' },
-            ]}
-            valore={politica} onChange={(v) => setPolitica(v as typeof politica)} />
-
-          <div style={{ marginTop: 20 }}>
-            <Bottone onClick={() => setPasso('conferma')}>Avanti</Bottone>
-          </div>
-        </>
-      )}
-
-      {passo === 'conferma' && (
-        <>
-          <h1 style={{ fontSize: 26, margin: '18px 0 16px' }}>Ultima cosa</h1>
-
-          <Etichetta>vuoi dire qualcosa a chi sale</Etichetta>
-          <textarea
-            value={note} onChange={(e) => setNote(e.target.value)}
-            rows={3} placeholder="Parto puntuale · musica alta · niente bagagli grandi"
-            style={{
-              width: '100%', marginTop: 10, padding: 13, fontSize: 15,
-              fontFamily: 'var(--testo)', borderRadius: 'var(--raggio-s)',
-              border: '1px solid var(--riga)', background: 'var(--superficie)',
-              color: 'var(--inchiostro)', resize: 'vertical',
-            }}
-          />
-
-          <label style={{
-            display: 'flex', gap: 12, alignItems: 'flex-start', margin: '22px 0 20px',
-            padding: '16px 18px', borderRadius: 'var(--raggio)',
-            border: '1px solid var(--riga)', background: 'var(--superficie)',
-            cursor: 'pointer',
-          }}>
-            <input type="checkbox" checked={dichiarato}
-              onChange={(e) => setDichiarato(e.target.checked)}
-              style={{ marginTop: 3, width: 20, height: 20, flexShrink: 0 }} />
-            <span style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--inchiostro-2)' }}>
-              {TESTO_DICHIARAZIONE}
-            </span>
-          </label>
-
-          {/* Quando manca il numero non si mostra un rimprovero: si mostra
-              il campo per metterlo, qui, senza perdere il modulo compilato. */}
-          {serveNumero && <AggiungiTelefono suSalvato={() => { setServeNumero(false); setErrore(null) }} />}
-
-          {errore && !serveNumero && (
-            <p style={{ color: 'var(--rosso)', fontSize: 14, marginBottom: 14 }}>{errore}</p>
-          )}
-
-          <Bottone
-            disabled={!dichiarato || invio}
-            onClick={async () => {
-              setInvio(true); setErrore(null)
-              const r = await fetch('/api/corse', {
-                method: 'POST', headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                  veicoloId: veicolo,
-                  origine: { label: origine!.etichetta, lat: origine!.lat, lng: origine!.lng },
-                  destinazione: { label: destinazione!.etichetta, lat: destinazione!.lat, lng: destinazione!.lng },
-                  oraArrivo, postiOfferti: posti, modalita,
-                  prenotaImmediata: immediata,
-                  deviazioniRitiro: devRitiro, deviazioniDeposito: devDeposito,
-                  politica, note,
-                  oraRitorno: oraRitorno || undefined,
-                  flessibilitaMin: scelta,
-                }),
-              })
-              const d = await r.json()
-              if (!r.ok) {
-                if (d.codice === 'telefono') { setServeNumero(true); setInvio(false); return }
-                setErrore(d.errore ?? 'Non è andata'); setInvio(false); return
-              }
-              window.location.href = `/corsa/${d.corsa.id}`
-            }}
-          >{invio ? 'Un attimo…' : 'Pubblica'}</Bottone>
-
-          <p style={{
-            fontSize: 13, color: 'var(--tenue)', textAlign: 'center',
-            margin: '12px 0 0', lineHeight: 1.5,
-          }}>
-            Puoi annullarla quando vuoi. Se nessuno prenota, sparisce da sola.
-          </p>
-        </>
-      )}
-    </main>
-  )
-}
-
-function Progresso({ passo }: { passo: Passo }) {
-  const passi: Passo[] = ['dove', 'come', 'conferma']
-  const i = passi.indexOf(passo)
-  return (
-    <div style={{ display: 'flex', gap: 6 }}>
-      {passi.map((p, n) => (
-        <div key={p} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: n <= i ? 'var(--accento)' : 'var(--riga)',
-        }} />
-      ))}
+                  <p className="conto-onesto">
+                    Resta comunque a carico tuo{' '}
+                    <strong>{euro(conto.costoViaggioCent - conto.rientroPienoCent)}</strong>:
+                    su GO chi guida non ci guadagna, rientra di una parte.
+                  </p>
+                </>
+              )}
+            </div>
+          </aside>
+        </div>
+      </div>
     </div>
   )
+
+  async function pubblica() {
+    if (!dichiarato || invio) return
+    setInvio(true); setErrore(null)
+    const r = await fetch('/api/corse', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        veicoloId: veicolo,
+        origine: { label: origine!.etichetta, lat: origine!.lat, lng: origine!.lng },
+        destinazione: { label: destinazione!.etichetta, lat: destinazione!.lat, lng: destinazione!.lng },
+        oraArrivo, postiOfferti: posti, modalita,
+        prenotaImmediata: immediata,
+        deviazioniRitiro: deviazioni, deviazioniDeposito: deviazioni,
+        politica, note,
+        oraRitorno: oraRitorno || undefined,
+        flessibilitaMin: scelta,
+      }),
+    })
+    const d = await r.json()
+    if (!r.ok) {
+      if (d.codice === 'telefono') { setServeNumero(true); setInvio(false); return }
+      setErrore(d.errore ?? 'Non è andata'); setInvio(false); return
+    }
+    window.location.href = `/corsa/${d.corsa.id}`
+  }
 }
 
-function Campo({ etichetta, valore, onChange, segnaposto, tipo = 'text' }: {
-  etichetta: string; valore: string; onChange: (v: string) => void
-  segnaposto: string; tipo?: string
+function Piede({ avanti, indietro, pronto, manca }: {
+  avanti: () => void; indietro?: () => void; pronto: boolean; manca: string
 }) {
   return (
-    <label style={{
-      display: 'block', marginBottom: 12, padding: '12px 16px',
-      border: '1px solid var(--riga)', borderRadius: 'var(--raggio-s)',
-      background: 'var(--superficie)',
-    }}>
-      <span style={{ display: 'block', fontSize: 12, color: 'var(--tenue)' }}>{etichetta}</span>
-      <input
-        type={tipo} value={valore} onChange={(e) => onChange(e.target.value)}
-        placeholder={segnaposto}
-        style={{
-          width: '100%', border: 'none', background: 'transparent', padding: '3px 0 0',
-          fontSize: 16, fontFamily: 'var(--testo)', color: 'var(--inchiostro)', outline: 'none',
-        }}
-      />
-    </label>
+    <>
+      <div className="pubblica-piede">
+        {indietro && (
+          <button type="button" className="collegamento-piccolo" onClick={indietro}>Indietro</button>
+        )}
+        <button type="button" className="azione azione-piena" aria-disabled={!pronto}
+          onClick={() => pronto && avanti()}>
+          Avanti <SegnoAvanti />
+        </button>
+      </div>
+      {!pronto && manca && <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>{manca}</p>}
+    </>
   )
 }
 
-function Interruttore({ titolo, opzioni, valore, onChange }: {
+function Opzioni({ titolo, opzioni, valore, onCambia }: {
   titolo: string
   opzioni: Array<{ v: string; t: string; n: string }>
   valore: string
-  onChange: (v: string) => void
+  onCambia: (v: string) => void
 }) {
   return (
-    <div style={{ marginBottom: 18 }}>
-      <Etichetta>{titolo}</Etichetta>
-      <div style={{ display: 'grid', gap: 7, marginTop: 9 }}>
+    <div style={{ marginTop: 'var(--s5)' }}>
+      <p className="occhiello">{titolo}</p>
+      <div className="scelte-blocco">
         {opzioni.map((o) => (
-          <button key={o.v} onClick={() => onChange(o.v)} style={{
-            textAlign: 'left', padding: '12px 15px', borderRadius: 'var(--raggio-s)',
-            border: `1px solid ${valore === o.v ? 'var(--accento)' : 'var(--riga)'}`,
-            background: valore === o.v ? 'var(--accento-velo)' : 'var(--superficie)',
-            color: 'var(--inchiostro)',
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{o.t}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--tenue)', marginTop: 2, lineHeight: 1.4 }}>
-              {o.n}
-            </div>
+          <button key={o.v} type="button"
+            className={`opzione${valore === o.v ? ' opzione-scelta' : ''}`}
+            aria-pressed={valore === o.v} onClick={() => onCambia(o.v)}>
+            <span className="opzione-titolo">{o.t}</span>
+            <span className="opzione-nota">{o.n}</span>
           </button>
         ))}
       </div>

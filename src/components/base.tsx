@@ -6,13 +6,13 @@ export function Riquadro({ children, stile, tono = 'neutro' }: {
   tono?: 'neutro' | 'accento' | 'verde' | 'rosso'
 }) {
   const toni = {
-    neutro: { background: 'var(--superficie)', border: '1px solid var(--riga)' },
+    neutro: { background: 'var(--carta)', border: '1px solid var(--riga)' },
     accento: { background: 'var(--accento-velo)', border: '1px solid var(--accento-riga)' },
     verde: { background: 'var(--verde-velo)', border: '1px solid transparent' },
     rosso: { background: 'var(--rosso-velo)', border: '1px solid transparent' },
   }[tono]
   return (
-    <div style={{ borderRadius: 'var(--raggio)', padding: '18px 20px', ...toni, ...stile }}>
+    <div style={{ borderRadius: 'var(--r-l)', padding: 'var(--s5)', ...toni, ...stile }}>
       {children}
     </div>
   )
@@ -33,9 +33,10 @@ export function Bottone({ children, variante = 'pieno', ...resto }: {
       {...resto}
       className="tocco"
       style={{
-        width: '100%', borderRadius: 'var(--raggio-s)', padding: '13px 18px',
-        fontWeight: 600, fontSize: 16, letterSpacing: '-.01em',
+        width: '100%', borderRadius: 999, padding: '14px 22px',
+        fontWeight: 600, fontSize: 16, letterSpacing: '-.012em',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        transition: 'transform .12s ease, background .16s ease',
         ...varianti[variante], ...resto.style,
       }}
     >

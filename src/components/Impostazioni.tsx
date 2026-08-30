@@ -44,7 +44,7 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   }
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '24px 20px 40px' }}>
+    <main className="schermo-stretto">
       <h1 style={{ fontSize: 26, marginBottom: 24 }}>Impostazioni</h1>
 
       <div style={{ marginBottom: 28 }}>

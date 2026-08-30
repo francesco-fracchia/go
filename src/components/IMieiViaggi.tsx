@@ -1,14 +1,27 @@
-import { Riquadro, Etichetta, euro } from './base.tsx'
+'use client'
+import { useState } from 'react'
+import { euro } from './base.tsx'
+import { SegnoAvanti } from './segni.tsx'
+import { quando } from '../lib/tempo.ts'
+import type { Modo } from '../server/modo.ts'
 
 /**
  * I miei viaggi.
  *
- * Mancava, ed era il buco più grande del prodotto: si poteva prenotare e poi
- * non ritrovare più la prenotazione. L'unico modo di tornarci era la
- * notifica — che si può cancellare, non arrivare, o essere già stata letta.
+ * Prima era un elenco solo, con il ruolo scritto in grigio a tredici pixel:
+ * «guidi tu». È l'informazione più importante della riga — decide cosa puoi
+ * fare, cosa ti aspetta, se stai per pagare o per incassare — e stava nel
+ * posto dove si guarda per ultimo.
  *
- * L'ordine è cronologico crescente per i viaggi futuri: quello che parte
- * prima sta in cima, perché è quello di cui ci si preoccupa adesso.
+ * Adesso sono due schede. Non un filtro: due elenchi, ciascuno con le sue
+ * parole. In quello da passeggero i numeri sono quello che paghi; in quello
+ * da conducente sono quello che rientra, e le righe hanno i posti liberi.
+ * La scheda aperta è quella della modalità in cui stai — se stai guidando,
+ * le tue corse sono la prima cosa che vedi.
+ *
+ * Le cose in sospeso restano in cima a tutt'e due: sono la ragione per cui
+ * questa schermata esiste, e sono le sole che non possono aspettare che tu
+ * scelga la scheda giusta.
  */
 
 export interface Viaggio {
@@ -25,106 +38,170 @@ export interface Viaggio {
    */
   importoCent: number | null
   altri: number
+  postiLiberi?: number
   daFare?: string
 }
 
-export function IMieiViaggi({ prossimi, passati }: {
+export function IMieiViaggi({ prossimi, passati, modo = 'passeggero' }: {
   prossimi: Viaggio[]
   passati: Viaggio[]
+  modo?: Modo
 }) {
-  if (prossimi.length === 0 && passati.length === 0) {
-    return (
-      <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 24, marginBottom: 10 }}>Nessun viaggio</h1>
-        <p style={{ color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
-          Quando prenoti o pubblichi un passaggio lo trovi qui.
-        </p>
-        <a href="/" style={{ fontWeight: 600 }}>Cerca un passaggio →</a>
-      </main>
-    )
-  }
+  const [scheda, setScheda] = useState<Viaggio['ruolo']>(modo)
+  const tutti = [...prossimi, ...passati]
+  const daFare = prossimi.filter((v) => v.daFare)
+
+  const conta = (r: Viaggio['ruolo']) => tutti.filter((v) => v.ruolo === r).length
+  const futuri = prossimi.filter((v) => v.ruolo === scheda)
+  const fatti = passati.filter((v) => v.ruolo === scheda)
+
+  if (tutti.length === 0) return <Nessuno modo={modo} />
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
-      <h1 style={{ fontSize: 26, marginBottom: 22 }}>I tuoi viaggi</h1>
+    <div className="fascia">
+      <div className="dentro dentro-app viaggi-dentro">
+        <h1 className="t-titolo">I miei viaggi</h1>
 
-      {prossimi.length > 0 && (
-        <section style={{ marginBottom: 30 }}>
-          <Etichetta>in programma</Etichetta>
-          <div className="griglia-elenco" style={{ display: 'grid', gap: 10, marginTop: 10 }}>
-            {prossimi.map((v) => <Riga key={v.id} v={v} />)}
-          </div>
-        </section>
-      )}
+        {/* ── Quello che devi fare TU, di qualunque ruolo sia ── */}
+        {daFare.length > 0 && (
+          <section className="viaggi-sospesi">
+            <p className="occhiello occhiello-accento">
+              {daFare.length === 1 ? 'Una cosa da fare' : `${daFare.length} cose da fare`}
+            </p>
+            <div className="pila-s" style={{ marginTop: 'var(--s3)' }}>
+              {daFare.map((v) => (
+                <a key={v.id} href={dove(v)} className="sospeso">
+                  <span className="cresci">
+                    <span className="sospeso-cosa">{v.daFare}</span>
+                    <span className="sospeso-dove">
+                      {v.destinazioneLabel} · {quando(v.oraPartenza)}
+                      {v.ruolo === 'conducente' ? ' · guidi tu' : ''}
+                    </span>
+                  </span>
+                  <SegnoAvanti />
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {passati.length > 0 && (
-        <section>
-          <Etichetta>già fatti</Etichetta>
-          <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
-            {passati.map((v) => <Riga key={v.id} v={v} passato />)}
+        <div className="segmenti viaggi-schede" role="group" aria-label="Ruolo">
+          <button type="button" className="segmento" aria-pressed={scheda === 'passeggero'}
+            onClick={() => setScheda('passeggero')}>
+            Come passeggero <span className="segmento-conta">{conta('passeggero')}</span>
+          </button>
+          <button type="button" className="segmento" aria-pressed={scheda === 'conducente'}
+            onClick={() => setScheda('conducente')}>
+            Come conducente <span className="segmento-conta">{conta('conducente')}</span>
+          </button>
+        </div>
+
+        {futuri.length === 0 && fatti.length === 0 ? (
+          <VuotoScheda ruolo={scheda} />
+        ) : (
+          <div className="pila" style={{ gap: 'var(--s7)' }}>
+            {futuri.length > 0 && (
+              <section>
+                <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>In programma</p>
+                <div className="griglia-elenco">
+                  {futuri.map((v) => <Carta key={v.id} v={v} />)}
+                </div>
+              </section>
+            )}
+            {fatti.length > 0 && (
+              <section>
+                <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Già fatti</p>
+                <div className="griglia-elenco">
+                  {fatti.map((v) => <Carta key={v.id} v={v} passato />)}
+                </div>
+              </section>
+            )}
           </div>
-        </section>
-      )}
-    </main>
+        )}
+      </div>
+    </div>
   )
 }
 
-function Riga({ v, passato }: { v: Viaggio; passato?: boolean }) {
-  const dove = v.ruolo === 'conducente' ? `/corsa/${v.id}` : `/prenotazione/${v.id}`
-  return (
-    <a href={dove} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <Riquadro stile={{ padding: '15px 17px', opacity: passato ? 0.72 : 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, color: 'var(--tenue)', marginBottom: 2 }}>
-              {quando(v.oraPartenza)} · {v.ruolo === 'conducente' ? 'guidi tu' : 'passeggero'}
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--titoli)', lineHeight: 1.3 }}>
-              {v.destinazioneLabel}
-            </div>
-            <div style={{ fontSize: 13.5, color: 'var(--tenue)' }}>
-              da {v.origineLabel}
-              {v.altri > 0 && ` · con altre ${v.altri} ${v.altri === 1 ? 'persona' : 'persone'}`}
-            </div>
-          </div>
-          {v.importoCent !== null && (
-            <div style={{ flexShrink: 0, textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 15 }}>
-                {euro(v.importoCent)}
-              </div>
-              {v.ruolo === 'conducente' && (
-                <div style={{ fontSize: 11.5, color: 'var(--tenue)', marginTop: 1 }}>
-                  ti rientrano
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+const dove = (v: Viaggio) =>
+  v.ruolo === 'conducente' ? `/corsa/${v.id}` : `/prenotazione/${v.id}`
 
-        {/* Quello che devi fare TU, se c'è qualcosa. È la ragione per cui
-            questa schermata esiste: raccoglie in un posto solo tutte le
-            cose in sospeso, che altrimenti vivono solo nelle notifiche. */}
-        {v.daFare && (
-          <div style={{
-            marginTop: 12, padding: '10px 13px', borderRadius: 'var(--raggio-s)',
-            background: 'var(--accento-velo)', color: 'var(--accento)',
-            fontSize: 13.5, fontWeight: 600,
-          }}>{v.daFare}</div>
+function Carta({ v, passato }: { v: Viaggio; passato?: boolean }) {
+  const guida = v.ruolo === 'conducente'
+  return (
+    <a href={dove(v)} className="corsa-carta carta-tocco"
+      style={passato ? { opacity: .68 } : undefined}>
+      <div className="fila-fra">
+        <span className="corsa-quando">{quando(v.oraPartenza)}</span>
+        {guida && v.postiLiberi !== undefined && !passato && (
+          v.postiLiberi === 0
+            ? <span className="pastiglia pastiglia-verde">piena</span>
+            : <span className="pastiglia">{v.postiLiberi} {v.postiLiberi === 1 ? 'posto' : 'posti'}</span>
         )}
-      </Riquadro>
+      </div>
+      <div className="corsa-dove">{v.destinazioneLabel}</div>
+      <div className="corsa-da">da {v.origineLabel}</div>
+      <div className="corsa-piede">
+        <span className="corsa-persone">
+          {guida
+            ? v.altri === 0 ? 'ancora nessuno' : `${v.altri} ${v.altri === 1 ? 'persona' : 'persone'} a bordo`
+            : v.altri > 0 ? `con altre ${v.altri}` : 'ti porta qualcun altro'}
+        </span>
+        {v.importoCent !== null && (
+          <span className="corsa-rientro">
+            <span className="numero">{euro(v.importoCent)}</span>
+            <span className="corsa-rientro-nota">{guida ? 'ti rientrano' : 'hai pagato'}</span>
+          </span>
+        )}
+      </div>
     </a>
   )
 }
 
-function quando(iso: string): string {
-  const d = new Date(iso)
-  const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-  const giorni = Math.round(
-    (new Date(d.toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
+function VuotoScheda({ ruolo }: { ruolo: Viaggio['ruolo'] }) {
+  return (
+    <div className="vuoto">
+      <h2 className="t-sezione">
+        {ruolo === 'conducente'
+          ? 'Non hai ancora pubblicato niente'
+          : 'Non hai ancora prenotato niente'}
+      </h2>
+      <p className="vuoto-testo" style={{ marginTop: 'var(--s3)' }}>
+        {ruolo === 'conducente'
+          ? 'Quando pubblichi un viaggio lo trovi qui, con chi ha prenotato e quanto ti rientra.'
+          : 'Quando prenoti un passaggio lo trovi qui, con l’ora, il punto di ritrovo e chi guida.'}
+      </p>
+      <a href={ruolo === 'conducente' ? '/pubblica' : '/'} className="azione azione-piena"
+        style={{ marginTop: 'var(--s5)' }}>
+        {ruolo === 'conducente' ? 'Pubblica un viaggio' : 'Cerca un passaggio'}
+        <SegnoAvanti />
+      </a>
+    </div>
   )
-  if (giorni === 0) return `oggi · ${ora}`
-  if (giorni === 1) return `domani · ${ora}`
-  if (giorni === -1) return `ieri · ${ora}`
-  if (giorni > 1 && giorni < 7) return `${d.toLocaleDateString('it-IT', { weekday: 'long' })} · ${ora}`
-  return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} · ${ora}`
+}
+
+function Nessuno({ modo }: { modo: Modo }) {
+  return (
+    <div className="fascia">
+      <div className="dentro dentro-app viaggi-dentro">
+        <h1 className="t-titolo">I miei viaggi</h1>
+        <div className="vuoto" style={{ marginTop: 'var(--s5)' }}>
+          <h2 className="t-sezione">Ancora niente</h2>
+          <p className="vuoto-testo" style={{ marginTop: 'var(--s3)' }}>
+            Qui finiscono i viaggi che prenoti e quelli che pubblichi, tenuti
+            separati. Quando ce n&apos;è uno, questa schermata ti dice cosa devi
+            fare e quando.
+          </p>
+          <div className="azioni" style={{ marginTop: 'var(--s5)' }}>
+            <a href="/" className="azione azione-piena">
+              {modo === 'conducente' ? 'Vai alla tua area' : 'Cerca un passaggio'}
+            </a>
+            <a href={modo === 'conducente' ? '/pubblica' : '/posti'} className="azione azione-vuota">
+              {modo === 'conducente' ? 'Pubblica un viaggio' : 'Guarda dove si va'}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

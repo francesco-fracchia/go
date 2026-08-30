@@ -40,7 +40,7 @@ export function Recensione({ prenotazione, nome }: { prenotazione: string; nome:
   const disponibili = positiva === null ? [] : positiva ? TAG_BENE : TAG_MALE
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main className="schermo-stretto">
       <h1 style={{ fontSize: 26, marginBottom: 22 }}>Com&apos;è andata con {nome}?</h1>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>

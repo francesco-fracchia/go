@@ -1,4 +1,5 @@
-import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
+import { Riquadro, Etichetta, euro } from './base.tsx'
+import { giorno, orario } from '../lib/tempo.ts'
 import { AzioniConducente, RispondiProposta } from './AzioniConducente.tsx'
 import { Invita } from './Invita.tsx'
 import { InViaggio } from './InViaggio.tsx'
@@ -6,6 +7,13 @@ import { QuotePersonalizzate } from './QuotePersonalizzate.tsx'
 
 /**
  * La corsa vista da chi guida.
+ *
+ * Due colonne sulla scrivania: a sinistra quello che si guarda («chi c'è a
+ * bordo, chi ha chiesto, dove passo»), a destra quello che si fa e il
+ * numero — appiccicato in alto mentre si scorre il resto. Prima erano una
+ * pila sola larga 460 pixel: su un portatile il conto e le azioni finivano
+ * sotto la piega, e questa è la schermata dove chi guida deve rispondere in
+ * fretta.
  *
  * Il momento che questa schermata esiste per risolvere è uno solo: la
  * conferma a tre ore dalla partenza. Se il conducente non conferma, a
@@ -60,10 +68,21 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const minutiAllaPartenza = (new Date(c.oraPartenza).getTime() - Date.now()) / 60_000
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 40px' }}>
+    <div className="fascia"><div className="dentro dentro-app dettaglio-dentro">
+
+      <div className="dettaglio-testa">
+        <p className="occhiello">{giorno(c.oraPartenza)} · guidi tu</p>
+        <h1 className="t-titolo" style={{ marginTop: 'var(--s2)' }}>{c.destinazioneLabel}</h1>
+        <p className="t-guida" style={{ marginTop: 'var(--s2)' }}>
+          Parti alle {orario(c.oraPartenza)} da {c.origineLabel}
+        </p>
+      </div>
+
+      <div className="dettaglio-corpo">
+      <div className="pila" style={{ gap: 'var(--s5)' }}>
       {/* ── La conferma. Prima di tutto, se serve. ── */}
       {c.daConfermare && (
-        <Riquadro tono="accento" stile={{ marginBottom: 18 }}>
+        <Riquadro tono="accento">
           <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--titoli)' }}>
             Confermi?
           </div>
@@ -81,7 +100,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
 
       {/* ── Le proposte: scadono, quindi vengono prima del resto ── */}
       {c.proposte.length > 0 && (
-        <section style={{ marginBottom: 18 }}>
+        <section>
           <Etichetta tono="accento">
             {c.proposte.length === 1 ? 'una richiesta' : `${c.proposte.length} richieste`}
           </Etichetta>
@@ -95,14 +114,14 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           Nella mezz'ora prima della partenza tutto il resto arretra: quello
           che serve è il navigatore e niente altro. */}
       {c.tappe && c.tappe.length >= 2 && minutiAllaPartenza <= 30 && (
-        <section style={{ marginBottom: 18 }}>
+        <section>
           <InViaggio corsa={c.id} tappe={c.tappe}
             prossimoRitiro={c.tappe[1]} />
         </section>
       )}
 
       {/* ── Il viaggio ── */}
-      <Riquadro stile={{ marginBottom: 14 }}>
+      <Riquadro>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
           <div style={{ minWidth: 0 }}>
             <Etichetta>parti alle</Etichetta>
@@ -194,7 +213,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
 
       {/* Fra amici le spese si dividono come vuole il gruppo. */}
       {c.modalita === 'privata' && c.passeggeri.length > 0 && (
-        <section style={{ marginTop: 24 }}>
+        <section>
           <QuotePersonalizzate
             corsa={c.id}
             tettoCent={c.tettoCent}
@@ -204,7 +223,47 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           />
         </section>
       )}
-    </main>
+      </div>
+
+      {/* ══ Il conto, sempre accanto ══
+          È la domanda che chi guida si fa ogni volta che apre la corsa:
+          quanto mi resta addosso di quello che spendo. */}
+      <aside className="colonna-azione">
+        <div className="scatola-prezzo">
+          <p className="occhiello">Ti resta a carico</p>
+          <div className="numero prezzo-grande">{euro(restaACarico)}</div>
+          <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
+            su {euro(c.costoCent)} che ti costa il viaggio.
+            {c.rientroNettoCent > 0 && ` Ti rientrano ${euro(c.rientroNettoCent)}.`}
+          </p>
+
+          <div className="conto-riga" />
+
+          <div className="fila-fra" style={{ marginTop: 'var(--s4)' }}>
+            <span className="conto-etichetta">A bordo</span>
+            <span className="conto-piccola">
+              {c.passeggeri.length}/{c.postiOfferti}
+            </span>
+          </div>
+
+          {liberi > 0 && (
+            <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+              Ogni persona in più sono{' '}
+              {euro(Math.floor(c.costoCent / (c.postiOfferti + 1)))} che non
+              paghi tu.
+            </p>
+          )}
+
+          {c.passeggeri.length > 0 && (
+            <a href={`/chat/${c.id}`} className="azione azione-vuota"
+              style={{ width: '100%', marginTop: 'var(--s4)' }}>
+              Scrivi a chi sale
+            </a>
+          )}
+        </div>
+      </aside>
+      </div>
+    </div></div>
   )
 }
 
@@ -261,5 +320,3 @@ function CartaProposta({ p }: { p: Proposta }) {
   )
 }
 
-const orario = (iso: string) =>
-  new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })

@@ -5,6 +5,7 @@ export const revalidate = 120
 
 const CASA = { lat: 45.3142, lng: 9.5033 }
 
+import { guscio } from '../../server/guscio.ts'
 import { Telaio } from '../../components/Telaio.tsx'
 
 export default async function Pagina({ searchParams }: {
@@ -23,5 +24,10 @@ export default async function Pagina({ searchParams }: {
     })
   } catch { /* si mostra il vuoto */ }
 
-  return <Telaio larga attiva="/posti"><Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} /></Telaio>
+  const g = await guscio()
+  return (
+    <Telaio attiva="/posti" {...g}>
+      <Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} modo={g.modo} />
+    </Telaio>
+  )
 }

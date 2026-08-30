@@ -5,10 +5,12 @@ import { preventivo, type Corsa } from '../../lib/pricing.ts'
 
 export const dynamic = 'force-dynamic'
 
+import { guscio } from '../../server/guscio.ts'
 import { Telaio } from '../../components/Telaio.tsx'
 
 export default async function Pagina() {
   const utente = await richiediUtente()
+  const g = await guscio()
   const adesso = Date.now()
 
   const [{ data: prenotazioni }, { data: guidate }] = await Promise.all([
@@ -87,6 +89,7 @@ export default async function Pagina() {
       destinazioneLabel: c.destinazione_label,
       importoCent: rientro,
       altri: aBordo.length,
+      postiLiberi: Math.max(0, c.posti_offerti - aBordo.length),
       daFare: proposte > 0
         ? `${proposte} ${proposte === 1 ? 'richiesta' : 'richieste'} da guardare`
         : c.stato === 'pubblicata' && minuti <= 180 && minuti > 0 && attive.length > 0
@@ -107,7 +110,7 @@ export default async function Pagina() {
     .filter((v) => new Date(v.oraPartenza).getTime() <= adesso - 3 * 3600_000)
     .sort((a, b) => new Date(b.oraPartenza).getTime() - new Date(a.oraPartenza).getTime())
 
-  return <Telaio larga attiva="/viaggi"><IMieiViaggi prossimi={futuri} passati={passati} /></Telaio>
+  return <Telaio attiva="/viaggi" {...g}><IMieiViaggi prossimi={futuri} passati={passati} modo={g.modo} /></Telaio>
 }
 
 interface RigaCorsa {

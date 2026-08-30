@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Etichetta } from './base.tsx'
 import type { Categoria, Posto } from '../server/posti.ts'
+import type { Modo } from '../server/modo.ts'
 
 /**
  * Dove si va.
@@ -14,6 +14,11 @@ import type { Categoria, Posto } from '../server/posti.ts'
  * Da ogni posto partono due azioni, una per lato del mercato:
  *   chi guida       pubblica una corsa già compilata verso quel posto
  *   chi cerca       vede i passaggi che ci vanno, o si mette in lista
+ *
+ * Ci sono tutt'e due sempre, ma quella in evidenza dipende dalla modalità:
+ * a chi sta cercando un posto non si mette davanti «ci vado io». Sono le
+ * stesse due azioni, in ordine diverso — ed è l'ordine a dire di chi è
+ * questa schermata in questo momento.
  *
  * L'ordine non è per fama — OpenStreetMap non sa quanto un posto sia
  * frequentato e non fingiamo di saperlo. È per quante corse ci vanno SU GO,
@@ -37,9 +42,10 @@ const CATEGORIE: Array<{ v: Categoria | 'tutte'; t: string }> = [
   { v: 'palestra', t: 'Palestre' },
 ]
 
-export function Posti({ iniziali, categoriaIniziale }: {
+export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
   iniziali: Posto[]
   categoriaIniziale?: Categoria
+  modo?: Modo
 }) {
   const [categoria, setCategoria] = useState<Categoria | 'tutte'>(categoriaIniziale ?? 'tutte')
   const [posti, setPosti] = useState(iniziali)
@@ -142,157 +148,119 @@ export function Posti({ iniziali, categoriaIniziale }: {
   }
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '20px 0 40px' }}>
-      <div style={{ padding: '0 20px' }}>
-        <h1 style={{ fontSize: 26, marginBottom: 6 }}>Dove si va</h1>
-        <p style={{ margin: '0 0 18px', color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.55 }}>
-          I posti qui intorno. Scegline uno: se qualcuno ci va lo vedi, se
-          nessuno ci va puoi dirlo.
-        </p>
-        {!vicino && (
-          <button onClick={usaPosizione} disabled={caricando} style={{
-            background: 'none', border: 'none', color: 'var(--accento)',
-            fontSize: 14, fontWeight: 600, padding: '0 0 10px',
-          }}>{caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}</button>
-        )}
-        {problema && (
-          <p style={{
-            fontSize: 13.5, color: 'var(--inchiostro-2)', lineHeight: 1.5,
-            margin: '0 0 14px', maxWidth: '46ch',
-          }}>{problema}</p>
-        )}
-        {vicino && (
-          <p style={{ fontSize: 13.5, color: 'var(--verde)', margin: '0 0 14px' }}>
-            Ordinati dalla tua posizione.
-          </p>
-        )}
-      </div>
+    <div className="fascia">
+      <div className="dentro dentro-app posti-dentro">
+        <header className="posti-testa">
+          <div className="cresci">
+            <h1 className="t-titolo">Dove si va</h1>
+            <p className="t-guida" style={{ marginTop: 'var(--s3)', maxWidth: '44ch' }}>
+              {modo === 'conducente'
+                ? 'I posti qui intorno. Se qualcuno ci sta cercando un passaggio lo vedi, e puoi pubblicare la corsa in due tocchi.'
+                : 'I posti qui intorno. Scegline uno: se qualcuno ci va lo vedi, se nessuno ci va puoi dirlo.'}
+            </p>
+          </div>
+          {!vicino && (
+            <button type="button" className="azione azione-vuota azione-piccola"
+              onClick={usaPosizione} disabled={caricando}>
+              {caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}
+            </button>
+          )}
+          {vicino && <span className="pastiglia pastiglia-verde">dalla tua posizione</span>}
+        </header>
 
-      {/* Le categorie scorrono in orizzontale: su un telefono una griglia di
-          dodici voci occupa mezzo schermo prima di mostrare un solo posto. */}
-      <div style={{
-        display: 'flex', gap: 8, overflowX: 'auto', padding: '0 20px 16px',
-        scrollbarWidth: 'none',
-      }}>
-        {CATEGORIE.map((c) => (
-          <button key={c.v} onClick={() => cambia(c.v)} style={{
-            flexShrink: 0, fontSize: 14, padding: '9px 15px', borderRadius: 999,
-            border: `1px solid ${categoria === c.v ? 'transparent' : 'var(--riga)'}`,
-            background: categoria === c.v ? 'var(--accento)' : 'var(--superficie)',
-            color: categoria === c.v ? 'var(--su-accento)' : 'var(--inchiostro)',
-            fontWeight: categoria === c.v ? 600 : 400, whiteSpace: 'nowrap',
-          }}>{c.t}</button>
-        ))}
-      </div>
+        {problema && <p className="t-corpo" style={{ maxWidth: '48ch' }}>{problema}</p>}
 
-      <div style={{ padding: '0 20px' }}>
-        {caricando && (
-          <p style={{ color: 'var(--tenue)', fontSize: 14 }}>Un attimo…</p>
-        )}
+        {/* Le categorie scorrono in orizzontale: su un telefono una griglia
+            di dodici voci occupa mezzo schermo prima di mostrare un posto. */}
+        <div className="scelte" role="group" aria-label="Categoria">
+          {CATEGORIE.map((c) => (
+            <button key={c.v} type="button"
+              className={`scelta${categoria === c.v ? ' scelta-attiva' : ''}`}
+              aria-pressed={categoria === c.v}
+              onClick={() => cambia(c.v)}>{c.t}</button>
+          ))}
+        </div>
+
+        {caricando && <p className="t-nota">Un attimo…</p>}
 
         {/* Mentre si guarda si dice cosa si sta facendo, non «caricamento»:
             la prima apertura di una zona nuova ci mette qualche secondo, e
             una rotellina muta fa pensare che sia rotto. */}
         {importando && posti.length === 0 && (
-          <p style={{ color: 'var(--tenue)', fontSize: 14.5, lineHeight: 1.6, maxWidth: '46ch' }}>
+          <p className="t-corpo" style={{ maxWidth: '48ch' }}>
             Stiamo guardando cosa c&apos;è qui intorno. È la prima volta che
-            qualcuno apre questa zona — ci vuole qualche secondo, e poi
-            resta.
+            qualcuno apre questa zona — ci vuole qualche secondo, e poi resta.
           </p>
         )}
 
         {!caricando && !importando && posti.length === 0 && (
-          <p style={{ color: 'var(--tenue)', fontSize: 14.5, lineHeight: 1.6, maxWidth: '46ch' }}>
-            Qui intorno non abbiamo trovato niente. Prova a spostarti con
-            «usa la mia posizione», oppure cerca direttamente per indirizzo.
-          </p>
+          <div className="vuoto">
+            <h2 className="t-sezione">Qui intorno non abbiamo trovato niente</h2>
+            <p className="vuoto-testo" style={{ marginTop: 'var(--s3)' }}>
+              Prova a spostarti con «usa la mia posizione», oppure cerca
+              direttamente per indirizzo.
+            </p>
+          </div>
         )}
 
-        <div className="griglia-elenco" style={{ display: 'grid', gap: 10 }}>
-          {posti.map((p) => <Carta key={p.id} p={p} />)}
+        <div className="griglia-elenco">
+          {posti.map((p) => <Carta key={p.id} p={p} modo={modo} />)}
         </div>
 
         {posti.length > 0 && (
-          <p style={{
-            fontSize: 11.5, color: 'var(--tenue)', margin: '24px 0 0',
-            lineHeight: 1.5,
-          }}>
+          <p className="t-nota" style={{ fontSize: 11.5 }}>
             Dati dei luoghi © contributori OpenStreetMap, licenza ODbL.
           </p>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 
-function Carta({ p }: { p: Posto }) {
+function Carta({ p, modo }: { p: Posto; modo: Modo }) {
   const km = p.distanzaM / 1000
   const distanza = km < 1
-    ? `${Math.round(p.distanzaM / 100) * 100} m`
+    ? `${Math.max(50, Math.round(p.distanzaM / 50) * 50)} m`
     : `${km.toFixed(km < 10 ? 1 : 0).replace('.', ',')} km`
 
   const versoIl = new URLSearchParams({
     dlat: String(p.lat), dlng: String(p.lng), dove: p.nome, cat: p.categoria,
   })
 
+  const cerca = { href: `/cerca?${versoIl}`, t: p.corse > 0 ? 'Vedi i passaggi' : 'Cerca un passaggio' }
+  const offro = { href: `/pubblica?${versoIl}`, t: 'Ci vado io' }
+  const [prima, poi] = modo === 'conducente' ? [offro, cerca] : [cerca, offro]
+
   return (
-    <div style={{
-      border: '1px solid var(--riga)', borderRadius: 'var(--raggio)',
-      background: 'var(--superficie)', padding: '15px 17px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 16.5, fontWeight: 600, fontFamily: 'var(--titoli)', lineHeight: 1.3 }}>
-            {p.nome}
-          </div>
-          <div style={{ fontSize: 13.5, color: 'var(--tenue)', marginTop: 2 }}>
-            {[p.citta, distanza].filter(Boolean).join(' · ')}
-          </div>
+    <div className="posto-carta">
+      <div className="fila-fra" style={{ alignItems: 'flex-start' }}>
+        <div className="cresci">
+          <div className="posto-titolo">{p.nome}</div>
+          <div className="t-nota">{[p.citta, distanza].filter(Boolean).join(' · ')}</div>
         </div>
-        <div style={{ flexShrink: 0, textAlign: 'right' }}>
-          {p.corse > 0 ? (
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--verde)' }}>
+        {p.corse > 0
+          ? <span className="pastiglia pastiglia-verde">
               {p.corse} {p.corse === 1 ? 'passaggio' : 'passaggi'}
             </span>
-          ) : p.richieste > 0 ? (
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accento)' }}>
-              {p.richieste} {p.richieste === 1 ? 'cerca' : 'cercano'}
-            </span>
-          ) : (
-            <span style={{ fontSize: 13.5, color: 'var(--tenue)' }}>nessuno</span>
-          )}
-        </div>
+          : p.richieste > 0
+            ? <span className="pastiglia pastiglia-viola">
+                {p.richieste} {p.richieste === 1 ? 'cerca' : 'cercano'}
+              </span>
+            : <span className="pastiglia">nessuno ancora</span>}
       </div>
 
       {/* Chi cerca qualcuno che lo porti è l'informazione che fa pubblicare
           un conducente: vale più di «ci vanno già in quattro». */}
       {p.richieste > 0 && p.corse > 0 && (
-        <div style={{ fontSize: 13, color: 'var(--accento)', marginTop: 6 }}>
+        <p className="posto-cercano">
           e {p.richieste} {p.richieste === 1 ? 'persona cerca' : 'persone cercano'} un passaggio
-        </div>
+        </p>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
-        <a href={`/cerca?${versoIl}`} style={{ flex: 1, textDecoration: 'none' }}>
-          <Azione testo={p.corse > 0 ? 'Vedi i passaggi' : 'Cerca un passaggio'} />
-        </a>
-        <a href={`/pubblica?${versoIl}`} style={{ flex: 1, textDecoration: 'none' }}>
-          <Azione testo="Ci vado io" primaria />
-        </a>
+      <div className="posto-azioni">
+        <a href={prima.href} className="azione azione-piena azione-piccola">{prima.t}</a>
+        <a href={poi.href} className="azione azione-vuota azione-piccola">{poi.t}</a>
       </div>
     </div>
-  )
-}
-
-function Azione({ testo, primaria }: { testo: string; primaria?: boolean }) {
-  return (
-    <div className="tocco" style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      borderRadius: 'var(--raggio-s)', padding: '11px 8px',
-      border: `1px solid ${primaria ? 'transparent' : 'var(--riga)'}`,
-      background: primaria ? 'var(--accento)' : 'var(--carta)',
-      color: primaria ? 'var(--su-accento)' : 'var(--inchiostro)',
-      fontSize: 14.5, fontWeight: 600, textAlign: 'center',
-    }}>{testo}</div>
   )
 }

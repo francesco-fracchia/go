@@ -1,4 +1,3 @@
-import { Marchio } from './Marchio.tsx'
 import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
 import { ContoAllaRovescia } from './ContoAllaRovescia.tsx'
 import { EsitoViaggio } from './EsitoViaggio.tsx'
@@ -57,13 +56,11 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
   const daSegnalare = arrivata && p.esito === 'atteso'
 
   return (
-    <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '18px 20px 60px' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-        <Marchio dimensione={30} />
-        <Etichetta tono={saltata ? 'tenue' : 'tenue'}>
-          {saltata ? 'annullato' : p.stato === 'richiesta' ? 'in attesa' : 'prenotato'}
-        </Etichetta>
-      </header>
+    <main className="schermo-stretto">
+      {/* Il marchio sta in barra: qui basta lo stato. */}
+      <p className="occhiello" style={{ marginBottom: 'var(--s5)' }}>
+        {saltata ? 'annullato' : p.stato === 'richiesta' ? 'in attesa' : 'prenotato'}
+      </p>
 
       <Intestazione stato={p.stato} arrivata={arrivata} nome={conducente?.nome ?? 'il conducente'} />
 
