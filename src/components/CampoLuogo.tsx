@@ -60,6 +60,8 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
   const [cercando, setCercando] = useState(false)
   const attesa = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [mappaAperta, setMappaAperta] = useState(false)
+  const [salvaCome, setSalvaCome] = useState(false)
+  const [salvato, setSalvato] = useState(false)
 
   /**
    * A campo vuoto e appena toccato si mostrano i luoghi salvati.
@@ -182,6 +184,56 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
             </li>
           ))}
         </ul>
+      )}
+
+      {/*
+        Salvare si offre QUI, non nelle impostazioni.
+        Nessuno va in un menu ad aggiungere casa propria: lo si fa nel
+        momento in cui l'indirizzo lo si è appena scritto, e solo se non è
+        già salvato — offrirlo su un posto che si conosce già è rumore.
+      */}
+      {valore && valore.fonte !== 'salvato' && !salvato && (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', paddingTop: 6 }}>
+          {salvaCome ? (
+            <>
+              <span style={{ fontSize: 13, color: 'var(--tenue)' }}>Salva come</span>
+              {([['casa', 'Casa'], ['lavoro', 'Lavoro']] as const).map(([tipo, nome]) => (
+                <button key={tipo} type="button"
+                  onClick={async () => {
+                    await fetch('/api/preferiti', {
+                      method: 'POST', headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({
+                        etichetta: nome, indirizzo: valore.etichetta,
+                        lat: valore.lat, lng: valore.lng, tipo,
+                      }),
+                    })
+                    setSalvato(true); setSalvaCome(false)
+                  }}
+                  style={{
+                    background: 'none', border: 'none', color: 'var(--accento)',
+                    fontSize: 13, fontWeight: 600, padding: '2px 0',
+                  }}>{nome}</button>
+              ))}
+              <button type="button" onClick={() => setSalvaCome(false)}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--tenue)',
+                  fontSize: 13, padding: '2px 0', marginLeft: 'auto',
+                }}>no</button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setSalvaCome(true)}
+              style={{
+                background: 'none', border: 'none', color: 'var(--tenue)',
+                fontSize: 13, padding: '2px 0',
+              }}>★ Salva questo posto</button>
+          )}
+        </div>
+      )}
+
+      {salvato && (
+        <p style={{ fontSize: 13, color: 'var(--verde)', margin: '6px 0 0', paddingLeft: 2 }}>
+          Salvato. Lo trovi al primo tocco, la prossima volta.
+        </p>
       )}
 
       {/* Molti punti di ritrovo non hanno un indirizzo che qualcuno saprebbe

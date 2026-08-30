@@ -314,6 +314,16 @@ I suggerimenti vengono da tre fonti, in quest'ordine:
 3. **gli indirizzi** — la rete di sicurezza, e si chiama solo se le prime due
    non bastano: una chiamata in meno su una quota che finisce
 
+I doppioni fra le fonti si tolgono confrontando la **posizione**, non il
+testo: «Fabrique» e «Fabrique, Milano» sono scritture diverse dello stesso
+punto, e cento metri di tolleranza coprono lo scarto fra come lo
+geolocalizza OpenStreetMap e come lo geolocalizza il geocoder. Vince la fonte
+più ricca, perché porta un nome che l'utente riconosce.
+
+Salvare un posto si offre **subito sotto il campo, appena scelto** — non
+nelle impostazioni. Nessuno va in un menu ad aggiungere casa propria: lo fa
+nel momento in cui l'indirizzo l'ha appena scritto.
+
 ## Le sei invarianti
 
 Non sono linee guida: sono test che rompono la build.

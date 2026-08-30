@@ -87,8 +87,40 @@ export async function suggerisci(
     ? []
     : (DEMO ? luoghiDemo(q) : await geocodifica(q, vicino))
 
-  return [...salvati, ...posti, ...indirizzi].slice(0, 8)
+  return unifica([...salvati, ...posti, ...indirizzi]).slice(0, 8)
 }
+
+/**
+ * Toglie i doppioni fra le tre fonti.
+ *
+ * «Fabrique» esiste sia come posto conosciuto sia come indirizzo: mostrarlo
+ * due volte con due segni diversi fa sembrare l'elenco rotto, e obbliga a
+ * scegliere fra due righe che sono la stessa cosa. Vince la fonte più
+ * ricca — un posto salvato batte un posto conosciuto, che batte un
+ * indirizzo — perché porta un nome che l'utente riconosce.
+ *
+ * Si confronta la POSIZIONE, non il testo: «Fabrique» e «Fabrique, Milano»
+ * sono scritture diverse dello stesso punto, e cento metri di tolleranza
+ * coprono lo scarto fra come lo geolocalizza OpenStreetMap e come lo
+ * geolocalizza il geocoder.
+ */
+function unifica(luoghi: Luogo[]): Luogo[] {
+  const tenuti: Luogo[] = []
+  for (const l of luoghi) {
+    const doppione = tenuti.some((t) => vicini(t, l) || stessoNome(t, l))
+    if (!doppione) tenuti.push(l)
+  }
+  return tenuti
+}
+
+/** Cento metri, in gradi: basta e avanza a queste latitudini. */
+const vicini = (a: Luogo, b: Luogo) =>
+  Math.abs(a.lat - b.lat) < 0.001 && Math.abs(a.lng - b.lng) < 0.0013
+
+const normale = (s: string) =>
+  s.toLowerCase().split(',')[0]!.trim().replace(/\s+/g, ' ')
+
+const stessoNome = (a: Luogo, b: Luogo) => normale(a.etichetta) === normale(b.etichetta)
 
 async function cercaFraSalvati(utenteId: string, q: string): Promise<Luogo[]> {
   const { luoghiSalvati } = await import('./preferiti.ts')
@@ -245,7 +277,14 @@ function luoghiDemo(testo: string): Luogo[] {
   for (const c of t) seme = (seme * 31 + c.charCodeAt(0)) % 100_000
   const scarto = (n: number) => ((seme >> n) % 200 - 100) / 2000
 
-  const bello = testo.trim().replace(/^\w/, (c) => c.toUpperCase())
+  // «via roma 18» → «Via Roma 18»: gli articoli e le preposizioni restano
+  // minuscoli, come si scrivono gli indirizzi in italiano.
+  const minuscole = new Set(['di', 'da', 'del', 'della', 'dei', 'degli', 'delle', 'dal', 'e', 'a', 'in'])
+  const bello = testo.trim().split(/\s+/)
+    .map((w, i) => (i > 0 && minuscole.has(w.toLowerCase()))
+      ? w.toLowerCase()
+      : w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
   return [{
     etichetta: bello.includes(',') ? bello : `${bello}, Lodi`,
     lat: 45.3142 + scarto(0),

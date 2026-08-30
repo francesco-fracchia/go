@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Etichetta } from './base.tsx'
 import { Carta, MetodoSalvato } from './Carta.tsx'
+import { LuoghiSalvati, type Salvato } from './LuoghiSalvati.tsx'
 
 /**
  * Impostazioni.
@@ -16,6 +17,8 @@ export interface DatiImpostazioni {
   push: boolean
   sms: boolean
   metodo: { marchio: string; ultime4: string | null } | null
+  luoghi: Salvato[]
+  mappa: boolean
 }
 
 export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
@@ -43,6 +46,10 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   return (
     <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '24px 20px 40px' }}>
       <h1 style={{ fontSize: 26, marginBottom: 24 }}>Impostazioni</h1>
+
+      <div style={{ marginBottom: 28 }}>
+        <LuoghiSalvati iniziali={iniziali.luoghi} mappa={iniziali.mappa} />
+      </div>
 
       <Etichetta>come ti raggiungiamo</Etichetta>
       <div style={{ margin: '10px 0 24px' }}>
