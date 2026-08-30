@@ -77,7 +77,10 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
             ? 'Nessun viaggio ancora'
             : `${p.corseConcluse} ${p.corseConcluse === 1 ? 'viaggio' : 'viaggi'} portati a termine`}
         </div>
-        <Verifica ok={p.telefonoOk} testo="Numero di telefono verificato" />
+        <Verifica ok={p.telefonoOk} testo="Numero di telefono verificato"
+          nota={!p.telefonoOk
+            ? (mio ? 'serve per pubblicare — lo aggiungi quando ti serve' : 'non ancora')
+            : undefined} />
         <Verifica ok={p.emailOk} testo="Email confermata" />
         <Verifica ok={p.documentoOk} testo="Documento verificato"
           nota={!p.documentoOk ? 'lo verifica Stripe su chi incassa' : undefined} />

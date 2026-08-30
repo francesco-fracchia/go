@@ -24,7 +24,8 @@ export class ErroreProfilo extends Error {
 
 export interface Registrazione {
   id: string
-  telefono: string
+  /** assente quando si entra con l'email: si chiederà dove serve */
+  telefono?: string
   nome: string
   cognome: string
   email?: string
@@ -45,8 +46,11 @@ export async function creaProfilo(r: Registrazione) {
 
   const { data, error } = await db.from('profili').insert({
     id: r.id,
-    telefono: r.telefono,
-    telefono_ok: true,
+    // Il numero c'è solo se la verifica via SMS è andata a buon fine: è
+    // quello che gli altri leggono per decidere se fidarsi, e non si
+    // mette a mano.
+    telefono: r.telefono ?? null,
+    telefono_ok: !!r.telefono,
     email: r.email ?? null,
     email_ok: !!r.email,
     nome: r.nome.trim(),

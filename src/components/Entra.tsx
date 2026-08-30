@@ -92,9 +92,9 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         nome, cognome,
-        // Senza numero si registra un segnaposto: lo si chiederà davvero
-        // prima di pubblicare o prenotare, dove serve.
-        telefono: via === 'telefono' ? numeroPulito() : `email:${indirizzo.trim()}`,
+        // Entrando con l'email il numero non c'è, e non se ne inventa uno:
+        // lo si chiede prima di pubblicare o prenotare, dove serve davvero.
+        telefono: via === 'telefono' ? numeroPulito() : undefined,
         email: via === 'email' ? indirizzo.trim() : undefined,
       }),
     })
