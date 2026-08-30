@@ -1,5 +1,6 @@
 import { cerca, alternativeVicine } from '../../../server/ricerca.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
+import { numero } from '../_numeri.ts'
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
       destinazione: { lat: num(q, 'dlat'), lng: num(q, 'dlng') },
       da: new Date(q.get('da') ?? Date.now()),
       a: new Date(q.get('a') ?? Date.now() + 12 * 3600_000),
-      posti: Number(q.get('posti') ?? 1),
+      posti: numero(q, 'posti') ?? 1,
       soloSenzaProposta: q.get('subito') === '1',
     }
 
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
 }
 
 function num(q: URLSearchParams, k: string): number {
-  const v = Number(q.get(k))
-  if (!Number.isFinite(v)) throw new Error(`parametro non valido: ${k}`)
+  const v = numero(q, k)
+  if (v === undefined) throw new Error(`parametro non valido: ${k}`)
   return v
 }

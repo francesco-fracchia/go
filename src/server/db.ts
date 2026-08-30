@@ -41,7 +41,24 @@ function client(): SupabaseClient {
       // resta senza prefisso proprio per non poterci finire.
       requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
       requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
-      { auth: { persistSession: false } },
+      {
+        auth: { persistSession: false },
+        global: {
+          /**
+           * Ogni interrogazione va al database, sempre.
+           *
+           * Next sostituisce `fetch` con una versione che mette in cache, e
+           * supabase-js passa da lì: la prima risposta a una query resta
+           * buona per sempre. Ci è costato un pomeriggio — la tabella dei
+           * posti aveva 1.101 righe e la schermata ne mostrava zero, perché
+           * la prima chiamata era avvenuta quando era vuota.
+           *
+           * È il guasto peggiore possibile su dati che cambiano: non dà
+           * errori, non rallenta, mostra semplicemente il passato.
+           */
+          fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+        },
+      },
     )
   }
   return cache

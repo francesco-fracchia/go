@@ -1,6 +1,7 @@
-import { postiVicini, importaZona, type Categoria } from '../../../server/posti.ts'
+import { postiVicini, importaZona, assicuraZona, type Categoria } from '../../../server/posti.ts'
 import { richiediUtente } from '../../../server/auth.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
+import { numero, punto } from '../_numeri.ts'
 
 /** Centro predefinito quando non sappiamo dov'è chi guarda: Lodi. */
 const CASA = { lat: 45.3142, lng: 9.5033 }
@@ -8,17 +9,29 @@ const CASA = { lat: 45.3142, lng: 9.5033 }
 export async function GET(req: Request) {
   try {
     const q = new URL(req.url).searchParams
-    const lat = Number(q.get('lat')), lng = Number(q.get('lng'))
-    const posizione = Number.isFinite(lat) && Number.isFinite(lng)
-      ? { lat, lng } : CASA
+    const posizione = punto(q) ?? CASA
 
-    return json({
-      posti: await postiVicini({
-        ...posizione,
-        categoria: (q.get('categoria') as Categoria) || undefined,
-        raggioM: Number(q.get('raggio') ?? 30_000),
-      }),
-    })
+    const filtri = {
+      ...posizione,
+      categoria: (q.get('categoria') as Categoria) || undefined,
+      raggioM: numero(q, 'raggio') ?? 30_000,
+    }
+
+    let posti = await postiVicini(filtri)
+
+    /**
+     * Se non c'è niente, si guarda se la zona è mai stata importata.
+     *
+     * La prima persona che apre una provincia nuova la popola per tutti
+     * quelli che verranno dopo. Ci mette qualche secondo e succede una
+     * volta sola: dopo, il registro dice che è fatta e nessuno riprova.
+     */
+    if (posti.length === 0) {
+      const importati = await assicuraZona(posizione.lat, posizione.lng).catch(() => null)
+      if (importati !== null && importati > 0) posti = await postiVicini(filtri)
+    }
+
+    return json({ posti })
   } catch (e) { return rispostaErrore(e) }
 }
 

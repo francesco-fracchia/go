@@ -60,18 +60,69 @@ export interface Posto {
   lng: number
 }
 
+/**
+ * La cella di importazione di un punto.
+ *
+ * Due decimi di grado sono una ventina di chilometri: la stessa scala del
+ * raggio con cui importiamo. Arrotondare è ciò che rende il registro utile
+ * — due persone della stessa provincia ricadono nella stessa cella, e la
+ * seconda non fa partire niente.
+ */
+const cellaDi = (lat: number, lng: number) =>
+  `${(Math.round(lat / 0.2) * 0.2).toFixed(1)},${(Math.round(lng / 0.2) * 0.2).toFixed(1)}`
+
+/**
+ * Si assicura che la zona attorno a un punto sia stata importata.
+ *
+ * La prima persona che guarda una provincia nuova la popola per tutti
+ * quelli che verranno dopo. Ci mette qualche secondo — Overpass non è
+ * veloce — e succede una volta sola nella vita di quella zona.
+ *
+ * Restituisce quanti posti ha trovato, o `null` se non c'era niente da
+ * fare perché la zona era già stata importata.
+ */
+export async function assicuraZona(lat: number, lng: number): Promise<number | null> {
+  const cella = cellaDi(lat, lng)
+
+  // Chi arriva secondo riceve falso e non parte: due persone che aprono la
+  // schermata nello stesso istante non devono lanciare due importazioni.
+  const { data: mia } = await db.rpc('prenota_zona', {
+    p_cella: cella, p_lat: lat, p_lng: lng,
+  })
+  if (mia !== true) return null
+
+  try {
+    const { nuovi } = await importaZona({ lat, lng })
+    await db.from('zone_importate').update({ posti_trovati: nuovi }).eq('cella', cella)
+    return nuovi
+  } catch (e) {
+    // L'importazione è fallita: si toglie la prenotazione, altrimenti la
+    // zona resta segnata come fatta e nessuno riproverà mai.
+    await db.from('zone_importate').delete().eq('cella', cella)
+    throw e
+  }
+}
+
 export async function postiVicini(opts: {
   lat: number; lng: number
   raggioM?: number
   categoria?: Categoria
   limite?: number
 }): Promise<Posto[]> {
-  const { data } = await db.rpc('posti_vicini', {
+  const { data, error } = await db.rpc('posti_vicini', {
     p_geo: `SRID=4326;POINT(${opts.lng} ${opts.lat})`,
     p_raggio_m: opts.raggioM ?? 30_000,
     p_categoria: opts.categoria ?? null,
     p_limite: opts.limite ?? 40,
   })
+
+  // Un errore ingoiato qui diventa una schermata vuota che sembra «non ci
+  // sono posti», quando invece la query non è mai arrivata. È il tipo di
+  // guasto che si scopre solo confrontando il database con lo schermo.
+  if (error) {
+    console.error('posti_vicini:', error.message, error.details ?? '')
+    return []
+  }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((r): Posto => ({
     id: String(r.id),
@@ -107,12 +158,26 @@ export async function importaZona(opts: {
     ).join('')
   });out center tags;`
 
+  /**
+   * Overpass vuole la richiesta come modulo, non come testo grezzo: con
+   * `text/plain` risponde 406 senza spiegare, ed è il genere di errore su
+   * cui si perde mezz'ora perché il messaggio non dice cosa cambiare.
+   *
+   * E vuole sapere chi sta chiedendo: è un servizio della comunità, non
+   * un'infrastruttura pagata, e un'applicazione che non si presenta è la
+   * prima a essere limitata quando il servizio è sotto carico.
+   */
   const r = await fetch(OVERPASS, {
     method: 'POST',
-    headers: { 'content-type': 'text/plain' },
-    body: corpo,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'user-agent': 'GO/1.0 (carpooling; ciao@vaigo.app)',
+    },
+    body: new URLSearchParams({ data: corpo }),
   })
-  if (!r.ok) throw new Error(`Overpass ha risposto ${r.status}`)
+  if (!r.ok) {
+    throw new Error(`Overpass ha risposto ${r.status}: ${(await r.text()).slice(0, 160)}`)
+  }
 
   const d = await r.json() as { elements?: ElementoOsm[] }
   const elementi = d.elements ?? []

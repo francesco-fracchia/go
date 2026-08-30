@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Etichetta } from './base.tsx'
 import type { Categoria, Posto } from '../server/posti.ts'
 
@@ -46,6 +46,36 @@ export function Posti({ iniziali, categoriaIniziale }: {
   const [caricando, setCaricando] = useState(false)
   const [vicino, setVicino] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
+  const [importando, setImportando] = useState(false)
+
+  /**
+   * Se la zona è vuota, la si guarda: non si dice all'utente che non
+   * abbiamo i dati.
+   *
+   * La prima persona che apre una provincia nuova la popola per tutti
+   * quelli che verranno dopo. Ci mette qualche secondo, e succede una
+   * volta sola nella vita di quella zona — dopo, il registro dice che è
+   * fatta e nessuno riprova.
+   *
+   * Il vincolo è che accada UNA volta per apertura di pagina, non a ogni
+   * cambio di categoria: per questo la dipendenza è vuota.
+   */
+  useEffect(() => {
+    if (iniziali.length > 0) return
+    let vivo = true
+    setImportando(true)
+    void (async () => {
+      try {
+        const r = await fetch('/api/posti')
+        const d = await r.json()
+        if (vivo && d.posti?.length) setPosti(d.posti)
+      } finally {
+        if (vivo) setImportando(false)
+      }
+    })()
+    return () => { vivo = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [posizione, setPosizione] = useState<{ lat: number; lng: number } | null>(null)
 
@@ -160,10 +190,21 @@ export function Posti({ iniziali, categoriaIniziale }: {
           <p style={{ color: 'var(--tenue)', fontSize: 14 }}>Un attimo…</p>
         )}
 
-        {!caricando && posti.length === 0 && (
-          <p style={{ color: 'var(--tenue)', fontSize: 14.5, lineHeight: 1.6 }}>
-            Non abbiamo ancora i posti di questa zona. Cerca per indirizzo, o
-            scrivici e la aggiungiamo.
+        {/* Mentre si guarda si dice cosa si sta facendo, non «caricamento»:
+            la prima apertura di una zona nuova ci mette qualche secondo, e
+            una rotellina muta fa pensare che sia rotto. */}
+        {importando && posti.length === 0 && (
+          <p style={{ color: 'var(--tenue)', fontSize: 14.5, lineHeight: 1.6, maxWidth: '46ch' }}>
+            Stiamo guardando cosa c&apos;è qui intorno. È la prima volta che
+            qualcuno apre questa zona — ci vuole qualche secondo, e poi
+            resta.
+          </p>
+        )}
+
+        {!caricando && !importando && posti.length === 0 && (
+          <p style={{ color: 'var(--tenue)', fontSize: 14.5, lineHeight: 1.6, maxWidth: '46ch' }}>
+            Qui intorno non abbiamo trovato niente. Prova a spostarti con
+            «usa la mia posizione», oppure cerca direttamente per indirizzo.
           </p>
         )}
 
