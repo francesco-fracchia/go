@@ -1,0 +1,84 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Quattro direzioni.
+
+   Non varianti della stessa idea: quattro risposte diverse alla domanda
+   «che cosa è questa applicazione». Cambiano colore, carattere, raggio
+   degli angoli e peso delle ombre insieme, perché è l'insieme a fare il
+   tono, non il colore da solo.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── NOTTE ── scura di natura, come il momento in cui la si usa.
+   Indaco elettrico su quasi-nero. Space Grotesk ha le forme larghe e
+   asciutte dei caratteri da insegna. */
+:root[data-palette="notte"] {
+  --marchio-luce: #C6CCFF; --marchio-alone: rgba(124,138,255,.32);
+  --carta: #0B0D12; --superficie: #141821; --superficie-2: #1C222D;
+  --inchiostro: #EDF0F4; --inchiostro-2: #B4BECD; --tenue: #78849A;
+  --riga: #262E3A; --riga-2: #1E2531;
+  --accento: #7C8AFF; --accento-vivo: #A3ADFF;
+  --accento-velo: #191F35; --accento-riga: #303A66; --su-accento: #0B0D12;
+  --verde: #3BD693; --verde-velo: #10281F;
+  --rosso: #FF7062; --rosso-velo: #2A1614;
+  --titoli: "Space Grotesk", sans-serif; --testo: "Inter", sans-serif;
+  --raggio: 16px; --raggio-s: 12px;
+  --ombra: 0 1px 2px rgba(0,0,0,.4), 0 6px 24px rgba(0,0,0,.45);
+}
+
+/* ── SEGNALE ── bianco tipografico, nero puro, un solo colore che urla.
+   Angoli quasi vivi, niente ombre: la gerarchia la fa il carattere.
+   È la direzione che invecchia meglio e si stampa. */
+:root[data-palette="segnale"] {
+  --marchio-luce: #FFB9A6; --marchio-alone: rgba(255,59,20,.26);
+  --carta: #FFFFFF; --superficie: #FFFFFF; --superficie-2: #F3F3F1;
+  --inchiostro: #0A0A0A; --inchiostro-2: #3D3D3B; --tenue: #78787A;
+  --riga: #E0E0DC; --riga-2: #EFEFEC;
+  --accento: #FF3B14; --accento-vivo: #FF6B4A;
+  --accento-velo: #FFF1ED; --accento-riga: #FFCCC0; --su-accento: #FFFFFF;
+  --verde: #00794C; --verde-velo: #EBF7F1;
+  --rosso: #D01A00; --rosso-velo: #FFF0ED;
+  --titoli: "Instrument Sans", sans-serif; --testo: "Instrument Sans", sans-serif;
+  --raggio: 5px; --raggio-s: 4px;
+  --ombra: none;
+}
+
+/* ── NEBBIA ── grigio-azzurro freddo, morbido, molto spazio.
+   Blu fiducia, angoli larghi, ombre basse. La più rassicurante:
+   sale in macchina con uno sconosciuto, di notte. */
+:root[data-palette="nebbia"] {
+  --marchio-luce: #9EC4FA; --marchio-alone: rgba(31,95,208,.26);
+  --carta: #F3F6F9; --superficie: #FFFFFF; --superficie-2: #E9EEF4;
+  --inchiostro: #131E2B; --inchiostro-2: #435568; --tenue: #8496A8;
+  --riga: #DBE3EC; --riga-2: #EDF1F6;
+  --accento: #1F5FD0; --accento-vivo: #4A85E8;
+  --accento-velo: #E9F1FE; --accento-riga: #BDD5F7; --su-accento: #FFFFFF;
+  --verde: #0E7355; --verde-velo: #E6F4EF;
+  --rosso: #C2372A; --rosso-velo: #FDEEEC;
+  --titoli: "Manrope", sans-serif; --testo: "Manrope", sans-serif;
+  --raggio: 20px; --raggio-s: 14px;
+  --ombra: 0 1px 2px rgba(19,30,43,.04), 0 8px 28px rgba(19,30,43,.07);
+}
+
+/* ── ACIDO ── lime ad altissima croma su carbone.
+   Bricolage Grotesque è largo e un po' storto: sembra un manifesto.
+   La più giovane, la più rischiosa, la più difficile da confondere. */
+:root[data-palette="acido"] {
+  --marchio-luce: #EEFFB8; --marchio-alone: rgba(201,255,46,.26);
+  --carta: #0F110E; --superficie: #191C17; --superficie-2: #232720;
+  --inchiostro: #F1F4EC; --inchiostro-2: #C0C7B5; --tenue: #868E7B;
+  --riga: #2D3229; --riga-2: #232720;
+  --accento: #C9FF2E; --accento-vivo: #DEFF77;
+  --accento-velo: #1D2412; --accento-riga: #3E4A20; --su-accento: #0F110E;
+  --verde: #7BE86B; --verde-velo: #16240F;
+  --rosso: #FF8A5B; --rosso-velo: #2A1A12;
+  --titoli: "Bricolage Grotesque", sans-serif; --testo: "Inter", sans-serif;
+  --raggio: 10px; --raggio-s: 8px;
+  --ombra: 0 1px 2px rgba(0,0,0,.5), 0 8px 26px rgba(0,0,0,.5);
+}
+
+/* Il testo sopra un fondo d'accento. Con il lime, bianco è illeggibile:
+   serve una variabile, non una costante. */
+:root {
+  --su-accento: #FFFFFF;
+  --marchio-luce: #FFD9B8;
+  --marchio-alone: rgba(200,90,42,.28);
+}

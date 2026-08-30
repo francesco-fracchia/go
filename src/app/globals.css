@@ -1,0 +1,128 @@
+@import "./temi.css";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GO — fondamenta visive.
+
+   Il tema chiaro è il predefinito. Il buio non è una preferenza estetica
+   ma un caso d'uso: si usa questa applicazione di notte, in macchina, con
+   gli occhi stanchi. Chi lo vuole lo accende, e la schermata della notte
+   resta scura comunque.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --carta:        #FAF8F6;
+  --superficie:   #FFFFFF;
+  --superficie-2: #F4F1ED;
+  --inchiostro:   #1A1714;
+  --inchiostro-2: #4A423B;
+  --tenue:        #948A80;
+  --riga:         #E4DED8;
+  --riga-2:       #F0ECE8;
+
+  --accento:      #C85A2A;
+  --accento-vivo: #F2915E;
+  --accento-velo: #FBEDE4;
+  --accento-riga: #E8C4AA;
+
+  --verde:        #1F7A52;
+  --verde-velo:   #EDF6F1;
+  --rosso:        #B33A2B;
+  --rosso-velo:   #FBEDEB;
+
+  --raggio:   14px;
+  --raggio-s: 10px;
+  --ombra:    0 1px 2px rgba(26,23,20,.05), 0 4px 16px rgba(26,23,20,.05);
+  --ombra-alta: 0 2px 6px rgba(26,23,20,.07), 0 12px 32px rgba(26,23,20,.09);
+
+  --testo: "Public Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --titoli: "Familjen Grotesk", var(--testo);
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) {
+    --carta:        #0E1116;
+    --superficie:   #171C23;
+    --superficie-2: #1F262E;
+    --inchiostro:   #EEF2F5;
+    --inchiostro-2: #C3CDD5;
+    --tenue:        #7E8B96;
+    --riga:         #2A333D;
+    --riga-2:       #222930;
+    --accento:      #F2915E;
+    --accento-vivo: #FFB98A;
+    --accento-velo: #2A2019;
+    --accento-riga: #3A2A20;
+    --verde:        #63C79B;
+    --verde-velo:   #13291F;
+    --rosso:        #E8705F;
+    --rosso-velo:   #2B1917;
+    --ombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.35);
+    --ombra-alta: 0 2px 6px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+  }
+}
+
+:root[data-tema="scuro"] {
+  --carta:        #0E1116;
+  --superficie:   #171C23;
+  --superficie-2: #1F262E;
+  --inchiostro:   #EEF2F5;
+  --inchiostro-2: #C3CDD5;
+  --tenue:        #7E8B96;
+  --riga:         #2A333D;
+  --riga-2:       #222930;
+  --accento:      #F2915E;
+  --accento-vivo: #FFB98A;
+  --accento-velo: #2A2019;
+  --accento-riga: #3A2A20;
+  --verde:        #63C79B;
+  --verde-velo:   #13291F;
+  --rosso:        #E8705F;
+  --rosso-velo:   #2B1917;
+  --ombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.35);
+  --ombra-alta: 0 2px 6px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--carta);
+  color: var(--inchiostro);
+  font-family: var(--testo);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  /* Su iOS il rimbalzo elastico sotto una schermata a tutto schermo
+     scopre il bianco del browser: si toglie. */
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3 {
+  font-family: var(--titoli);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+a { color: var(--accento); }
+
+/* Il pollice deve arrivarci al buio, in movimento, con una mano sola. */
+.tocco { min-height: 48px; }
+
+/* Area sicura: la barra di sistema di iPhone mangia i pulsanti in fondo. */
+.fondo-fisso {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  background: var(--superficie);
+  border-top: 1px solid var(--riga);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
