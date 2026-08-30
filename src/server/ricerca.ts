@@ -30,6 +30,8 @@ export interface RisultatoRicerca {
   fermataPronta: boolean
   fermataRitiro: string | null
   kmDeviazione: number
+  /** minuti di tolleranza ancora aperti sull'orario, 0 se già fissato */
+  flessibileMin: number
   scartoOrigineM: number
 }
 
@@ -63,6 +65,7 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
     fermata_ritiro: string | null
     km_deviazione_stimati: number
     deviazione_ammessa: boolean
+    flessibilita_min: number
   }>
 
   return righe
@@ -79,6 +82,7 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
       fermataRitiro: r.fermata_ritiro,
       kmDeviazione: r.fermata_ritiro !== null ? 0 : Number(r.km_deviazione_stimati),
       scartoOrigineM: r.scarto_origine_m,
+      flessibileMin: Number(r.flessibilita_min ?? 0),
     }))
     .sort(ordinamento)
 }

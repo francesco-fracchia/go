@@ -1,11 +1,12 @@
 import { db } from '../../server/db.ts'
 import { richiediUtente } from '../../server/auth.ts'
 import { FormPubblica } from '../../components/FormPubblica.tsx'
+import type { Categoria } from '../../lib/flessibilita.ts'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Pagina({ searchParams }: {
-  searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string }>
+  searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string; cat?: string }>
 }) {
   const q = await searchParams
   const dlat = Number(q.dlat), dlng = Number(q.dlng)
@@ -22,7 +23,7 @@ export default async function Pagina({ searchParams }: {
     .eq('proprietario', utente)
     .eq('attivo', true)
 
-  return <FormPubblica destinazione={destinazione} veicoli={(data ?? []).map((v) => ({
+  return <FormPubblica destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
     id: v.id, marca: v.marca, modello: v.modello, postiTotali: v.posti_totali,
   }))} />
 }

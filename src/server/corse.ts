@@ -41,6 +41,8 @@ export interface RichiestaPubblicazione {
    * pubblicata solo in andata lo lascia a metà.
    */
   oraRitorno?: Date
+  /** tolleranza sull'ora di arrivo, in minuti — vale solo per la ricerca */
+  flessibilitaMin?: number
 }
 
 /** Margine sull'orario: meglio arrivare presto che tardi, di notte. */
@@ -132,6 +134,7 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
     max_posti_dietro: req.maxPostiDietro ?? null,
     sconto_cent: corsa.scontoConducente,
     politica: req.politica ?? 'flessibile',
+    flessibilita_min: Math.min(60, Math.max(0, req.flessibilitaMin ?? 0)),
     note: req.note ?? null,
     stato: 'pubblicata',
     token_link: corsa.modalita === 'link' ? token() : null,

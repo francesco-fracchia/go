@@ -74,6 +74,7 @@ export function datiDemo(): Tabelle {
         km_base: 40, pedaggio_cent: 0, parcheggio_cent: 0, posti_offerti: 3,
         sconto_cent: 0, politica: 'flessibile', prenota_immediata: false,
         accetta_deviazioni: true, deviazioni_ritiro: true, deviazioni_deposito: false,
+        flessibilita_min: 30, orario_fissato: false,
         note: 'Parto puntuale. Musica alta, se non vi piace ditelo pure.',
         corsa_ritorno: 'c-mia-ritorno', token_link: null },
       { id: 'c-mia-ritorno', conducente: IO, veicolo: 'v-mia', stato: 'pubblicata',
@@ -92,6 +93,7 @@ export function datiDemo(): Tabelle {
         km_base: 40, pedaggio_cent: 0, parcheggio_cent: 0, posti_offerti: 3,
         sconto_cent: 0, politica: 'flessibile', prenota_immediata: true,
         accetta_deviazioni: true, deviazioni_ritiro: true, deviazioni_deposito: true,
+        flessibilita_min: 0, orario_fissato: true,
         note: 'Puntuale, se tardate avvisatemi!', token_link: null },
       { id: 'c-marco', conducente: 'u-marco', veicolo: 'v-marco', stato: 'confermata',
         modalita: 'pubblica', ora_partenza: fra(210), ora_arrivo: fra(248),
@@ -294,6 +296,7 @@ export function funzioniDemo(t: Tabelle): Record<string, (a: Record<string, unkn
             scarto_origine_m: 300, scarto_destinazione_m: 120,
             fermata_ritiro: 'f1', km_deviazione_stimati: 0,
             deviazione_ammessa: !!c.deviazioni_ritiro,
+            flessibilita_min: Number(c.flessibilita_min ?? 0),
           }
         })
         .filter((c) => c.posti_liberi > 0)

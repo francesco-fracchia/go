@@ -71,7 +71,8 @@ export default async function Pagina({ searchParams }: {
  */
 async function arricchisci(base: Array<{
   corsaId: string; conducente: string; oraPartenza: string; oraArrivo: string
-  postiLiberi: number; prezzoDa: number; fermataPronta: boolean; kmDeviazione: number
+  postiLiberi: number; prezzoDa: number; fermataPronta: boolean
+  kmDeviazione: number; flessibileMin: number
 }>): Promise<Risultato[]> {
   if (base.length === 0) return []
 
@@ -112,6 +113,7 @@ async function arricchisci(base: Array<{
       prezzoDa: r.prezzoDa,
       fermataPronta: r.fermataPronta,
       kmDeviazione: r.kmDeviazione,
+      flessibileMin: r.flessibileMin,
       conducente: { nome: p?.nome ?? '', fotoUrl: p?.foto_url ?? null, distintivi },
       veicolo: (c?.veicoli as unknown as { marca: string; modello: string }) ?? { marca: '', modello: '' },
     }

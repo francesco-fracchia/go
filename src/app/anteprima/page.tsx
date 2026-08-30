@@ -99,7 +99,7 @@ const risultati: Risultato[] = [
   {
     corsaId: 'r1', oraPartenza: fra(180), oraArrivo: fra(215),
     partenzaLabel: 'Piazza della Vittoria, Lodi', arrivoLabel: 'Fabrique, Milano',
-    postiLiberi: 3, prezzoDa: 445, fermataPronta: true, kmDeviazione: 0,
+    postiLiberi: 3, prezzoDa: 445, fermataPronta: true, kmDeviazione: 0, flessibileMin: 30,
     conducente: { nome: 'Giulia', fotoUrl: null, distintivi: ['non annulla mai'] },
     veicolo: { marca: 'Fiat', modello: 'Panda' },
   },

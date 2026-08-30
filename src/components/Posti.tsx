@@ -155,7 +155,7 @@ function Carta({ p }: { p: Posto }) {
     : `${km.toFixed(km < 10 ? 1 : 0).replace('.', ',')} km`
 
   const versoIl = new URLSearchParams({
-    dlat: String(p.lat), dlng: String(p.lng), dove: p.nome,
+    dlat: String(p.lat), dlng: String(p.lng), dove: p.nome, cat: p.categoria,
   })
 
   return (

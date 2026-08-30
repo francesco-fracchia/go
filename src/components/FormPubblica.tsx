@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Bottone, Etichetta } from './base.tsx'
 import { TESTO_DICHIARAZIONE } from './testi.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
+import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '../lib/flessibilita.ts'
 
 /**
  * Il modulo di pubblicazione.
@@ -18,9 +19,10 @@ import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
 
 type Passo = 'dove' | 'come' | 'conferma'
 
-export function FormPubblica({ veicoli, destinazione: destinazioneIniziale }: {
+export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, categoria }: {
   veicoli: Array<{ id: string; marca: string; modello: string; postiTotali: number }>
   destinazione?: LuogoScelto
+  categoria?: Categoria
 }) {
   const [passo, setPasso] = useState<Passo>('dove')
   const [origine, setOrigine] = useState<LuogoScelto | null>(null)
@@ -36,6 +38,14 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale }: {
   const [dichiarato, setDichiarato] = useState(false)
   const [note, setNote] = useState('')
   const [oraRitorno, setOraRitorno] = useState('')
+  const [flessibilita, setFlessibilita] = useState<Flessibilita | null>(null)
+
+  // La proposta si ricalcola con l'orario: la stessa tratta il martedì
+  // mattina e il sabato sera non ha la stessa elasticità.
+  const suggerita = oraArrivo && !Number.isNaN(new Date(oraArrivo).getTime())
+    ? proponi({ categoria, oraArrivo: new Date(oraArrivo) })
+    : null
+  const scelta = flessibilita ?? suggerita?.minuti ?? 0
   const [invio, setInvio] = useState(false)
   const [errore, setErrore] = useState<string | null>(null)
 
@@ -73,6 +83,32 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale }: {
             L&apos;ora di partenza la calcoliamo noi dal percorso, con dieci
             minuti di margine.
           </p>
+
+          {/* La flessibilità non si chiede a freddo: si propone quella
+              giusta guardando dove si va e quando, e chi vuole la cambia.
+              Il valore proposto è quello che quasi nessuno tocca. */}
+          {suggerita && (
+            <div style={{ marginBottom: 20 }}>
+              <Etichetta>quanto sei preciso</Etichetta>
+              <div style={{ display: 'flex', gap: 8, margin: '10px 0 8px' }}>
+                {SCELTE.map((m) => (
+                  <button key={m} onClick={() => setFlessibilita(m)} className="tocco" style={{
+                    flex: 1, padding: '12px 4px', borderRadius: 'var(--raggio-s)',
+                    border: `1px solid ${scelta === m ? 'transparent' : 'var(--riga)'}`,
+                    background: scelta === m ? 'var(--accento)' : 'var(--superficie)',
+                    color: scelta === m ? 'var(--su-accento)' : 'var(--inchiostro)',
+                    fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap',
+                  }}>{etichetta(m)}</button>
+                ))}
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--tenue)', margin: 0, lineHeight: 1.5 }}>
+                {flessibilita === null && `${suggerita.perche} `}
+                {scelta === 0
+                  ? 'Ti trova solo chi cerca quell’ora.'
+                  : `Ti trova anche chi cerca fino a ${scelta} minuti prima o dopo. Alla prima prenotazione l’orario si fissa.`}
+              </p>
+            </div>
+          )}
 
           {/* Il ritorno è il vero problema della notte: chi cerca un
               passaggio per andare a ballare sa già che dovrà tornare, e una
@@ -246,6 +282,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale }: {
                   deviazioniRitiro: devRitiro, deviazioniDeposito: devDeposito,
                   politica, note,
                   oraRitorno: oraRitorno || undefined,
+                  flessibilitaMin: scelta,
                 }),
               })
               const d = await r.json()

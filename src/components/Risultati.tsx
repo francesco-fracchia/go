@@ -25,6 +25,8 @@ export interface Risultato {
   prezzoDa: number
   fermataPronta: boolean
   kmDeviazione: number
+  /** minuti di tolleranza ancora aperti sull'orario, 0 se già fissato */
+  flessibileMin?: number
   conducente: { nome: string; fotoUrl: string | null; distintivi: string[] }
   veicolo: { marca: string; modello: string }
 }
@@ -76,6 +78,13 @@ function Riga({ r }: { r: Risultato }) {
             <div style={{ fontSize: 15, color: 'var(--tenue)', lineHeight: 1.15 }}>
               {orario(r.oraArrivo)}
             </div>
+            {/* Un orario che può ancora spostarsi va detto qui, dove si
+                sceglie: scoprirlo dopo aver prenotato è un tradimento. */}
+            {r.flessibileMin ? (
+              <div style={{ fontSize: 11, color: 'var(--tenue)', marginTop: 3 }}>
+                ± {r.flessibileMin}′
+              </div>
+            ) : null}
           </div>
 
           <div style={{ flexGrow: 1, minWidth: 0 }}>

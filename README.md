@@ -209,6 +209,32 @@ una fetta più grande del costo vero.
 C'è un test che esiste solo per fermare chi, un giorno, proverà ad
 aggiungerle.
 
+## La flessibilità dell'orario
+
+Non è una preferenza della persona: è **una proprietà del viaggio**. La stessa
+persona parte alle 8 spaccate il martedì e «verso le undici» il sabato.
+Chiederglielo ogni volta significa farle rispondere sempre la stessa cosa, e
+sbagliare quando la tratta cambia.
+
+Quindi `proponi()` propone il valore giusto guardando **dove si va e quando**
+— la categoria del posto ce l'abbiamo già — e chi vuole lo cambia:
+
+| destinazione | proposta | perché |
+|---|---|---|
+| stazione, aeroporto | **ora esatta** | un treno non aspetta, nemmeno di sabato sera |
+| cinema, stadio | ± 10 | comincia a un'ora precisa |
+| discoteca, bar | ± 30 | mezz'ora prima o dopo non cambia la serata |
+| niente, mattina feriale | **ora esatta** | la mattina si arriva all'ora giusta |
+| niente, notte | ± 30 | di notte mezz'ora non cambia niente |
+
+Due cose che la flessibilità **non** fa:
+
+- **non rende vaga la partenza.** Serve a farsi *trovare*. Se l'orario
+  restasse elastico fino all'ultimo, l'incertezza la pagherebbe il
+  passeggero, in piedi a un angolo di notte.
+- **non resta aperta.** Alla prima prenotazione l'orario si fissa, e lo fa un
+  trigger del database: non è una regola da ricordarsi di applicare.
+
 ## Le sei invarianti
 
 Non sono linee guida: sono test che rompono la build.
