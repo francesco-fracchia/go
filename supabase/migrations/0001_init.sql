@@ -8,8 +8,15 @@
 -- qualcuno scrive un client nuovo, i vincoli reggono lo stesso.
 -- ════════════════════════════════════════════════════════════════════════
 
-create extension if not exists "uuid-ossp";
-create extension if not exists postgis;
+create extension if not exists "uuid-ossp" with schema extensions;
+
+-- PostGIS nello schema `extensions`, non in `public`.
+--
+-- È la convenzione di Supabase, e non è cosmetica: PostGIS crea centinaia
+-- di funzioni, e in `public` finirebbero tutte esposte dall'API generata
+-- automaticamente. Il tipo `geography` resta usabile senza qualificarlo
+-- perché `extensions` è già nel percorso di ricerca.
+create extension if not exists postgis with schema extensions;
 
 -- ─── Enumerazioni ───────────────────────────────────────────────────────
 create type alimentazione   as enum ('benzina','diesel','gpl','metano','ibrida','elettrica');
