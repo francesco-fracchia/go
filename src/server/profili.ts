@@ -135,6 +135,19 @@ export async function creaVeicolo(v: NuovoVeicolo) {
   return data
 }
 
+/**
+ * Se la verifica via SMS è disponibile.
+ *
+ * Finché non c'è un fornitore configurato non si può PRETENDERE un numero
+ * verificato: si chiederebbe una cosa impossibile, e chi prova il prodotto
+ * resta bloccato davanti a un messaggio rosso senza uscita.
+ *
+ * Il numero però si chiede lo stesso — serve alle chiamate mascherate e a
+ * essere raggiungibili. Semplicemente risulta non verificato, e il profilo
+ * lo dice.
+ */
+export const SMS_DISPONIBILE = process.env.SMS_ATTIVO === '1'
+
 export type Quanto = 'volentieri' | 'dipende' | 'poco'
 
 export interface Preferenze {
@@ -157,6 +170,34 @@ export async function salvaPreferenze(utenteId: string, p: Partial<Preferenze>) 
   if (typeof p.soste === 'boolean') patch.soste = p.soste
   if (Object.keys(patch).length === 0) return
   await db.from('profili').update(patch).eq('id', utenteId)
+}
+
+/**
+ * Aggiunge o cambia il numero di telefono.
+ *
+ * Con l'SMS attivo il numero entra come NON verificato e la verifica
+ * avviene a parte; senza, resta non verificato e basta. In nessuno dei due
+ * casi lo si segna verificato da qui: quella spunta la legge chi decide se
+ * salire in macchina con te, e non si mette a mano.
+ */
+export async function salvaTelefono(utenteId: string, numero: string) {
+  const pulito = numero.replace(/[\s.\-()]/g, '')
+  const completo = pulito.startsWith('+') ? pulito : `+39${pulito}`
+  if (!/^\+\d{10,15}$/.test(completo)) {
+    throw new ErroreProfilo('telefono', 'numero non valido')
+  }
+
+  const { error } = await db.from('profili')
+    .update({ telefono: completo, telefono_ok: false })
+    .eq('id', utenteId)
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new ErroreProfilo('telefono', 'questo numero è già di un altro account')
+    }
+    throw new ErroreProfilo('db', error.message)
+  }
+  return completo
 }
 
 export async function profilo(id: string) {

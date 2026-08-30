@@ -1,6 +1,7 @@
 import { db } from './db.ts'
 import { percorso, type Punto } from './percorsi.ts'
 import { risolvi } from './luoghi.ts'
+import { SMS_DISPONIBILE } from './profili.ts'
 import { quotaPiena, costoBase, preventivo, type Corsa, type Modalita } from '../lib/pricing.ts'
 import type { Cents } from '../lib/money.ts'
 
@@ -51,14 +52,25 @@ const MARGINE_MINUTI = 10
 export async function pubblicaCorsa(req: RichiestaPubblicazione) {
   const { data: profilo } = await db
     .from('profili')
-    .select('dichiarazione_privato, sospeso, limitato, telefono_ok')
+    .select('dichiarazione_privato, sospeso, limitato, telefono, telefono_ok')
     .eq('id', req.conducenteId)
     .single()
 
   if (!profilo) throw new ErroreCorsa('profilo', 'profilo non trovato')
   if (profilo.sospeso) throw new ErroreCorsa('sospeso', 'account sospeso')
-  if (!profilo.telefono_ok) {
-    throw new ErroreCorsa('telefono', 'verifica il numero prima di pubblicare')
+  /**
+   * Un numero serve: chi sale deve poter chiamare, e la chiamata passa da
+   * un numero mascherato che ha bisogno del vero sotto.
+   *
+   * La VERIFICA si pretende solo quando siamo in grado di farla. Chiederla
+   * senza un fornitore di SMS configurato significa bloccare tutti davanti
+   * a una porta che non si apre.
+   */
+  if (!profilo.telefono) {
+    throw new ErroreCorsa('telefono', 'aggiungi il tuo numero: chi sale deve poterti chiamare')
+  }
+  if (SMS_DISPONIBILE && !profilo.telefono_ok) {
+    throw new ErroreCorsa('telefono', 'verifica il tuo numero prima di pubblicare')
   }
   // La dichiarazione di non professionalità si raccoglie qui, alla prima
   // pubblicazione: è l'artefatto con cui si documenta, utente per utente,

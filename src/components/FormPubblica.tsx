@@ -4,6 +4,7 @@ import { Bottone, Etichetta } from './base.tsx'
 import { TESTO_DICHIARAZIONE } from './testi.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
 import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '../lib/flessibilita.ts'
+import { AggiungiTelefono } from './AggiungiTelefono.tsx'
 
 /**
  * Il modulo di pubblicazione.
@@ -51,6 +52,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const scelta = flessibilita ?? suggerita?.minuti ?? 0
   const [invio, setInvio] = useState(false)
   const [errore, setErrore] = useState<string | null>(null)
+  const [serveNumero, setServeNumero] = useState(false)
 
   const massimo = (veicoli.find((v) => v.id === veicolo)?.postiTotali ?? 5) - 1
 
@@ -266,7 +268,11 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
             </span>
           </label>
 
-          {errore && (
+          {/* Quando manca il numero non si mostra un rimprovero: si mostra
+              il campo per metterlo, qui, senza perdere il modulo compilato. */}
+          {serveNumero && <AggiungiTelefono suSalvato={() => { setServeNumero(false); setErrore(null) }} />}
+
+          {errore && !serveNumero && (
             <p style={{ color: 'var(--rosso)', fontSize: 14, marginBottom: 14 }}>{errore}</p>
           )}
 
@@ -289,7 +295,10 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                 }),
               })
               const d = await r.json()
-              if (!r.ok) { setErrore(d.errore ?? 'Non è andata'); setInvio(false); return }
+              if (!r.ok) {
+                if (d.codice === 'telefono') { setServeNumero(true); setInvio(false); return }
+                setErrore(d.errore ?? 'Non è andata'); setInvio(false); return
+              }
               window.location.href = `/corsa/${d.corsa.id}`
             }}
           >{invio ? 'Un attimo…' : 'Pubblica'}</Bottone>
