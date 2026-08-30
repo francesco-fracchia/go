@@ -87,7 +87,30 @@ export async function suggerisci(
     ? []
     : (DEMO ? luoghiDemo(q) : await geocodifica(q, vicino))
 
-  return unifica([...salvati, ...posti, ...indirizzi]).slice(0, 8)
+  /**
+   * Un suggerimento senza coordinate non è un suggerimento: è una trappola.
+   *
+   * Chi lo sceglie vede il campo riempirsi e il modulo dichiararsi
+   * completo, e poi tutto quello che viene dopo — il preventivo, il
+   * percorso, il prezzo — fallisce dicendo che manca una destinazione che
+   * lui ha appena scelto. Meglio una riga in meno nell'elenco.
+   *
+   * Nascevano da `Number(r.lat)` su una colonna che a volte non c'era:
+   * `Number(undefined)` fa NaN, e in JSON NaN diventa `null` senza che
+   * nessuno se ne accorga.
+   */
+  return unifica([...salvati, ...posti, ...indirizzi])
+    .filter(haCoordinate)
+    .slice(0, 8)
+}
+
+/** Un luogo si può usare solo se si sa dov'è, e se è su questo pianeta. */
+export function haCoordinate(l: { lat: number; lng: number }): boolean {
+  return Number.isFinite(l.lat) && Number.isFinite(l.lng)
+    && Math.abs(l.lat) <= 90 && Math.abs(l.lng) <= 180
+    // Il punto zero è in mezzo all'Atlantico: nessun indirizzo italiano ci
+    // finisce, e ci finiscono invece tutte le coordinate mancanti.
+    && !(l.lat === 0 && l.lng === 0)
 }
 
 /**

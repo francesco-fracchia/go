@@ -67,6 +67,15 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const [serveNumero, setServeNumero] = useState(false)
   const [conto, setConto] = useState<Preventivo | null>(null)
   const [contando, setContando] = useState(false)
+  /**
+   * Perché il conto non c'è.
+   *
+   * Prima l'errore veniva ingoiato e il pannello restava per sempre su
+   * «appena metti partenza e arrivo…» — cioè diceva all'utente di fare una
+   * cosa che aveva già fatto. Un guasto muto che accusa chi lo subisce è
+   * peggio di un guasto rumoroso.
+   */
+  const [contoRotto, setContoRotto] = useState<string | null>(null)
 
   // La proposta di flessibilità si ricalcola con l'orario: la stessa tratta
   // il martedì mattina e il sabato sera non ha la stessa elasticità.
@@ -83,9 +92,9 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
    * la stessa tratta chiesta due volte non paga due percorsi.
    */
   useEffect(() => {
-    if (!origine || !destinazione || !veicolo) { setConto(null); return }
+    if (!origine || !destinazione || !veicolo) { setConto(null); setContoRotto(null); return }
     let vivo = true
-    setContando(true)
+    setContando(true); setContoRotto(null)
     const t = setTimeout(async () => {
       try {
         const r = await fetch('/api/preventivo', {
@@ -97,9 +106,16 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
             postiOfferti: posti,
           }),
         })
-        if (!r.ok || !vivo) return
+        if (!vivo) return
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({}))
+          setContoRotto(d.errore ?? 'non riusciamo a calcolare le spese')
+          return
+        }
         setConto(await r.json())
-      } catch { /* il modulo funziona anche senza il numero */ }
+      } catch {
+        if (vivo) setContoRotto('non riusciamo a calcolare le spese adesso')
+      }
       finally { if (vivo) setContando(false) }
     }, 250)
     return () => { vivo = false; clearTimeout(t) }
@@ -340,7 +356,12 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
             <div className="scatola-conto">
               <p className="occhiello">Le spese del viaggio</p>
 
-              {!conto ? (
+              {contoRotto && !conto ? (
+                <p className="conto-attesa">
+                  {contoRotto}. Puoi pubblicare lo stesso: il calcolo lo
+                  rifacciamo noi, ed è lo stesso di sempre.
+                </p>
+              ) : !conto ? (
                 <p className="conto-attesa">
                   {contando
                     ? 'Calcoliamo…'

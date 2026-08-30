@@ -31,28 +31,38 @@ export async function percorso(punti: Punto[]): Promise<Percorso> {
 
   const chiave = chiaveDi(punti)
 
-  const { data: cached } = await db
-    .from('percorsi_cache')
-    .select('km, minuti, percorso')
-    .eq('chiave', chiave)
-    .maybeSingle()
+  /**
+   * La cache si rilegge con una funzione, non con una select.
+   *
+   * La colonna è una geography, e PostgREST la restituisce come stringa
+   * esadecimale: leggerla direttamente dava una polilinea VUOTA, con i
+   * chilometri giusti accanto e nessun errore. Il danno arrivava dopo, in
+   * chi scriveva quella polilinea in una corsa: `LINESTRING()` senza punti,
+   * che PostGIS rifiuta. Ogni tratta funzionava una volta sola — la prima,
+   * quella che riempiva la cache.
+   */
+  const { data: cache } = await db.rpc('leggi_percorso', { p_chiave: chiave })
+  const cached = Array.isArray(cache) ? cache[0] : cache
 
   if (cached) {
-    void db.rpc('tocca_percorso', { p_chiave: chiave })
-    return {
-      km: Number(cached.km),
-      minuti: cached.minuti,
-      polilinea: leggiLinestring(cached.percorso),
+    const polilinea = leggiLinestring(cached.percorso)
+    // Una riga che non sa più dire da dove passa non è una cache: è una
+    // risposta sbagliata più veloce. Si ricalcola.
+    if (polilinea.length > 0) {
+      void db.rpc('tocca_percorso', { p_chiave: chiave })
+      return { km: Number(cached.km), minuti: cached.minuti, polilinea }
     }
   }
 
   const calcolato = await calcolaConOrs(punti)
-  await db.from('percorsi_cache').insert({
+  // `upsert` e non `insert`: se la riga c'è ma era illeggibile la si
+  // sostituisce, invece di fallire sulla chiave e riprovare per sempre.
+  await db.from('percorsi_cache').upsert({
     chiave,
     km: calcolato.km,
     minuti: calcolato.minuti,
     percorso: aLinestring(calcolato.polilinea),
-  })
+  }, { onConflict: 'chiave' })
   return calcolato
 }
 

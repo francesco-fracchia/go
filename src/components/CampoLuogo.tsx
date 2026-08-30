@@ -97,7 +97,11 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
       try {
         const r = await fetch(`/api/luoghi?${p}`)
         const d = await r.json()
-        setSuggerimenti(d.luoghi ?? [])
+        // Anche qui, non solo sul server: una riga senza coordinate si
+        // sceglie volentieri e poi non porta da nessuna parte.
+        setSuggerimenti((d.luoghi ?? []).filter(
+          (l: LuogoScelto) => Number.isFinite(l.lat) && Number.isFinite(l.lng),
+        ))
         setAperto(true)
       } finally { setCercando(false) }
     }, 350)

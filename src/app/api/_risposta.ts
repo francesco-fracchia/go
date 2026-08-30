@@ -1,6 +1,7 @@
 import { NonAutenticato } from '../../server/auth.ts'
 import { ErrorePrenotazione } from '../../server/prenotazioni.ts'
 import { ErroreCorsa } from '../../server/corse.ts'
+import { ErroreProfilo } from '../../server/profili.ts'
 import { ViolazioneConformita } from '../../lib/pricing.ts'
 
 /**
@@ -13,7 +14,8 @@ import { ViolazioneConformita } from '../../lib/pricing.ts'
 export function rispostaErrore(e: unknown): Response {
   if (e instanceof NonAutenticato) return json({ errore: 'accedi per continuare' }, 401)
 
-  if (e instanceof ErrorePrenotazione || e instanceof ErroreCorsa) {
+  if (e instanceof ErrorePrenotazione || e instanceof ErroreCorsa
+      || e instanceof ErroreProfilo) {
     return json({ errore: e.message, codice: e.codice }, stato(e.codice))
   }
   if (e instanceof ViolazioneConformita) {
