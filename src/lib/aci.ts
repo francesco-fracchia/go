@@ -1,4 +1,16 @@
 /**
+ * ⚠️  SUPERATO. Le stime per fascia di questo file non si usano più.
+ *
+ * I costi veri sono nella tabella `aci_modelli`, importati dal
+ * Supplemento ordinario n. 40 alla Gazzetta Ufficiale del 23 dicembre 2025:
+ * 4.628 modelli, quelli reali. Le stime qui sotto erano sbagliate in
+ * entrambe le direzioni — il modello benzina più economico costa
+ * 0,2864 €/km contro una stima di 0,3712 per le utilitarie — e su quelle
+ * auto il conducente avrebbe incassato più di quanto spende.
+ *
+ * Resta solo come riferimento nei test del motore dei prezzi, dove serve un
+ * numero qualsiasi e non un dato vero.
+ *
  * Tabella dei costi chilometrici di esercizio.
  *
  * FONTE: tabelle ACI dei costi chilometrici (art. 3 c.1 D.Lgs. 314/1997),

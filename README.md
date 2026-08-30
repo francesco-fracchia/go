@@ -342,11 +342,22 @@ dell'attività.
 
 ## Il vincolo ACI
 
+`aci_modelli` contiene i **4.628 modelli veri**, importati dal Supplemento
+ordinario n. 40 alla Gazzetta Ufficiale del 23 dicembre 2025 — le tabelle
+nazionali dei costi chilometrici di esercizio, colonna «COSTO KM» su 15.000
+km annui.
+
 `veicoli.centesimi_per_km` è sovrascritto da un trigger `BEFORE INSERT OR
-UPDATE` che lo risolve dalla tabella `aci_costi`. Qualunque valore mandi il
-client viene ignorato. Se la coppia fascia/alimentazione non è a tabella si
-ripiega **al valore più basso** disponibile: sbagliare al ribasso è un
-problema commerciale, al rialzo è un problema legale.
+UPDATE` che lo legge da lì. Qualunque valore mandi il client viene ignorato.
+Modello mancante → si ripiega sul **minimo della sua alimentazione**:
+sbagliare al ribasso è un problema commerciale, al rialzo è un problema
+legale.
+
+Prima c'erano stime per fascia, ed erano sbagliate **in entrambe le
+direzioni**: il modello benzina più economico costa 0,2864 €/km contro una
+stima di 0,3712 per le utilitarie. Su quelle auto il conducente avrebbe
+incassato più di quanto spende — con tutti e tre i presidi che non se ne
+accorgevano, perché il tetto era sbagliato in partenza.
 
 ## La commissione di incasso
 
@@ -428,7 +439,6 @@ Sotto, in ordine di quanto bloccano.
 - [ ] dominio e primo dispiegamento
 
 **Servono prima del primo utente vero**
-- [ ] sostituire le 29 voci ACI stimate con i dati ufficiali
 - [ ] importare i posti della zona e inserire le prime serate da `/serate`
 
 **Si possono fare dopo**
