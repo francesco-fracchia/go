@@ -96,6 +96,24 @@ comodità: poter indicare «il parcheggio dietro la chiesa» invece di
 scriverlo. La ricerca per indirizzo copre lo stesso bisogno e non costa
 niente.
 
+### Il freno
+
+`consumo_mappe` conta ogni mappa che nasce, e a **8.000 al mese** — sotto la
+soglia gratuita di 10.000, perché il conteggio arriva dal browser e qualcosa
+si perde sempre — **smettiamo di offrirla**. Il pulsante non compare e resta
+la ricerca per indirizzo.
+
+È meglio della quota di Google, che a soglia superata fa *fallire* le
+richieste: l'utente vede un rettangolo grigio e non sa perché. Qui invece il
+servizio si degrada in uno stato già previsto, e nessuno vede niente di
+rotto. Il consumo del mese si guarda in `/serate`.
+
+Un caricamento è **una mappa creata**, non un utente e non una piastrella:
+trascinare e zoomare dentro la stessa mappa è compreso. E in GO una mappa
+nasce in un posto solo — quando qualcuno tocca «Scegli sulla mappa».
+**Metterne una nei risultati di ricerca moltiplicherebbe il consumo per
+dieci**, ed è il tipo di aggiunta che sembra innocua.
+
 | | costo | licenza |
 |---|---|---|
 | **ricerca per indirizzo** (ORS) | 0 € | commerciale, 2.000 chiamate al giorno |

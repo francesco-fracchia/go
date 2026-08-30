@@ -38,8 +38,6 @@ import { Bottone } from './base.tsx'
  * prometterla che mostrarla con una filigrana addosso. Si accende quando il
  * volume la giustifica, ed è una variabile d'ambiente.
  */
-export const MAPPA_ATTIVA = !!process.env.NEXT_PUBLIC_MAPTILER_KEY
-
 const PIASTRELLE = [
   `https://api.maptiler.com/maps/dataviz-light/{z}/{x}/{y}@2x.png?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`,
 ]
@@ -117,6 +115,11 @@ export function Mappa({ centro, iniziale, onConferma, onAnnulla }: {
 
       // Una mappa grigia con i controlli sopra sembra funzionante: se le
       // piastrelle non arrivano bisogna dirlo, non lasciarla lì.
+      // Si segna che è nata, subito: se l'utente chiude fra due secondi la
+      // mappa è comunque costata un caricamento, e non contarla vorrebbe
+      // dire scoprire lo sforamento in fattura.
+      void fetch('/api/mappa', { method: 'POST' }).catch(() => {})
+
       mappa.on('error', (e) => {
         console.error('mappa:', e.error)
         setGuasta(true)

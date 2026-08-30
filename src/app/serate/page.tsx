@@ -4,6 +4,8 @@ import { GestioneSerate } from '../../components/GestioneSerate.tsx'
 
 export const dynamic = 'force-dynamic'
 
+import { statoMappa } from '../../server/mappe.ts'
+
 export default async function Pagina() {
   const utente = await richiediUtente()
   const ammessi = (process.env.MODERATORI ?? '').split(',').map((s) => s.trim())
@@ -16,7 +18,11 @@ export default async function Pagina() {
   }
 
   const serate = await prossimeSerate(30)
-  return <GestioneSerate esistenti={serate.map((s) => ({
+  const consumo = await statoMappa().catch(() => null)
+  return <GestioneSerate
+    mappa={consumo?.attiva ?? false}
+    consumo={consumo ? { caricamenti: consumo.caricamenti, soglia: consumo.soglia, attiva: consumo.attiva } : undefined}
+    esistenti={serate.map((s) => ({
     id: s.id, locale: s.locale, citta: s.citta, inizio: s.inizio, corse: s.corsePubblicate,
   }))} />
 }

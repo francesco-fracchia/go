@@ -19,10 +19,11 @@ import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '.
 
 type Passo = 'dove' | 'come' | 'conferma'
 
-export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, categoria }: {
+export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, categoria, mappa = false }: {
   veicoli: Array<{ id: string; marca: string; modello: string; postiTotali: number }>
   destinazione?: LuogoScelto
   categoria?: Categoria
+  mappa?: boolean
 }) {
   const [passo, setPasso] = useState<Passo>('dove')
   const [origine, setOrigine] = useState<LuogoScelto | null>(null)
@@ -73,9 +74,9 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
       {passo === 'dove' && (
         <>
           <h1 style={{ fontSize: 26, margin: '18px 0 20px' }}>Dove vai?</h1>
-          <CampoLuogo etichetta="Parti da" valore={origine} onScegli={setOrigine}
+          <CampoLuogo mappa={mappa} etichetta="Parti da" valore={origine} onScegli={setOrigine}
             segnaposto="Lodi, piazza della Vittoria" />
-          <CampoLuogo etichetta="Arrivi a" valore={destinazione} onScegli={setDestinazione}
+          <CampoLuogo mappa={mappa} etichetta="Arrivi a" valore={destinazione} onScegli={setDestinazione}
             segnaposto="Fabrique, Milano" />
           <Campo etichetta="Vuoi essere lì alle" valore={oraArrivo} onChange={setOraArrivo}
             segnaposto="23:45" tipo="datetime-local" />

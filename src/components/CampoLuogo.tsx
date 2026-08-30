@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Mappa, MAPPA_ATTIVA } from './Mappa.tsx'
+import { Mappa } from './Mappa.tsx'
 
 /**
  * Un campo che sa dove sono i posti.
@@ -19,12 +19,19 @@ import { Mappa, MAPPA_ATTIVA } from './Mappa.tsx'
 
 export interface LuogoScelto { etichetta: string; lat: number; lng: number }
 
-export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino }: {
+export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, mappa = false }: {
   etichetta: string
   segnaposto: string
   valore: LuogoScelto | null
   onScegli: (l: LuogoScelto | null) => void
   vicino?: { lat: number; lng: number }
+  /**
+   * Se offrire la scelta sulla mappa. Lo decide il server, che sa se c'è una
+   * chiave e quante mappe sono già nate questo mese: superata la soglia
+   * gratuita il pulsante sparisce e resta la ricerca per indirizzo, invece
+   * di arrivare una fattura.
+   */
+  mappa?: boolean
 }) {
   const [testo, setTesto] = useState(valore?.etichetta ?? '')
   const [suggerimenti, setSuggerimenti] = useState<LuogoScelto[]>([])
@@ -108,7 +115,7 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino }: 
       {/* Molti punti di ritrovo non hanno un indirizzo che qualcuno saprebbe
           scrivere: «il parcheggio dietro la chiesa», «l'uscita del casello».
           La ricerca copre la metà facile, la mappa l'altra. */}
-      {MAPPA_ATTIVA && (
+      {mappa && (
         <button
           type="button"
           onClick={() => setMappaAperta(true)}
@@ -119,7 +126,7 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino }: 
         >Scegli sulla mappa</button>
       )}
 
-      {mappaAperta && MAPPA_ATTIVA && (
+      {mappaAperta && mappa && (
         <Mappa
           centro={valore ?? vicino ?? { lat: 45.3142, lng: 9.5033 }}
           iniziale={valore ? { ...valore } : undefined}

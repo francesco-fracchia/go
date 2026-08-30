@@ -221,6 +221,8 @@ export function datiDemo(): Tabelle {
         mai_annullato: true, affidabile: false, conducente_avviato: true, veterano: false },
     ],
 
+    consumo_mappe: [{ mese: 'demo', caricamenti: 137 }],
+
     push_iscrizioni: [], notifiche: [], lavori: [], segnalazioni: [],
     chiamate: [], percorsi_cache: [], luoghi_cache: [], aci_costi: [],
   }
@@ -310,5 +312,11 @@ export function funzioniDemo(t: Tabelle): Record<string, (a: Record<string, unkn
     conferma_imbarco_token: () => 'ok',
     assegna_codici_imbarco: () => 0,
     puo_chiamare: () => true,
+    caricamenti_del_mese: () => (t.consumo_mappe?.[0]?.caricamenti ?? 0),
+    conta_caricamento_mappa: () => {
+      const riga = (t.consumo_mappe ??= [{ mese: 'demo', caricamenti: 0 }])[0]!
+      riga.caricamenti = Number(riga.caricamenti) + 1
+      return riga.caricamenti
+    },
   }
 }

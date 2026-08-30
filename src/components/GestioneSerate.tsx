@@ -11,8 +11,11 @@ import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
  * secondi non ne verranno inserite, e la schermata iniziale resterà vuota
  * proprio nei mesi in cui è l'unica cosa da guardare.
  */
-export function GestioneSerate({ esistenti }: {
+export function GestioneSerate({ esistenti, mappa = false, consumo }: {
   esistenti: Array<{ id: string; locale: string; citta: string; inizio: string; corse: number }>
+  mappa?: boolean
+  /** mappe create questo mese e soglia oltre cui smettiamo di offrirla */
+  consumo?: { caricamenti: number; soglia: number; attiva: boolean }
 }) {
   const [locale, setLocale] = useState('')
   const [luogo, setLuogo] = useState<LuogoScelto | null>(null)
@@ -33,7 +36,7 @@ export function GestioneSerate({ esistenti }: {
         background: 'var(--superficie)', padding: '18px 20px', marginBottom: 28,
       }}>
         <Campo etichetta="Locale" valore={locale} onChange={setLocale} segnaposto="Fabrique" />
-        <CampoLuogo etichetta="Dove" valore={luogo} onScegli={setLuogo}
+        <CampoLuogo mappa={mappa} etichetta="Dove" valore={luogo} onScegli={setLuogo}
           segnaposto="via Gaudenzio Fantoli 9, Milano" />
         <Campo etichetta="Quando apre" valore={inizio} onChange={setInizio}
           segnaposto="" tipo="datetime-local" />
@@ -91,6 +94,37 @@ export function GestioneSerate({ esistenti }: {
           }}
         >Importa i posti attorno al punto scelto</button>
       </div>
+
+      {/* Il consumo della mappa si guarda qui, dove si amministra: è
+          l'unica voce di costo che può crescere da sola. */}
+      {consumo && (
+        <div style={{
+          border: '1px solid var(--riga)', borderRadius: 'var(--raggio)',
+          padding: '14px 16px', marginBottom: 28,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 14.5, fontWeight: 600 }}>Mappe aperte questo mese</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 15 }}>
+              {consumo.caricamenti.toLocaleString('it-IT')} / {consumo.soglia.toLocaleString('it-IT')}
+            </span>
+          </div>
+          <div style={{
+            height: 5, borderRadius: 3, background: 'var(--superficie-2)',
+            margin: '10px 0 8px', overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${Math.min(100, (consumo.caricamenti / consumo.soglia) * 100)}%`,
+              background: consumo.attiva ? 'var(--accento)' : 'var(--rosso)',
+            }} />
+          </div>
+          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--tenue)', lineHeight: 1.5 }}>
+            {consumo.attiva
+              ? 'Superata la soglia smettiamo di offrire la mappa: resta la ricerca per indirizzo, e non arriva nessuna fattura.'
+              : 'Soglia superata: la scelta sulla mappa è sospesa fino al mese prossimo. La ricerca per indirizzo funziona.'}
+          </p>
+        </div>
+      )}
 
       <Etichetta>in programma</Etichetta>
       <div style={{ marginTop: 10 }}>

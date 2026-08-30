@@ -24,9 +24,10 @@ export interface Serata {
   corsePubblicate: number
 }
 
-export function Cerca({ serate = [], destinazione }: {
+export function Cerca({ serate = [], destinazione, mappa = false }: {
   serate?: Serata[]
   destinazione?: LuogoScelto
+  mappa?: boolean
 }) {
   const [da, setDa] = useState<LuogoScelto | null>(null)
   const [a, setA] = useState<LuogoScelto | null>(destinazione ?? null)
@@ -52,9 +53,9 @@ export function Cerca({ serate = [], destinazione }: {
       {/* ── La ricerca. Tre campi, nessuno facoltativo, nessuno in più. ── */}
       <div className="prima-affiancate">
       <div>
-      <CampoLuogo etichetta="Parti da" valore={da} onScegli={setDa}
+      <CampoLuogo mappa={mappa} etichetta="Parti da" valore={da} onScegli={setDa}
         segnaposto="Lodi, piazza della Vittoria" />
-      <CampoLuogo etichetta="Vai a" valore={a} onScegli={setA}
+      <CampoLuogo mappa={mappa} etichetta="Vai a" valore={a} onScegli={setA}
         segnaposto="Fabrique, Milano" />
       <Campo etichetta="Vuoi essere lì" valore={quando} onChange={setQuando}
         segnaposto="" tipo="datetime-local" />
