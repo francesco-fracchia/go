@@ -1,4 +1,4 @@
-import { db, DEMO } from './db.ts'
+import { db, DEMO, leggiEnv } from './db.ts'
 
 /**
  * Da indirizzo a coordinate.
@@ -163,7 +163,7 @@ async function geocodifica(
   q: string, vicino?: { lat: number; lng: number },
 ): Promise<Luogo[]> {
 
-  const chiave = process.env.ORS_API_KEY
+  const chiave = leggiEnv('ORS_API_KEY')
   if (!chiave) return []
 
   const p = new URLSearchParams({
@@ -226,7 +226,7 @@ export async function inverso(lat: number, lng: number): Promise<Luogo | null> {
   if (DEMO) {
     return { etichetta: `Punto scelto (${lat.toFixed(4)}, ${lng.toFixed(4)})`, lat, lng }
   }
-  const chiave = process.env.ORS_API_KEY
+  const chiave = leggiEnv('ORS_API_KEY')
   if (!chiave) return null
 
   const r = await fetch(`${ORS}/reverse?${new URLSearchParams({

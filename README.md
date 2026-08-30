@@ -345,6 +345,14 @@ I suggerimenti vengono da tre fonti, in quest'ordine:
 3. **gli indirizzi** — la rete di sicurezza, e si chiama solo se le prime due
    non bastano: una chiamata in meno su una quota che finisce
 
+I suggerimenti sono pesati attorno a un **punto di riferimento**, e senza il
+prodotto sembra rotto: chi scrive «piazza della vittoria» dal lodigiano si
+vede proporre Brescia, che è la più famosa d'Italia. Il punto si prende da
+casa se l'ha salvata, altrimenti dalla partenza dell'ultima corsa,
+altrimenti dal centro predefinito — nessuno dei tre chiede il permesso di
+geolocalizzazione, che a schermata appena aperta si nega e non si richiede
+più.
+
 I doppioni fra le fonti si tolgono confrontando la **posizione**, non il
 testo: «Fabrique» e «Fabrique, Milano» sono scritture diverse dello stesso
 punto, e cento metri di tolleranza coprono lo scarto fra come lo

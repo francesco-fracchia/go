@@ -9,6 +9,8 @@ import { Telaio } from '../../components/Telaio.tsx'
 
 import { statoMappa } from '../../server/mappe.ts'
 
+import { centroPer } from '../../server/centro.ts'
+
 export default async function Pagina({ searchParams }: {
   searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string; cat?: string }>
 }) {
@@ -22,13 +24,14 @@ export default async function Pagina({ searchParams }: {
 
   const utente = await richiediUtente()
   const { attiva: mappa } = await statoMappa().catch(() => ({ attiva: false }))
+  const vicino = await centroPer(utente)
   const { data } = await db
     .from('veicoli')
     .select('id, marca, modello, posti_totali')
     .eq('proprietario', utente)
     .eq('attivo', true)
 
-  return <Telaio attiva="/pubblica"><FormPubblica mappa={mappa} destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
+  return <Telaio attiva="/pubblica"><FormPubblica mappa={mappa} vicino={vicino} destinazione={destinazione} categoria={q.cat as Categoria | undefined} veicoli={(data ?? []).map((v) => ({
     id: v.id, marca: v.marca, modello: v.modello, postiTotali: v.posti_totali,
   }))} /></Telaio>
 }

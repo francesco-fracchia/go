@@ -57,7 +57,21 @@ export const db = new Proxy({} as SupabaseClient, {
 })
 
 export function requireEnv(nome: string): string {
-  const v = process.env[nome]
+  const v = leggiEnv(nome)
   if (!v) throw new Error(`variabile d'ambiente mancante: ${nome}`)
   return v
+}
+
+/**
+ * Legge una variabile togliendo i caratteri invisibili.
+ *
+ * Copiando una chiave da una pagina web capita che si attacchi un carattere
+ * di controllo o uno spazio non separatore. Il valore sembra giusto a
+ * occhio, e il servizio risponde 403 senza dire perché — è successo, e
+ * abbiamo impiegato mezz'ora a capirlo guardando la lunghezza della
+ * stringa. Toglierli costa una riga.
+ */
+export function leggiEnv(nome: string): string | undefined {
+  const v = process.env[nome]
+  return v?.replace(/[\u0000-\u001f\u007f\u00a0]/g, '').trim() || undefined
 }

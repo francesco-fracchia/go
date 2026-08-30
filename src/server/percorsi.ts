@@ -1,4 +1,4 @@
-import { db, DEMO } from './db.ts'
+import { db, DEMO, leggiEnv } from './db.ts'
 
 /**
  * Calcolo dei percorsi, con cache.
@@ -77,7 +77,7 @@ export async function kmDeviazione(
 const ORS = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
 
 async function calcolaConOrs(punti: Punto[]): Promise<Percorso> {
-  const chiave = process.env.ORS_API_KEY
+  const chiave = leggiEnv('ORS_API_KEY')
   if (!chiave) throw new Error("variabile d'ambiente mancante: ORS_API_KEY")
 
   const risposta = await fetch(ORS, {

@@ -15,7 +15,17 @@ import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import pg from 'pg'
 
-const STRINGA = process.env.DATABASE_URL
+/**
+ * I caratteri di controllo che si portano dietro gli appunti.
+ *
+ * Copiando una chiave da una pagina web capita che si attacchi un
+ * carattere invisibile — un \u0003, uno spazio non separatore. Il valore
+ * sembra giusto a occhio, e il servizio risponde 403 senza dire perché.
+ * Ci abbiamo perso mezz'ora una volta: meglio toglierli e basta.
+ */
+const pulito = (v) => v?.replace(/[\u0000-\u001f\u007f\u00a0]/g, '').trim()
+
+const STRINGA = pulito(process.env.DATABASE_URL)
 if (!STRINGA) {
   console.error(`
 Manca DATABASE_URL.

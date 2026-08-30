@@ -7,6 +7,9 @@ import { Telaio } from '../components/Telaio.tsx'
 
 import { statoMappa } from '../server/mappe.ts'
 
+import { centroPer } from '../server/centro.ts'
+import { utenteCorrente } from '../server/auth.ts'
+
 export default async function Home({ searchParams }: {
   searchParams: Promise<{ dlat?: string; dlng?: string; dove?: string }>
 }) {
@@ -19,7 +22,8 @@ export default async function Home({ searchParams }: {
   // Se il database non risponde la schermata deve comparire lo stesso: le
   // serate sono un contorno, la ricerca no.
   const { attiva: mappa } = await statoMappa().catch(() => ({ attiva: false }))
+  const vicino = await centroPer(await utenteCorrente().catch(() => null))
   let serate: Awaited<ReturnType<typeof prossimeSerate>> = []
   try { serate = await prossimeSerate() } catch { /* si mostra senza */ }
-  return <Telaio attiva="/"><Cerca serate={serate} destinazione={destinazione} mappa={mappa} /></Telaio>
+  return <Telaio attiva="/"><Cerca serate={serate} destinazione={destinazione} mappa={mappa} vicino={vicino} /></Telaio>
 }
