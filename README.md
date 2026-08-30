@@ -468,6 +468,12 @@ Sotto, in ordine di quanto bloccano.
 - [ ] account Stripe, webhook registrato, chiavi
 - [ ] chiave OpenRouteService, numero Twilio, chiavi VAPID
 - [ ] dominio e primo dispiegamento
+- [ ] **limitare la chiave MapTiler ai domini veri** (Allowed HTTP Origins:
+      il dominio, `*.dominio`, e `localhost` per continuare a sviluppare).
+      La chiave sta nel browser e chiunque la legge dal sorgente: senza
+      quella limitazione qualcuno consuma la tua quota sul suo sito. Si fa
+      in trenta secondi e non si può fare prima, perché una regola sbagliata
+      dà una mappa grigia senza dire perché.
 
 **Servono prima del primo utente vero**
 - [ ] importare i posti della zona e inserire le prime serate da `/serate`
