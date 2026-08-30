@@ -26,11 +26,24 @@ export async function middleware(req: NextRequest) {
   const percorso = req.nextUrl.pathname
   if (!PROTETTE.some((p) => percorso.startsWith(p))) return NextResponse.next()
 
+  /**
+   * Senza le chiavi si lascia passare.
+   *
+   * Un middleware che solleva porta giù OGNI pagina del sito, comprese
+   * quelle che non hanno bisogno di sapere chi sei: la prima cosa che si
+   * vede al primo dispiegamento è un errore 500 su tutto. Meglio far
+   * passare la richiesta e lasciare che sia la pagina a dire cosa manca —
+   * senza database non c'è comunque niente da proteggere.
+   */
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const chiave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !chiave) return NextResponse.next()
+
   let risposta = NextResponse.next({ request: req })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    url,
+    chiave,
     {
       cookies: {
         getAll: () => req.cookies.getAll(),
@@ -43,8 +56,17 @@ export async function middleware(req: NextRequest) {
     },
   )
 
-  const { data } = await supabase.auth.getUser()
-  if (!data.user) {
+  // E se la verifica fallisce per qualunque altra ragione — rete, servizio
+  // giù, sessione illeggibile — si lascia passare invece di rompere tutto.
+  let utente = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    utente = data.user
+  } catch {
+    return risposta
+  }
+
+  if (!utente) {
     const entra = new URL('/entra', req.url)
     entra.searchParams.set('ritorno', percorso + req.nextUrl.search)
     return NextResponse.redirect(entra)
