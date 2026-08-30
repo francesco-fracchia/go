@@ -28,7 +28,7 @@ create table posti (
   nascosto     boolean not null default false,
   aggiornato_il timestamptz not null default now()
 );
-create index using gist on posti (geo);
+create index on posti using gist (geo);
 create index on posti (categoria) where not nascosto;
 alter table posti enable row level security;
 create policy "i posti si vedono" on posti for select to authenticated

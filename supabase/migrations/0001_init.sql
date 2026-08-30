@@ -163,7 +163,7 @@ create table corse (
 );
 create index on corse (stato, ora_partenza);
 create index on corse (conducente);
-create index using gist on corse (destinazione_geo);
+create index on corse using gist (destinazione_geo);
 
 alter table corse enable row level security;
 create policy "vedo le corse pubbliche" on corse for select to authenticated

@@ -80,7 +80,7 @@ create table richieste_passaggio (
   creata_il     timestamptz not null default now()
 );
 create index on richieste_passaggio (ora_arrivo) where attiva;
-create index using gist on richieste_passaggio (destinazione_geo);
+create index on richieste_passaggio using gist (destinazione_geo);
 alter table richieste_passaggio enable row level security;
 create policy "vedo le richieste attive" on richieste_passaggio for select to authenticated
   using (attiva or passeggero = auth.uid());

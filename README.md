@@ -141,6 +141,21 @@ più utile che possiamo dare a un conducente.
 
 Attribuzione ODbL mostrata in fondo alla schermata.
 
+## Applicare le migrazioni
+
+```bash
+npm run migra            # applica quelle che mancano
+npm run migra -- --stato # dice cosa è già passato, senza toccare niente
+```
+
+Serve `DATABASE_URL` in `.env.local` — su Supabase sta nel pulsante
+**Connect** in alto, scheda *Direct*, variante **Session pooler** (porta
+5432: la connessione diretta è solo IPv6 e da molte reti non passa).
+
+Ogni migrazione gira in una transazione e il registro sta nel database:
+se una fallisce non lascia dietro mezze tabelle, e rilanciando riprende da
+dove si era fermata invece di ricominciare.
+
 ## Provarla adesso, senza chiavi
 
 ```bash
@@ -433,7 +448,7 @@ Le chiavi VAPID si generano con `npx web-push generate-vapid-keys`.
 Sotto, in ordine di quanto bloccano.
 
 **Bloccano il lancio**
-- [ ] un progetto Supabase con le migrazioni applicate
+- [x] ~~un progetto Supabase con le migrazioni applicate~~ — fatto
 - [ ] account Stripe, webhook registrato, chiavi
 - [ ] chiave OpenRouteService, numero Twilio, chiavi VAPID
 - [ ] dominio e primo dispiegamento

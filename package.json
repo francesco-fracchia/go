@@ -10,15 +10,18 @@
     "build": "npm run prepara && next build",
     "start": "next start",
     "demo": "npm run prepara && DEMO=1 next dev --webpack",
-    "prepara": "node scripts/copia-worker.mjs"
+    "prepara": "node scripts/copia-worker.mjs",
+    "migra": "node --env-file-if-exists=.env.local scripts/migra.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@types/web-push": "^3.6.4",
     "esbuild": "^0.28.2",
+    "pg": "^8.23.0",
     "typescript": "^5.6.0"
   },
   "dependencies": {

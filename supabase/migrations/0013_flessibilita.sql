@@ -41,7 +41,14 @@ create trigger prenotazioni_fissano_orario
   for each row execute function fissa_orario();
 
 -- La ricerca allarga la finestra di ciascuna corsa della sua flessibilità.
-create or replace function cerca_corse(
+--
+-- Si elimina prima di ricreare: la funzione guadagna una colonna nel
+-- risultato, e `create or replace` rifiuta un cambio di tipo di ritorno.
+-- È il genere di errore che si scopre a metà installazione, con metà
+-- schema già applicato.
+drop function if exists cerca_corse(geography, geography, timestamptz, timestamptz, integer, integer);
+
+create function cerca_corse(
   p_origine       geography,
   p_destinazione  geography,
   p_da            timestamptz,

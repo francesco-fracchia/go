@@ -54,5 +54,5 @@ comment on column profili.soste is
 create type capienza_bagagli as enum ('nessuno', 'piccoli', 'medi', 'grandi');
 
 alter table veicoli add column bagagli capienza_bagagli not null default 'medi';
-update veicoli set bagagli = case when bagagli_grandi then 'grandi' else 'piccoli' end;
+update veicoli set bagagli = (case when bagagli_grandi then 'grandi' else 'piccoli' end)::capienza_bagagli;
 alter table veicoli drop column bagagli_grandi;

@@ -34,7 +34,7 @@ create table serate (
   creata_il     timestamptz not null default now()
 );
 create index on serate (inizio) where pubblicata;
-create index using gist on serate (geo);
+create index on serate using gist (geo);
 alter table serate enable row level security;
 create policy "le serate si vedono" on serate for select to authenticated
   using (pubblicata);
