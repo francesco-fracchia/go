@@ -13,10 +13,21 @@ import { NextResponse, type NextRequest } from 'next/server'
  * Si chiede di entrare solo al momento di fare qualcosa, e con il ritorno
  * al posto giusto.
  */
+/** Protette insieme a tutto quello che ci sta sotto. */
 const PROTETTE = [
-  '/viaggi', '/pubblica', '/conto', '/veicoli',
+  '/viaggi', '/pubblica', '/conto', '/veicoli', '/impostazioni',
   '/prenotazione', '/chat', '/recensione', '/cerco', '/moderazione',
+  '/serate',
 ]
+
+/**
+ * Protette SOLO esattamente così.
+ *
+ * `/profilo` senza altro è il tuo, e richiede di sapere chi sei.
+ * `/profilo/qualcuno` è il profilo di un altro, e si guarda prima di
+ * decidere se salire in macchina con lui — anche senza essersi registrati.
+ */
+const PROTETTE_ESATTE = ['/profilo']
 
 export async function middleware(req: NextRequest) {
   // In dimostrazione si è già dentro: chiedere di registrarsi per guardare
@@ -24,7 +35,9 @@ export async function middleware(req: NextRequest) {
   if (process.env.DEMO === '1') return NextResponse.next()
 
   const percorso = req.nextUrl.pathname
-  if (!PROTETTE.some((p) => percorso.startsWith(p))) return NextResponse.next()
+  const protetta = PROTETTE.some((p) => percorso.startsWith(p))
+    || PROTETTE_ESATTE.includes(percorso)
+  if (!protetta) return NextResponse.next()
 
   /**
    * Senza le chiavi si lascia passare.

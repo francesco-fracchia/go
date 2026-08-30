@@ -51,7 +51,10 @@
 
   /* Larghezze: la colonna del telefono e quella del desktop. */
   --colonna: 460px;
-  --largo: 1180px;
+  /* Largo davvero: su un portatile da 1440 la pagina usa lo schermo invece
+     di lasciare due bande grigie ai lati. Il limite serve solo a impedire
+     che su un monitor da 27 pollici una riga di testo diventi illeggibile. */
+  --largo: 1400px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -200,7 +203,7 @@ a { color: var(--accento); }
   }
   .intestazione-dentro {
     max-width: var(--largo); margin: 0 auto;
-    padding: 0 28px; height: 62px;
+    padding: 0 32px; height: 62px;
     display: flex; align-items: center; gap: 34px;
   }
   .marchio-collegamento {
@@ -250,7 +253,8 @@ a { color: var(--accento); }
 }
 
 @media (min-width: 1200px) {
-  .intestazione-dentro { padding: 0 40px; }
+  .intestazione-dentro { padding: 0 44px; }
+  .casa { padding-left: 44px !important; padding-right: 44px !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -358,7 +362,7 @@ a { color: var(--accento); }
    cosa che si vede — prima bisogna capire cosa si sta usando.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.casa { --colonna: 1120px; }
+.casa { --colonna: var(--largo); }
 .casa main, .casa { max-width: none; }
 
 .apertura {
@@ -497,8 +501,12 @@ a { color: var(--accento); }
 
 @media (min-width: 860px) {
   .apertura {
-    grid-template-columns: 1.05fr .95fr;
-    gap: 56px;
+    /* La colonna del testo non cresce con lo schermo: oltre una certa
+       larghezza una riga smette di essere leggibile. Cresce lo spazio fra
+       le due, che è quello che fa respirare. */
+    grid-template-columns: minmax(0, 560px) minmax(380px, 480px);
+    justify-content: space-between;
+    gap: 72px;
     /* Centrato, non allineato in alto: la colonna destra è più alta e
        lasciare la sinistra appesa in cima le dà un'aria di incompiuto. */
     align-items: center;
@@ -545,3 +553,45 @@ label:focus-within {
 }
 
 .voce-bassa-attiva { background: var(--accento-velo); }
+
+/* ─── Scelte rapide: giorno e ora ──────────────────────────────────────
+   Pulsanti invece di un calendario. Chi esce il sabato non pensa
+   «30 agosto 2026 ore 23:30»: pensa «stasera verso le undici e mezza». */
+
+.scelte {
+  display: flex; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.scelte::-webkit-scrollbar { display: none; }
+
+.scelta {
+  flex-shrink: 0;
+  display: inline-flex; align-items: baseline; gap: 5px;
+  min-height: 40px; padding: 0 13px;
+  border-radius: 10px; border: 1px solid var(--riga);
+  background: var(--superficie); color: var(--inchiostro);
+  font-size: 14.5px; font-weight: 500; font-family: var(--testo);
+  white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.scelta:hover { border-color: var(--inchiostro-2); }
+.scelta-attiva {
+  background: var(--accento); border-color: transparent;
+  color: var(--su-accento); font-weight: 600;
+}
+.scelta-numero { font-size: 12px; opacity: .6; }
+.scelta-attiva .scelta-numero { opacity: .75; }
+
+.campo-data {
+  width: 100%; padding: 12px 14px; font-size: 16px;
+  font-family: var(--testo); color: var(--inchiostro);
+  border: 1px solid var(--riga); border-radius: var(--raggio-s);
+  background: var(--superficie); outline: none;
+}
+
+.collegamento-piccolo {
+  background: none; border: none; padding: 2px 0;
+  color: var(--tenue); font-size: 13px; font-family: var(--testo);
+}
+.collegamento-piccolo:hover { color: var(--accento); }

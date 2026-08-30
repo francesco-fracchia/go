@@ -45,6 +45,7 @@ export function Posti({ iniziali, categoriaIniziale }: {
   const [posti, setPosti] = useState(iniziali)
   const [caricando, setCaricando] = useState(false)
   const [vicino, setVicino] = useState(false)
+  const [problema, setProblema] = useState<string | null>(null)
 
   const [posizione, setPosizione] = useState<{ lat: number; lng: number } | null>(null)
 
@@ -74,15 +75,39 @@ export function Posti({ iniziali, categoriaIniziale }: {
    * che in una provincia è già quasi giusto.
    */
   function usaPosizione() {
-    if (!navigator.geolocation) return
+    setProblema(null)
+
+    // Il browser dà la posizione solo su HTTPS (o su localhost). Senza
+    // questo controllo la richiesta fallisce e basta, e sembra che il
+    // pulsante non faccia niente.
+    if (!navigator.geolocation) {
+      setProblema('Il tuo browser non sa dirci dove sei.')
+      return
+    }
+    if (!window.isSecureContext) {
+      setProblema('La posizione funziona solo su una connessione sicura.')
+      return
+    }
+
     setCaricando(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setPosizione(p); setVicino(true); carica(categoria, p)
       },
-      () => setCaricando(false),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600_000 },
+      (e) => {
+        setCaricando(false)
+        // Ogni motivo ha una via d'uscita diversa, e dirla è la differenza
+        // fra «non funziona» e «ecco cosa fare».
+        setProblema(
+          e.code === e.PERMISSION_DENIED
+            ? 'Hai negato la posizione. Puoi riattivarla dalle impostazioni del browser, oppure cercare per indirizzo.'
+            : e.code === e.POSITION_UNAVAILABLE
+              ? 'Non riusciamo a capire dove sei. Prova a cercare per indirizzo.'
+              : 'Ci ha messo troppo. Riprova, o cerca per indirizzo.',
+        )
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 },
     )
   }
 
@@ -95,10 +120,21 @@ export function Posti({ iniziali, categoriaIniziale }: {
           nessuno ci va puoi dirlo.
         </p>
         {!vicino && (
-          <button onClick={usaPosizione} style={{
+          <button onClick={usaPosizione} disabled={caricando} style={{
             background: 'none', border: 'none', color: 'var(--accento)',
-            fontSize: 14, fontWeight: 600, padding: '0 0 16px',
-          }}>Usa la mia posizione</button>
+            fontSize: 14, fontWeight: 600, padding: '0 0 10px',
+          }}>{caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}</button>
+        )}
+        {problema && (
+          <p style={{
+            fontSize: 13.5, color: 'var(--inchiostro-2)', lineHeight: 1.5,
+            margin: '0 0 14px', maxWidth: '46ch',
+          }}>{problema}</p>
+        )}
+        {vicino && (
+          <p style={{ fontSize: 13.5, color: 'var(--verde)', margin: '0 0 14px' }}>
+            Ordinati dalla tua posizione.
+          </p>
         )}
       </div>
 

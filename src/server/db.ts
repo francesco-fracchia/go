@@ -36,7 +36,10 @@ function client(): SupabaseClient {
       return cache
     }
     cache = createClient(
-      requireEnv('SUPABASE_URL'),
+      // Il nome ha il prefisso pubblico perché l'URL del progetto non è un
+      // segreto e serve anche al browser: la chiave accanto sì, e quella
+      // resta senza prefisso proprio per non poterci finire.
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
       requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
       { auth: { persistSession: false } },
     )
@@ -55,6 +58,20 @@ export const db = new Proxy({} as SupabaseClient, {
     return typeof v === 'function' ? v.bind(c) : v
   },
 })
+
+/**
+ * I nomi delle variabili d'ambiente, in un posto solo.
+ *
+ * Sbagliarne uno costa una pagina intera in errore 500, e l'errore dice il
+ * nome che hai cercato — non quello che avresti dovuto cercare. È successo
+ * con SUPABASE_URL contro NEXT_PUBLIC_SUPABASE_URL, e la pagina del
+ * profilo è rimasta rotta finché non l'abbiamo aperta.
+ */
+export const ENV = {
+  supabaseUrl: 'NEXT_PUBLIC_SUPABASE_URL',
+  supabaseAnon: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  supabaseServizio: 'SUPABASE_SERVICE_ROLE_KEY',
+} as const
 
 export function requireEnv(nome: string): string {
   const v = leggiEnv(nome)

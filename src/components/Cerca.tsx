@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Marchio } from './Marchio.tsx'
 import { Etichetta } from './base.tsx'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
+import { Quando } from './Quando.tsx'
 
 /**
  * La prima schermata.
@@ -100,8 +101,7 @@ export function Cerca({ serate = [], destinazione, mappa = false, vicino }: {
               valore={da} onScegli={setDa} segnaposto="Lodi, piazza della Vittoria" />
             <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Vai a"
               valore={a} onScegli={setA} segnaposto="Fabrique, Milano" />
-            <Campo etichetta="Vuoi essere lì" valore={quando} onChange={setQuando}
-              tipo="datetime-local" />
+            <Quando valore={quando} onCambia={setQuando} />
 
             <button
               type="button"

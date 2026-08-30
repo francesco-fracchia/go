@@ -15,8 +15,22 @@ import { Bottone } from './base.tsx'
  * incassa — che è l'unico posto dove serve davvero.
  */
 export function Entra({ ritorno = '/' }: { ritorno?: string }) {
+  /**
+   * Due strade per entrare, e la seconda non è un ripiego temporaneo.
+   *
+   * Il numero di telefono resta la strada giusta — è quello che serve alle
+   * chiamate mascherate, e chi viaggia con sconosciuti si fida di più di
+   * chi ha un numero verificato. Ma l'SMS costa e richiede un fornitore
+   * configurato, e finché non c'è nessuno può entrare affatto.
+   *
+   * L'email è l'altra strada: costa zero, funziona subito, e il numero lo
+   * si chiede comunque prima di pubblicare o prenotare — cioè nel momento
+   * in cui serve davvero, non all'ingresso.
+   */
+  const [via, setVia] = useState<'telefono' | 'email'>('email')
   const [fase, setFase] = useState<'numero' | 'codice' | 'nome'>('numero')
   const [telefono, setTelefono] = useState('')
+  const [indirizzo, setIndirizzo] = useState('')
   const [codice, setCodice] = useState('')
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
@@ -43,17 +57,27 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
   async function mandaCodice() {
     setAttesa(true); setErrore(null)
-    const { error } = await client().auth.signInWithOtp({ phone: numeroPulito() })
+    const { error } = via === 'telefono'
+      ? await client().auth.signInWithOtp({ phone: numeroPulito() })
+      : await client().auth.signInWithOtp({
+          email: indirizzo.trim(),
+          options: { shouldCreateUser: true },
+        })
     setAttesa(false)
-    if (error) { setErrore('Non siamo riusciti a mandare il codice. Controlla il numero.'); return }
+    if (error) {
+      setErrore(via === 'telefono'
+        ? 'Non siamo riusciti a mandare il codice. Controlla il numero.'
+        : 'Non siamo riusciti a mandare il codice. Controlla l’indirizzo.')
+      return
+    }
     setFase('codice')
   }
 
   async function verifica() {
     setAttesa(true); setErrore(null)
-    const { data, error } = await client().auth.verifyOtp({
-      phone: numeroPulito(), token: codice, type: 'sms',
-    })
+    const { data, error } = via === 'telefono'
+      ? await client().auth.verifyOtp({ phone: numeroPulito(), token: codice, type: 'sms' })
+      : await client().auth.verifyOtp({ email: indirizzo.trim(), token: codice, type: 'email' })
     setAttesa(false)
     if (error || !data.user) { setErrore('Codice sbagliato o scaduto.'); return }
 
@@ -66,7 +90,13 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     setAttesa(true); setErrore(null)
     const r = await fetch('/api/profilo', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ nome, cognome, telefono: numeroPulito() }),
+      body: JSON.stringify({
+        nome, cognome,
+        // Senza numero si registra un segnaposto: lo si chiederà davvero
+        // prima di pubblicare o prenotare, dove serve.
+        telefono: via === 'telefono' ? numeroPulito() : `email:${indirizzo.trim()}`,
+        email: via === 'email' ? indirizzo.trim() : undefined,
+      }),
     })
     setAttesa(false)
     if (!r.ok) { setErrore((await r.json()).errore ?? 'Non è andata'); return }
@@ -82,22 +112,37 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       {fase === 'numero' && (
         <>
           <h1 style={{ fontSize: 26, textAlign: 'center', marginBottom: 8 }}>
-            Il tuo numero
+            {via === 'telefono' ? 'Il tuo numero' : 'La tua email'}
           </h1>
           <p style={{
             textAlign: 'center', color: 'var(--inchiostro-2)', fontSize: 15,
-            margin: '0 0 26px', lineHeight: 1.55,
+            margin: '0 0 22px', lineHeight: 1.55,
           }}>
-            Ti mandiamo un codice. Nessuna password da ricordare, e il numero
-            non lo vede nessun altro utente.
+            Ti mandiamo un codice. Nessuna password da ricordare.
           </p>
-          <Campo valore={telefono} onChange={setTelefono}
-            segnaposto="333 1234567" tipo="tel" />
+
+          {via === 'telefono'
+            ? <Campo valore={telefono} onChange={setTelefono} segnaposto="333 1234567" tipo="tel" />
+            : <Campo valore={indirizzo} onChange={setIndirizzo} segnaposto="nome@esempio.it" tipo="email" />}
+
           {errore && <Errore testo={errore} />}
-          <Bottone disabled={telefono.replace(/\D/g, '').length < 9 || attesa}
+
+          <Bottone
+            disabled={attesa || (via === 'telefono'
+              ? telefono.replace(/\D/g, '').length < 9
+              : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(indirizzo.trim()))}
             onClick={mandaCodice}>
             {attesa ? 'Un attimo…' : 'Mandami il codice'}
           </Bottone>
+
+          <button
+            onClick={() => { setVia(via === 'telefono' ? 'email' : 'telefono'); setErrore(null) }}
+            style={{
+              width: '100%', background: 'none', border: 'none',
+              color: 'var(--tenue)', fontSize: 14, padding: 16,
+            }}>
+            {via === 'telefono' ? 'Usa l’email' : 'Usa il numero di telefono'}
+          </button>
         </>
       )}
 
@@ -110,7 +155,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
             textAlign: 'center', color: 'var(--inchiostro-2)', fontSize: 15,
             margin: '0 0 26px',
           }}>
-            L&apos;abbiamo mandato al {telefono}.
+            L&apos;abbiamo mandato {via === 'telefono' ? `al ${telefono}` : `a ${indirizzo}`}.
           </p>
           <Campo valore={codice} onChange={setCodice} segnaposto="000000"
             tipo="text" centrato mono />
@@ -121,7 +166,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
           <button onClick={() => setFase('numero')} style={{
             width: '100%', background: 'none', border: 'none', color: 'var(--tenue)',
             fontSize: 14, padding: 14,
-          }}>Ho sbagliato numero</button>
+          }}>{via === 'telefono' ? 'Ho sbagliato numero' : 'Ho sbagliato indirizzo'}</button>
         </>
       )}
 

@@ -48,6 +48,7 @@ export async function creaProfilo(r: Registrazione) {
     telefono: r.telefono,
     telefono_ok: true,
     email: r.email ?? null,
+    email_ok: !!r.email,
     nome: r.nome.trim(),
     cognome: r.cognome.trim(),
     data_nascita: r.dataNascita ?? null,

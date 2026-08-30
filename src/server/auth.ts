@@ -16,8 +16,8 @@ export async function utenteCorrente(): Promise<string | null> {
 
   const store = await cookies()
   const supabase = createServerClient(
-    requireEnv('SUPABASE_URL'),
-    requireEnv('SUPABASE_ANON_KEY'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       cookies: {
         getAll: () => store.getAll(),
@@ -37,4 +37,24 @@ export async function richiediUtente(): Promise<string> {
   const id = await utenteCorrente()
   if (!id) throw new NonAutenticato()
   return id
+}
+
+/**
+ * Come `richiediUtente`, ma per le pagine: invece di sollevare, manda ad
+ * accedere e torna dove si era.
+ *
+ * Un'eccezione dentro un componente server diventa una pagina bianca con
+ * scritto 500, che non dice niente e non offre una via d'uscita. La
+ * versione che reindirizza è quella giusta ovunque ci sia un utente
+ * davanti; quella che solleva resta per le rotte, dove un 401 è la
+ * risposta corretta.
+ */
+export async function utentePagina(percorso: string): Promise<string> {
+  const id = await utenteCorrente()
+  if (id) return id
+  const { redirect } = await import('next/navigation')
+  // `redirect` non torna mai, ma il compilatore non lo sa attraverso un
+  // import dinamico: il throw esplicito glielo dice.
+  redirect(`/entra?ritorno=${encodeURIComponent(percorso)}`)
+  throw new NonAutenticato()
 }
