@@ -1,7 +1,7 @@
 import { Riquadro, Etichetta, euro } from './base.tsx'
 import { giorno, orario } from '../lib/tempo.ts'
 import { AzioniConducente, RispondiProposta } from './AzioniConducente.tsx'
-import { Invita } from './Invita.tsx'
+import { Condividi } from './Condividi.tsx'
 import { InViaggio } from './InViaggio.tsx'
 import { QuotePersonalizzate } from './QuotePersonalizzate.tsx'
 
@@ -71,7 +71,14 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
     <div className="fascia"><div className="dentro dentro-app dettaglio-dentro">
 
       <div className="dettaglio-testa">
-        <p className="occhiello">{giorno(c.oraPartenza)} · guidi tu</p>
+        {/* Che questa corsa la guidi TU è la prima cosa da sapere: decide
+            cosa puoi fare in questa schermata, e ci si può arrivare da un
+            collegamento senza aver scelto di entrare in modalità
+            conducente. Una riga grigia in coda alla data non bastava. */}
+        <p className="fila" style={{ gap: 'var(--s3)' }}>
+          <span className="pastiglia pastiglia-viola">guidi tu</span>
+          <span className="occhiello">{giorno(c.oraPartenza)}</span>
+        </p>
         <h1 className="t-titolo" style={{ marginTop: 'var(--s2)' }}>{c.destinazioneLabel}</h1>
         <p className="t-guida" style={{ marginTop: 'var(--s2)' }}>
           Parti alle {orario(c.oraPartenza)} da {c.origineLabel}
@@ -181,32 +188,18 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           {/* Su una corsa non pubblica il posto vuoto si riempie mandando
               il collegamento, non aspettando che qualcuno la trovi. */}
           {liberi > 0 && c.modalita !== 'pubblica' && c.tokenLink && (
-            <Invita token={c.tokenLink}
-              destinazione={c.destinazioneLabel}
-              orario={orario(c.oraPartenza)} />
+            <Condividi privata percorso={`/invito/${c.tokenLink}`}
+              destinazione={c.destinazioneLabel} orario={orario(c.oraPartenza)}
+              sotto="Non compare nelle ricerche. Manda il collegamento a chi vuoi: chi lo apre può prenotare." />
           )}
 
           {/* Il posto vuoto non è uno spazio bianco: è un invito.
               Nel primo anno la maggior parte delle corse parte mezza vuota,
               e questa è l'unica leva che il conducente ha in mano. */}
           {liberi > 0 && c.modalita === 'pubblica' && (
-            <div style={{
-              border: '1px dashed var(--riga)', borderRadius: 'var(--raggio)',
-              padding: '16px 18px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--inchiostro-2)', lineHeight: 1.5 }}>
-                {liberi === 1 ? 'Resta un posto' : `Restano ${liberi} posti`}.
-                Ogni persona in più sono{' '}
-                {euro(Math.floor(c.costoCent / (c.postiOfferti + 1)))} che non
-                paghi tu.
-              </div>
-              <button style={{
-                background: 'none', border: 'none', color: 'var(--accento)',
-                fontWeight: 600, fontSize: 14, padding: '10px 0 0',
-              }}>
-                Manda il link a chi ci va
-              </button>
-            </div>
+            <Condividi percorso={`/corsa/${c.id}`}
+              destinazione={c.destinazioneLabel} orario={orario(c.oraPartenza)}
+              sotto={`${liberi === 1 ? 'Resta un posto' : `Restano ${liberi} posti`}. La corsa è già nelle ricerche, ma ogni persona in più sono ${euro(Math.floor(c.costoCent / (c.postiOfferti + 1)))} che non paghi tu: mandarla a chi sai che ci va è la strada più corta.`} />
           )}
         </div>
       </section>

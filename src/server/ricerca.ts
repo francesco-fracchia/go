@@ -44,6 +44,16 @@ export interface Filtri {
   /** quanto lontano dal percorso si accetta di cercare */
   raggioM?: number
   soloSenzaProposta?: boolean
+  /**
+   * Chi sta cercando, per non proporgli le proprie corse.
+   *
+   * Non è una raffinatezza: la propria corsa non si può prenotare — il
+   * server rifiuta — quindi ogni riga di quelle è un risultato che occupa
+   * lo spazio di uno vero e finisce in un vicolo cieco. E aprirla porta
+   * alla schermata di chi guida, cioè dall'altra parte dell'applicazione
+   * rispetto a quella in cui si stava.
+   */
+  escludi?: string | null
 }
 
 export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
@@ -57,7 +67,7 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
   })
   if (error) throw new Error(`ricerca non riuscita: ${error.message}`)
 
-  const righe = (data ?? []) as Array<{
+  const tutte = (data ?? []) as Array<{
     corsa_id: string; conducente: string
     ora_partenza: string; ora_arrivo: string
     posti_liberi: number; quota_cent: number
@@ -67,6 +77,8 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
     deviazione_ammessa: boolean
     flessibilita_min: number
   }>
+
+  const righe = f.escludi ? tutte.filter((r) => r.conducente !== f.escludi) : tutte
 
   return righe
     .filter((r) => r.fermata_ritiro !== null || r.deviazione_ammessa)

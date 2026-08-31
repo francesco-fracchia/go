@@ -32,7 +32,18 @@ export function Interruttore({ modo }: { modo: Modo }) {
   const [, avvia] = useTransition()
 
   function cambia(m: Modo) {
-    if (m === ottimista) return
+    /**
+     * Anche toccando il segmento già acceso si riscrive il biscotto.
+     *
+     * Alcune schermate esistono solo da un lato del mercato e si vestono di
+     * quel lato a prescindere da come si era entrati: la pubblicazione è
+     * sempre da conducente, i risultati sempre da passeggero. Lì
+     * l'interruttore mostra la modalità della pagina, che può non essere
+     * quella ricordata — e senza questa riconciliazione uno toccherebbe
+     * «Cerco» già acceso, non succederebbe nulla, e alla schermata dopo si
+     * ritroverebbe di nuovo da conducente.
+     */
+    if (m === ottimista && m === modo) return
     setOttimista(m)
     document.cookie = `modo=${m}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
     avvia(() => {

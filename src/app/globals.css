@@ -1520,3 +1520,13 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   font-family: var(--mono); font-size: 12px; line-height: 1.5;
   color: var(--tenue); overflow-wrap: anywhere;
 }
+
+/* ── Mandare la corsa a qualcuno ── */
+.condividi {
+  padding: var(--s5); border-radius: var(--r-l);
+  border: 1px dashed var(--riga); background: var(--superficie-2);
+}
+.condividi-testo {
+  margin: var(--s3) 0 var(--s4); font-size: 14px;
+  line-height: 1.55; color: var(--inchiostro-2);
+}

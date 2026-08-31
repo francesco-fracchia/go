@@ -41,7 +41,7 @@ export default async function Pagina({ searchParams }: {
 
   if (!Number.isFinite(num('olat')) || !Number.isFinite(num('dlat'))) {
     return (
-      <Telaio attiva="/" {...g}>
+      <Telaio attiva="/" {...g} modo="passeggero">
         <div className="dentro dentro-app" style={{ padding: 'var(--s8) 0' }}>
           <h1 className="t-sezione">Dicci da dove parti e dove vai.</h1>
           <a href="/" className="azione azione-piena" style={{ marginTop: 'var(--s5)' }}>
@@ -58,6 +58,9 @@ export default async function Pagina({ searchParams }: {
     da: new Date(q.da ?? Date.now()),
     a: new Date(q.a ?? Date.now() + 12 * 3600_000),
     posti: Number(q.posti ?? 1),
+    // Le proprie corse non si prenotano: mostrarle sarebbe mandare chi
+    // cerca dall'altra parte dell'applicazione.
+    escludi: g.utente,
   }
 
   const [trovati, { attiva: mappa }, vicino] = await Promise.all([
@@ -73,7 +76,7 @@ export default async function Pagina({ searchParams }: {
   const parti = q.parti || 'dove sei'
 
   return (
-    <Telaio attiva="/" {...g}>
+    <Telaio attiva="/" {...g} modo="passeggero">
       <div className="fascia">
         <div className="dentro dentro-app risultati-dentro">
 
