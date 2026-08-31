@@ -73,3 +73,34 @@ export const SegnoAvanti = ({ dimensione = 18 }: { dimensione?: number }) => (
     <path d="M5 12h13M12.5 6l6 6-6 6" />
   </svg>
 )
+
+/* ── I segni dei tre pilastri ──────────────────────────────────────────
+   Più grandi degli altri: qui non accompagnano una parola in una barra,
+   sono il primo elemento che si vede di una sezione. */
+
+const grande = { ...base, width: 30, height: 30, strokeWidth: 1.5 }
+
+/** Una cifra divisa: quello che si paga è una spesa spezzata, non un prezzo. */
+export const SegnoQuota = () => (
+  <svg {...grande}>
+    <circle cx="12" cy="12" r="9.2" />
+    <path d="M7.6 8.6h8.8M7.6 15.4h8.8M14.2 5.6l-4.4 12.8" />
+  </svg>
+)
+
+/** Una persona dentro un contorno: si sa chi è prima di salire. */
+export const SegnoFiducia = () => (
+  <svg {...grande}>
+    <path d="M12 2.8 4.4 6v6.1c0 4.6 3.1 7.9 7.6 9.1 4.5-1.2 7.6-4.5 7.6-9.1V6Z" />
+    <path d="M8.6 12.2l2.3 2.4 4.5-4.9" />
+  </svg>
+)
+
+/** Una strada con un innesto: ti prende anche se non sei sul suo percorso. */
+export const SegnoVicino = () => (
+  <svg {...grande}>
+    <path d="M3.4 19.4c3.6 0 4.2-4.6 7.4-6.2s5.4-.6 9.8-6.6" />
+    <path d="M7 21.2c1.4-2 1.4-5.2 3.8-8" />
+    <circle cx="10.8" cy="13.2" r="2.2" />
+  </svg>
+)

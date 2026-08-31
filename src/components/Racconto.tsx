@@ -1,6 +1,7 @@
 import { Marchio } from './Marchio.tsx'
-import { Incontro, Notte, Spese } from './visivi.tsx'
-import { SegnoAvanti } from './segni.tsx'
+import { Incontro, Notte, Spese, Tracciato } from './visivi.tsx'
+import { SegnoAvanti, SegnoQuota, SegnoFiducia, SegnoVicino } from './segni.tsx'
+import { Domande, TutteLeDomande, PER_CHI_CERCA, PER_CHI_OFFRE } from './Domande.tsx'
 import { quotaApplicata, feePasseggero, type Corsa } from '../lib/pricing.ts'
 
 /**
@@ -43,12 +44,16 @@ export function Racconto({ entrato }: { entrato?: boolean }) {
   return (
     <>
       <Apertura v={v} />
+      <Pilastri />
       <ComeFunziona />
       <DueStrade v={v} />
       <QuattroDiNotte v={v} />
       <NonStaiPagando />
       <Fiducia />
+      <Distintivi />
       <Esempi />
+      <HaiPostiLiberi v={v} />
+      <Aiuto />
       <Chiusura v={v} />
     </>
   )
@@ -96,7 +101,48 @@ function Apertura({ v }: { v: Inviti }) {
   )
 }
 
-/* ══ 2. Come funziona davvero ══════════════════════════════════════════ */
+/* ══ 2. I tre pilastri ═════════════════════════════════════════════════
+   Le tre ragioni per cui GO esiste, dette una volta e in fila. Non sono
+   slogan: ciascuna corrisponde a una cosa che il prodotto fa e che si può
+   verificare scorrendo la pagina. */
+
+const PILASTRI = [
+  {
+    Segno: SegnoQuota,
+    t: 'Costa poco perché non è un prezzo',
+    d: 'Non paghi un passaggio: paghi la tua parte di una spesa che esisteva già. Il costo esce dalle tabelle ACI sul modello esatto dell’auto, diviso per chi è a bordo — chi guida compreso.',
+  },
+  {
+    Segno: SegnoFiducia,
+    t: 'Sai con chi sali prima di salire',
+    d: 'Nome, foto, età, la macchina, quante corse ha portato a termine, cosa abbiamo verificato. E i distintivi, che non sono stelle date da qualcuno ma conteggi: «non annulla mai» vuol dire zero annullate su almeno cinque viaggi.',
+  },
+  {
+    Segno: SegnoVicino,
+    t: 'Ti trova anche chi passa solo vicino',
+    d: 'Non serve stare esattamente sul suo percorso. Cerchiamo anche chi ti passa accanto e può fare qualche chilometro in più per prenderti: quei chilometri li calcoliamo, li paghi tu, e chi guida decide se accettare.',
+  },
+]
+
+function Pilastri() {
+  return (
+    <section className="fascia sezione sezione-riga">
+      <div className="dentro">
+        <div className="griglia griglia-3">
+          {PILASTRI.map(({ Segno, t, d }) => (
+            <div key={t} className="pilastro">
+              <span className="pilastro-segno"><Segno /></span>
+              <h3 className="pilastro-titolo">{t}</h3>
+              <p className="pilastro-testo">{d}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ══ 3. Come funziona davvero ══════════════════════════════════════════ */
 
 const PASSI = [
   { n: '01', t: 'Tu devi andare a Milano', d: 'Stasera, verso le undici. Il treno non c’è più e il taxi costa quaranta euro.' },
@@ -263,6 +309,126 @@ function Fiducia() {
               <p className="fatto-testo">{f.d}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ══ I distintivi ══════════════════════════════════════════════════════
+   L'equivalente onesto di un programma «conducente d'oro»: non un premio
+   che assegniamo noi, ma quattro conteggi. Le soglie sono quelle vere,
+   scritte nella vista che li calcola — se un giorno cambiano, cambia
+   anche questa sezione, perché un distintivo spiegato male vale meno di
+   un distintivo che non c'è. */
+
+const DISTINTIVI = [
+  { n: 'già avviato', q: 'almeno 3 viaggi portati a termine' },
+  { n: 'non annulla mai', q: 'almeno 5 viaggi conclusi e nemmeno uno annullato' },
+  { n: 'affidabile', q: 'almeno 20 viaggi conclusi, con meno del 5% annullati' },
+  { n: 'veterano', q: 'almeno 25 viaggi conclusi e 15 recensioni positive' },
+]
+
+function Distintivi() {
+  return (
+    <section className="fascia sezione sezione-riga">
+      <div className="dentro">
+        <div className="testa-sezione">
+          <div>
+            <p className="occhiello">I distintivi</p>
+            <h2 className="t-titolo" style={{ marginTop: 'var(--s3)' }}>
+              Non diamo stelle.<br /><em className="viola">Contiamo.</em>
+            </h2>
+          </div>
+          <p className="t-corpo">
+            Una media di stelle dice poco: quattro e mezzo su cinque può
+            voler dire chiunque. Su un passaggio il rischio numero uno è che
+            non arrivi, e allora il distintivo che conta è quello — e si
+            calcola dai fatti, non si assegna.
+          </p>
+        </div>
+
+        <div className="griglia griglia-4">
+          {DISTINTIVI.map((d) => (
+            <div key={d.n} className="distintivo">
+              <span className="pastiglia pastiglia-verde">{d.n}</span>
+              <p className="distintivo-regola">{d.q}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="t-nota" style={{ marginTop: 'var(--s5)', maxWidth: '58ch' }}>
+          Si perdono come si prendono. Chi annulla un viaggio perde «non
+          annulla mai» e non c’è modo di riaverlo se non guidando.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+/* ══ Hai posti liberi? ═════════════════════════════════════════════════
+   La sezione che parla a chi ha l'auto. In un mercato a due lati il lato
+   corto è l'offerta: senza qualcuno che parte non c'è niente da cercare,
+   e questa pagina finora chiedeva quasi solo di cercare. */
+
+function HaiPostiLiberi({ v }: { v: Inviti }) {
+  return (
+    <section className="fascia sezione sezione-velo">
+      <div className="dentro guidatori-dentro">
+        <div>
+          <p className="occhiello">Hai la macchina</p>
+          <h2 className="t-titolo" style={{ margin: 'var(--s3) 0 var(--s5)' }}>
+            Quei posti dietro<br /><em className="viola">stanno viaggiando vuoti.</em>
+          </h2>
+          <p className="t-guida misura">
+            Non devi cambiare i tuoi piani, né deviare, né aspettare nessuno:
+            pubblichi il viaggio che faresti comunque e vedi subito quanto ti
+            rientra. Ci vogliono meno di due minuti, e se non prenota nessuno
+            la corsa sparisce da sola.
+          </p>
+          <ul className="punti-guida">
+            <li>Il prezzo non lo devi decidere: lo calcoliamo dalle spese vere della tua auto.</li>
+            <li>Scegli tu se accettare le richieste una per una o farti prenotare direttamente.</li>
+            <li>I soldi arrivano dopo il viaggio, non prima: chi sale è protetto, e tu non discuti niente in macchina.</li>
+          </ul>
+          <div className="azioni" style={{ marginTop: 'var(--s6)' }}>
+            <a href={v.offro} className="azione azione-piena">Pubblica un viaggio</a>
+          </div>
+        </div>
+        <div className="guidatori-disegno"><Tracciato altezza={190} /></div>
+      </div>
+    </section>
+  )
+}
+
+/* ══ Le domande ════════════════════════════════════════════════════════ */
+
+function Aiuto() {
+  return (
+    <section className="fascia sezione sezione-riga">
+      <div className="dentro">
+        <div className="testa-sezione">
+          <div>
+            <p className="occhiello">Le domande che si fanno tutti</p>
+            <h2 className="t-titolo" style={{ marginTop: 'var(--s3)' }}>
+              Prima che tu debba chiedere.
+            </h2>
+          </div>
+        </div>
+
+        <div className="aiuto-colonne">
+          <div>
+            <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Se cerchi un passaggio</p>
+            <Domande domande={PER_CHI_CERCA.slice(0, 3)} />
+          </div>
+          <div>
+            <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Se ne offri uno</p>
+            <Domande domande={PER_CHI_OFFRE.slice(0, 3)} />
+          </div>
+        </div>
+
+        <div className="azioni" style={{ marginTop: 'var(--s6)', justifyContent: 'center' }}>
+          <TutteLeDomande />
         </div>
       </div>
     </section>
