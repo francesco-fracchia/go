@@ -52,7 +52,35 @@ export async function catturaCorsa(corsaId: string) {
 
   for (const p of attive) {
     const q = calcolo.quote.find((x) => x.passeggeroId === p.passeggero)
-    if (!q || !p.stripe_payment_intent) continue
+    if (!q) continue
+
+    /**
+     * «Niente da incassare» non è «niente da fare».
+     *
+     * Qui c'era `if (!q || !p.stripe_payment_intent) continue`, e quel
+     * `continue` saltava anche l'aggiornamento di stato più sotto. Una
+     * prenotazione senza PaymentIntent restava `autorizzata` per sempre
+     * mentre la corsa proseguiva fino a `conclusa`: non diventava mai
+     * `catturata`, quindi non maturava, non entrava in `maturato_conducente`
+     * — che conta solo `catturata` e `completata` — e non riceveva mai
+     * l'invito a recensire. Il passeggero spariva dopo il viaggio.
+     *
+     * Capita in due casi veri. Il passeggero ESENTE, che il motore prevede
+     * («esenzione totale — solo in modalità privata, la assorbe il
+     * conducente»): non ha niente da autorizzare, quindi non ha un intent.
+     * E la prenotazione il cui intent non è stato scritto perché la seconda
+     * scrittura è fallita a metà.
+     *
+     * Il primo caso è normale e va registrato. Il secondo è un'anomalia e va
+     * URLATA, non saltata in silenzio: sono soldi che qualcuno si aspetta.
+     */
+    if (!p.stripe_payment_intent && q.totale > 0) {
+      console.error(
+        `prenotazione ${p.id}: ${q.totale} centesimi da incassare e nessun `
+        + 'PaymentIntent. Non è stata catturata e non è stata chiusa.',
+      )
+      continue
+    }
 
     // Non si cattura mai più di quanto autorizzato: se la matematica lo
     // chiedesse, c'è un errore a monte e ci si ferma.
@@ -62,12 +90,16 @@ export async function catturaCorsa(corsaId: string) {
       )
     }
 
-    if (q.totale === 0) {
-      await annulla(p.stripe_payment_intent)
-    } else {
-      await cattura(p.stripe_payment_intent, q.totale)
-      incassato += q.totale
-      catturate++
+    if (p.stripe_payment_intent) {
+      if (q.totale === 0) {
+        // Autorizzato e poi diventato gratuito: si libera la carta invece di
+        // catturare zero, che su Stripe costa comunque la commissione fissa.
+        await annulla(p.stripe_payment_intent)
+      } else {
+        await cattura(p.stripe_payment_intent, q.totale)
+        incassato += q.totale
+        catturate++
+      }
     }
 
     await db.from('prenotazioni').update({
