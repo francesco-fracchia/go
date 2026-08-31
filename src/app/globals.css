@@ -502,7 +502,8 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .scelte {
   display: flex; gap: 6px;
   overflow-x: auto; scrollbar-width: none;
-  padding-bottom: 2px; scroll-snap-type: x proximity;
+  padding: 3px 3px 6px; margin: -3px -3px -6px;
+  scroll-snap-type: x proximity; scroll-padding: 3px;
 }
 .scelte::-webkit-scrollbar { display: none; }
 
@@ -518,8 +519,8 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .scelta:hover { border-color: var(--inchiostro-2); }
 .scelta-attiva {
-  background: var(--accento); border-color: transparent;
-  color: var(--su-accento); font-weight: 600;
+  background: var(--inchiostro); border-color: transparent;
+  color: var(--carta); font-weight: 600;
 }
 .scelta-numero { font-size: 12px; opacity: .6; }
 .scelta-attiva .scelta-numero { opacity: .78; }
@@ -980,6 +981,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   .ricerca-fondo { grid-template-columns: 1fr auto; }
 }
 .ricerca-manca { margin: 0; font-size: 14px; color: var(--tenue); }
+.ricerca-manca-viva { color: var(--inchiostro-2); font-weight: 500; }
 .ricerca-invia { width: 100%; }
 @media (min-width: 560px) { .ricerca-invia { width: auto; min-width: 160px; } }
 .ricerca-invia[aria-disabled="true"] { opacity: .4; pointer-events: none; }
@@ -1010,7 +1012,12 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 
 .posti-fila {
   display: flex; gap: var(--s3); overflow-x: auto;
-  scrollbar-width: none; padding-bottom: 4px; scroll-snap-type: x proximity;
+  scrollbar-width: none; scroll-snap-type: x proximity;
+  /* Il contorno del fuoco e il bordo al passaggio del mouse escono di
+     qualche pixel dalla scheda: senza questo respiro il contenitore che
+     scorre li taglia a metà, e sembra un difetto di impaginazione. */
+  padding: 4px 4px 8px; margin: -4px -4px -8px;
+  scroll-padding: 4px;
 }
 .posti-fila::-webkit-scrollbar { display: none; }
 .posto-gettone {
@@ -1415,7 +1422,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   transition: border-color .14s ease, background .14s ease;
 }
 .opzione:hover { border-color: var(--inchiostro-2); }
-.opzione-scelta { border-color: var(--accento); background: var(--accento-velo); }
+.opzione-scelta { border-color: var(--inchiostro); background: var(--superficie); }
 .opzione-titolo { font-size: 15.5px; font-weight: 600; }
 .opzione-nota { font-size: 12.5px; line-height: 1.45; color: var(--tenue); }
 
@@ -1435,7 +1442,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .posto-numero:hover { border-color: var(--inchiostro-2); }
 .posto-numero-scelto {
-  background: var(--accento); border-color: transparent; color: var(--su-accento);
+  background: var(--inchiostro); border-color: transparent; color: var(--carta);
   transform: translateY(-2px);
 }
 
@@ -2064,7 +2071,9 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 
 .giorni {
   display: flex; gap: var(--s2); margin-top: var(--s3);
-  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 3px 3px 6px; margin-left: -3px; margin-right: -3px;
+  scroll-padding: 3px;
 }
 .giorni::-webkit-scrollbar { display: none; }
 .giorno {
@@ -2076,7 +2085,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .giorno:hover { border-color: var(--inchiostro-2); }
 .giorno-scelto {
-  background: var(--accento); border-color: transparent; color: var(--su-accento);
+  background: var(--inchiostro); border-color: transparent; color: var(--carta);
   transform: translateY(-1px);
 }
 .giorno-nome { font-size: 12px; font-weight: 500; opacity: .75; }
@@ -2098,8 +2107,17 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .fasce .segmento { flex: 1; }
 
 .ore {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
   gap: var(--s2); margin-top: var(--s3);
+}
+.minuti {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: var(--s2); margin-top: var(--s3);
+}
+.quando-piede {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4); margin-top: var(--s5);
+  padding-top: var(--s4); border-top: 1px solid var(--riga-2);
 }
 .ora {
   min-height: 46px; border-radius: var(--r-s);
@@ -2108,7 +2126,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   transition: background .13s ease, border-color .13s ease;
 }
 .ora:hover { border-color: var(--inchiostro-2); }
-.ora-scelta { background: var(--accento); border-color: transparent; color: var(--su-accento); font-weight: 600; }
+.ora-scelta { background: var(--inchiostro); border-color: transparent; color: var(--carta); font-weight: 600; }
 
 /* ── Dove si va: i comandi in testata e le schede ── */
 .posti-comandi { display: grid; gap: var(--s3); align-content: end; }

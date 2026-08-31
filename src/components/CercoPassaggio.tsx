@@ -69,10 +69,10 @@ export function CercoPassaggio({ mappa = false, vicino, casa }: {
 
         <div className="pannello-ricerca">
           <div className="ricerca-luoghi">
-            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
-              valore={destinazione} onScegli={setDestinazione} segnaposto="Indirizzo, città o locale" />
             <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Partenza"
               valore={origine} onScegli={setOrigine} segnaposto="Da dove parti" />
+            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
+              valore={destinazione} onScegli={setDestinazione} segnaposto="Indirizzo, città o locale" />
           </div>
 
           <div className="ricerca-quando">
@@ -112,9 +112,9 @@ export function CercoPassaggio({ mappa = false, vicino, casa }: {
 
           <div className="ricerca-fondo">
             <p className="ricerca-manca">
-              {!destinazione ? 'Dicci dove devi andare'
-                : !origine ? 'E da dove parti'
-                  : !quando ? 'Scegli quando' : 'Nessuno vedrà i tuoi contatti.'}
+              {!origine ? 'Manca la partenza'
+                : !destinazione ? 'Manca la destinazione'
+                  : !quando ? 'Manca il giorno e l’ora' : 'Nessuno vedrà i tuoi contatti.'}
             </p>
             <button type="button" className="azione azione-piena ricerca-invia"
               aria-disabled={!pronto || invio} onClick={manda}>

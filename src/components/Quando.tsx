@@ -25,11 +25,22 @@ import { useEffect, useState } from 'react'
 
 export interface Momento { giorno: Date; ora: string }
 
+/**
+ * Le ore, per momento della giornata. I minuti si scelgono a parte.
+ *
+ * Una griglia che contenga ogni combinazione di ora e minuto sono
+ * duecentottanta bottoni; una che contenga solo le mezz'ore costringe chi
+ * deve essere lì alle 22:45 a mentire. Due scelte piccole invece di una
+ * grande: prima l'ora, poi il minuto — che è anche l'ordine in cui uno la
+ * pensa.
+ */
 const ORE = {
-  giorno: ['07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
-  sera: ['19:00', '20:00', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'],
-  notte: ['00:00', '00:30', '01:00', '01:30', '02:00', '03:00', '04:00', '05:00'],
+  giorno: ['07', '08', '09', '10', '11', '12', '14', '16', '17', '18'],
+  sera: ['19', '20', '21', '22', '23'],
+  notte: ['00', '01', '02', '03', '04', '05'],
 }
+
+const MINUTI = ['00', '10', '15', '20', '30', '40', '45', '50']
 
 const NOMI: Record<keyof typeof ORE, string> = {
   giorno: 'Di giorno', sera: 'Di sera', notte: 'Di notte',
@@ -43,13 +54,21 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
   const [aperto, setAperto] = useState(false)
   const [giorno, setGiorno] = useState<Date | null>(null)
   const [ora, setOra] = useState('')
+  const [minuto, setMinuto] = useState('00')
   const [fascia, setFascia] = useState<keyof typeof ORE>('sera')
-  const [altro, setAltro] = useState('')
+  const [altriGiorni, setAltriGiorni] = useState(false)
 
   const oggi = new Date(); oggi.setHours(0, 0, 0, 0)
 
-  /** Sette giorni: una settimana è il limite oltre cui nessuno programma una serata. */
-  const giorni = Array.from({ length: 7 }, (_, i) => {
+  /**
+   * I giorni, come schede che scorrono.
+   *
+   * Il campo data nativo apriva il calendario del sistema — diverso su ogni
+   * macchina, brutto ovunque, e con dentro anche il 1994. Trenta giorni
+   * che scorrono coprono tutto quello che qualcuno programma davvero, e
+   * sono fatti della stessa materia del resto della schermata.
+   */
+  const giorni = Array.from({ length: altriGiorni ? 30 : 7 }, (_, i) => {
     const d = new Date(oggi); d.setDate(d.getDate() + i)
     return {
       data: d,
@@ -108,7 +127,7 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
                   <button key={g.numero} type="button"
                     className={`giorno${scelto ? ' giorno-scelto' : ''}`}
                     aria-pressed={scelto}
-                    onClick={() => { setGiorno(g.data); setAltro('') }}>
+                    onClick={() => { setGiorno(g.data); if (ora) componi(g.data, `${ora}:${minuto}`) }}>
                     <span className="giorno-nome">{g.nome}</span>
                     <span className="giorno-numero">{g.numero}</span>
                     <span className="giorno-mese">{g.mese}</span>
@@ -117,17 +136,13 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
               })}
             </div>
 
-            <label className="altro-giorno">
-              <span>Più in là</span>
-              <input type="date" value={altro}
-                onChange={(e) => {
-                  setAltro(e.target.value)
-                  if (e.target.value) {
-                    const d = new Date(`${e.target.value}T00:00`)
-                    if (!Number.isNaN(d.getTime())) setGiorno(d)
-                  }
-                }} />
-            </label>
+            {!altriGiorni && (
+              <button type="button" className="collegamento-piccolo"
+                style={{ marginTop: 'var(--s3)' }}
+                onClick={() => setAltriGiorni(true)}>
+                Più in là →
+              </button>
+            )}
 
             <p className="occhiello occhiello-muto" style={{ marginTop: 'var(--s6)' }}>L&apos;ora</p>
             <div className="segmenti fasce">
@@ -142,15 +157,35 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
                 <button key={o} type="button"
                   className={`ora${ora === o ? ' ora-scelta' : ''}`}
                   aria-pressed={ora === o}
-                  onClick={() => { setOra(o); componi(giorno, o) }}>{o}</button>
+                  onClick={() => { setOra(o); componi(giorno, `${o}:${minuto}`) }}>{o}</button>
               ))}
             </div>
 
-            {!giorno && (
-              <p className="t-nota" style={{ marginTop: 'var(--s4)' }}>
-                Scegli prima il giorno.
+            <p className="occhiello occhiello-muto" style={{ marginTop: 'var(--s5)' }}>
+              E i minuti
+            </p>
+            <div className="minuti">
+              {MINUTI.map((m) => (
+                <button key={m} type="button"
+                  className={`ora${minuto === m ? ' ora-scelta' : ''}`}
+                  aria-pressed={minuto === m}
+                  onClick={() => { setMinuto(m); if (ora) componi(giorno, `${ora}:${m}`) }}>
+                  :{m}
+                </button>
+              ))}
+            </div>
+
+            <div className="quando-piede">
+              <p className="t-nota">
+                {!giorno ? 'Scegli il giorno.'
+                  : !ora ? 'Adesso l’ora.'
+                    : `Vuoi essere lì alle ${ora}:${minuto}.`}
               </p>
-            )}
+              {giorno && ora && (
+                <button type="button" className="azione azione-piena azione-piccola"
+                  onClick={() => setAperto(false)}>Fatto</button>
+              )}
+            </div>
           </div>
         </>
       )}

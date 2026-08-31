@@ -34,7 +34,16 @@ export function Ricerca({ casa, destinazione, mappa = false, vicino, compatta }:
   const [quando, setQuando] = useState('')
   const [inCorso, setInCorso] = useState(false)
 
-  const manca = !a ? 'Dicci dove vai' : !da ? 'E da dove parti' : !quando ? 'Scegli quando' : null
+  /**
+   * Cosa manca, detto per nome.
+   *
+   * «Dicci dove vai» appeso accanto a un pulsante spento non è
+   * un'istruzione: è una frase che galleggia. Nominare il campo mancante
+   * lo lega a quello che si sta guardando.
+   */
+  const manca = !da ? 'Manca la partenza'
+    : !a ? 'Manca la destinazione'
+      : !quando ? 'Manca il giorno e l’ora' : null
 
   function cerca() {
     if (manca) return
@@ -55,10 +64,10 @@ export function Ricerca({ casa, destinazione, mappa = false, vicino, compatta }:
   return (
     <div className={`pannello-ricerca${compatta ? ' pannello-ricerca-compatto' : ''}`}>
       <div className="ricerca-luoghi">
-        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
-          valore={a} onScegli={setA} segnaposto="Indirizzo, città o locale" />
         <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Partenza"
           valore={da} onScegli={setDa} segnaposto="Da dove parti" />
+        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
+          valore={a} onScegli={setA} segnaposto="Indirizzo, città o locale" />
       </div>
 
       <div className="ricerca-quando">
