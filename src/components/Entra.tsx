@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { MarchioEsteso, Marchio } from './Marchio.tsx'
-import { SegnoAvanti } from './segni.tsx'
+import { MarchioEsteso } from './Marchio.tsx'
+import { Notte } from './visivi.tsx'
 
 /**
  * Entrare, e registrarsi.
@@ -217,22 +217,38 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     setSchermata('mandata')
   }
 
+  /**
+   * L'accesso era un modulo in mezzo al bianco: quattro rettangoli grigi e
+   * un pulsante, uguali a quelli di qualunque altra applicazione. È la
+   * prima schermata che qualcuno vede di GO, e non diceva niente di GO.
+   *
+   * Adesso metà è la scena — inchiostro, il marchio per esteso, la promessa
+   * e il disegno della notte, che è l'immagine del prodotto e non una
+   * decorazione, perché è il momento in cui GO serve davvero — e metà è il
+   * modulo, sul chiaro, dove si lavora.
+   *
+   * Su telefono la scena non può prendere metà schermo: diventa una fascia
+   * in cima, la stessa forma che ha la testata in tutte le altre schermate,
+   * così l'accesso non è una porta staccata dall'edificio.
+   */
   return (
     <main className="ingresso">
-      <div className="ingresso-parola solo-scrivania">
-        <MarchioEsteso dimensione={52} id="ingresso" />
-        <p className="t-guida" style={{ maxWidth: '30ch' }}>
-          Qualcuno sta già facendo la tua strada. Dividete le spese del
-          viaggio, e basta.
-        </p>
+      <div className="ingresso-scena">
+        <div className="ingresso-scena-dentro">
+          <MarchioEsteso dimensione={46} id="ingresso" scuro />
+          <p className="ingresso-promessa-testo">
+            Qualcuno sta già facendo la tua strada.<br />
+            Dividete le spese del viaggio, e basta.
+          </p>
+          <div className="ingresso-disegno" aria-hidden="true"><Notte /></div>
+        </div>
       </div>
 
       <div className="ingresso-modulo">
-        <div className="solo-telefono ingresso-segno"><Marchio dimensione={48} /></div>
 
         {schermata === 'entra' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Bentornato</h1>
+            <h1 className="t-blocco ingresso-titolo">Bentornato</h1>
             <p className="ingresso-sotto">Entra con la tua email e la password.</p>
 
             <Provider su={conProvider} />
@@ -272,7 +288,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'registra' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Crea il tuo account</h1>
+            <h1 className="t-blocco ingresso-titolo">Crea il tuo account</h1>
             <p className="ingresso-sotto">
               Ci vuole meno di un minuto. Il codice te lo chiediamo una volta
               sola, adesso.
@@ -313,7 +329,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'codiceEntra' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Controlla la posta</h1>
+            <h1 className="t-blocco ingresso-titolo">Controlla la posta</h1>
             <p className="ingresso-sotto">
               Abbiamo mandato un codice a <strong>{email()}</strong>. Vale pochi
               minuti.
@@ -339,7 +355,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'codice' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Controlla la posta</h1>
+            <h1 className="t-blocco ingresso-titolo">Controlla la posta</h1>
             <p className="ingresso-sotto">
               Abbiamo mandato un codice a <strong>{email()}</strong>. Serve solo
               a dimostrare che l&apos;indirizzo è tuo: dopo entrerai con la
@@ -359,7 +375,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'dimenticata' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Scegli una password</h1>
+            <h1 className="t-blocco ingresso-titolo">Scegli una password</h1>
             <p className="ingresso-sotto">
               Dicci il tuo indirizzo: ti mandiamo un collegamento per
               impostarne una. Se finora sei sempre entrato con il codice, va
@@ -384,7 +400,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'mandata' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Guarda la posta</h1>
+            <h1 className="t-blocco ingresso-titolo">Guarda la posta</h1>
             <p className="ingresso-sotto">
               Se <strong>{email()}</strong> è registrato, fra poco arriva un
               collegamento per scegliere una password nuova. Vale un&apos;ora.

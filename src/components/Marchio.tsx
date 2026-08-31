@@ -69,11 +69,13 @@ export function Marchio({ dimensione = 34, variante = 'quadrato', id = 'go' }: {
  * mezzo carattere, ed è quello che distingue una firma da una didascalia:
  * la frase finisce, e il colore dice di chi è.
  */
-export function MarchioEsteso({ dimensione = 40, id = 'go' }: {
+export function MarchioEsteso({ dimensione = 40, id = 'go', scuro }: {
   dimensione?: number; id?: string
+  /** su fondo d'inchiostro: il claim diventa chiaro, il punto resta acceso */
+  scuro?: boolean
 }) {
   return (
-    <div className="lockup">
+    <div className={scuro ? 'lockup lockup-scuro' : 'lockup'}>
       <Marchio variante="nudo" dimensione={dimensione} id={id} />
       <p className="lockup-claim">
         Se vai comunque, vai insieme<em className="lockup-punto">.</em>

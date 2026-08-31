@@ -771,6 +771,90 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .spese-chiusa { margin: 0; font-size: 16px; line-height: 1.55; color: var(--inchiostro-2); }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   Entrare.
+
+   Era un modulo in mezzo al bianco: quattro rettangoli grigi e un pulsante,
+   uguali a quelli di qualunque altra applicazione. È la prima schermata che
+   qualcuno vede di GO, e non diceva niente di GO.
+
+   Adesso metà è la SCENA — inchiostro, il marchio per esteso, la promessa e
+   il disegno della notte, che è l'immagine del prodotto e non una
+   decorazione — e metà è il MODULO, sul chiaro, dove si lavora. Su telefono
+   la scena diventa una fascia in cima: la stessa forma che ha la testata in
+   tutte le altre schermate, così l'accesso non è una porta staccata
+   dall'edificio.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ingresso { min-height: 100dvh; display: grid; }
+@media (min-width: 900px) {
+  .ingresso { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); }
+}
+
+.ingresso-scena {
+  background: var(--notte-fondo); color: var(--notte-testo);
+  display: grid; align-content: center;
+  padding: var(--s7) var(--bordo);
+}
+@media (min-width: 900px) {
+  .ingresso-scena { padding: var(--s9) var(--s8); }
+}
+.ingresso-scena-dentro { max-width: 460px; width: 100%; margin: 0 auto; }
+@media (min-width: 900px) { .ingresso-scena-dentro { margin: 0 0 0 auto; } }
+
+.ingresso-promessa-testo {
+  margin: var(--s5) 0 0;
+  font-size: clamp(1.02rem, 1.5vw, 1.22rem); line-height: 1.55;
+  color: var(--notte-tenue);
+}
+/* Il disegno vive solo dove c'è spazio: su telefono la fascia deve restare
+   una fascia, non diventare metà della schermata prima del primo campo. */
+.ingresso-disegno { display: none; margin-top: var(--s7); }
+@media (min-width: 900px) { .ingresso-disegno { display: block; } }
+
+.lockup-scuro .lockup-claim { color: var(--notte-testo); }
+.lockup-scuro .lockup-punto { color: var(--marchio-luce, #C9BEFF); }
+
+.ingresso-modulo {
+  display: grid; align-content: center;
+  padding: var(--s7) var(--bordo) var(--s8);
+  background: var(--foglio);
+}
+@media (min-width: 900px) { .ingresso-modulo { padding: var(--s9) var(--s8); } }
+.ingresso-modulo > * { width: 100%; max-width: 420px; margin-left: auto; margin-right: auto; }
+@media (min-width: 900px) { .ingresso-modulo > * { margin-left: 0; } }
+
+.ingresso-titolo { text-align: left; }
+.ingresso-sotto {
+  margin: var(--s3) 0 var(--s6); text-align: left;
+  font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2);
+}
+.ingresso-campo { margin-bottom: var(--s3); }
+.ingresso-coppia { display: grid; gap: var(--s3); }
+@media (min-width: 420px) { .ingresso-coppia { grid-template-columns: 1fr 1fr; } }
+.ingresso-invia { width: 100%; margin-top: var(--s4); }
+.ingresso-invia[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.ingresso-sotto-azioni {
+  display: flex; justify-content: space-between; gap: var(--s4);
+  flex-wrap: wrap; margin-top: var(--s5);
+  padding-top: var(--s4); border-top: 1px solid var(--riga);
+}
+.ingresso-legale {
+  margin: var(--s4) 0 0; font-size: 12.5px; line-height: 1.55;
+  color: var(--tenue);
+}
+
+/* ── Google e Apple ── */
+.provider { display: grid; gap: var(--s2); }
+.provider-voce { width: 100%; justify-content: center; }
+.oppure {
+  display: flex; align-items: center; gap: var(--s3);
+  margin: var(--s5) 0; font-size: 12.5px; color: var(--tenue);
+}
+.oppure::before, .oppure::after {
+  content: ''; flex: 1; height: 1px; background: var(--riga);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    Il racconto: la prima schermata di chi non sa ancora cos'è GO.
 
    Ogni sezione sanguina da bordo a bordo; dentro, la colonna è larga
@@ -1539,33 +1623,6 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   padding: var(--s6) var(--bordo) var(--s9);
 }
 
-/* ── Entrare ──
-   Su uno schermo grande il modulo non galleggia nel bianco: accanto c'è il
-   motivo per cui uno sta mettendo la propria email. */
-.ingresso {
-  min-height: 100dvh; display: grid; align-content: center;
-  gap: var(--s7); padding: var(--s7) var(--bordo);
-  max-width: 480px; margin: 0 auto;
-}
-@media (min-width: 900px) {
-  .ingresso {
-    max-width: var(--misura-app);
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
-    align-items: center; gap: var(--s9);
-  }
-}
-.ingresso-parola { display: grid; gap: var(--s5); align-content: center; }
-.ingresso-promessa { margin: 0; }
-.ingresso-modulo {
-  width: 100%;
-}
-@media (min-width: 900px) {
-  .ingresso-modulo {
-    padding: var(--s6); border-radius: var(--r-xl);
-    background: var(--carta); border: 1px solid var(--riga); box-shadow: var(--ombra);
-  }
-}
-
 /* Il dettaglio tecnico di un guasto: piccolo, monospaziato, e distinto dal
    messaggio che lo precede — è per chi sta costruendo, non per chi usa. */
 .errore-dettaglio {
@@ -1670,26 +1727,6 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 /* ═══════════════════════════════════════════════════════════════════════
    Entrare, e la presentazione.
    ═══════════════════════════════════════════════════════════════════════ */
-
-.ingresso-segno { display: flex; justify-content: center; margin-bottom: var(--s5); }
-.ingresso-titolo { text-align: center; }
-.ingresso-sotto {
-  margin: var(--s3) 0 var(--s5); text-align: center;
-  font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2);
-}
-.ingresso-campo { margin-bottom: var(--s3); }
-.ingresso-coppia { display: grid; gap: var(--s3); }
-@media (min-width: 420px) { .ingresso-coppia { grid-template-columns: 1fr 1fr; } }
-.ingresso-invia { width: 100%; margin-top: var(--s4); }
-.ingresso-invia[aria-disabled="true"] { opacity: .45; pointer-events: none; }
-.ingresso-sotto-azioni {
-  display: flex; justify-content: space-between; gap: var(--s4);
-  flex-wrap: wrap; margin-top: var(--s4);
-}
-.ingresso-legale {
-  margin: var(--s4) 0 0; font-size: 12.5px; line-height: 1.55;
-  color: var(--tenue); text-align: center;
-}
 
 /* ── Google e Apple ── */
 .provider { display: grid; gap: var(--s2); }
