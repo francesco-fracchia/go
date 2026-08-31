@@ -1,5 +1,5 @@
 import webpush from 'web-push'
-import { db, requireEnv } from './db.ts'
+import { db, leggiEnv } from './db.ts'
 
 /**
  * Notifiche.
@@ -28,16 +28,26 @@ const CRITICI: ReadonlySet<Tipo> = new Set<Tipo>([
 /** Costo indicativo di un SMS Twilio verso l'Italia. */
 export const COSTO_SMS_CENT = 7
 
-/** Configurata al primo invio, non all'import: vedi db.ts. */
+/**
+ * Configurata al primo invio, non all'import: vedi db.ts.
+ *
+ * E se le chiavi non ci sono, si dice di no invece di sollevare. Una
+ * notifica è una cortesia: un canale non configurato deve significare
+ * «questa strada non c'è», non «tutto quello che stavi facendo si ferma».
+ * Prima bastava non aver messo le chiavi push su un ambiente perché
+ * pubblicare una corsa fallisse — a corsa già creata, con un errore che non
+ * nominava le notifiche.
+ */
 let vapidPronto = false
-function configuraVapid() {
-  if (vapidPronto) return
-  webpush.setVapidDetails(
-    'mailto:' + requireEnv('CONTATTO_EMAIL'),
-    requireEnv('VAPID_PUBLIC_KEY'),
-    requireEnv('VAPID_PRIVATE_KEY'),
-  )
+function configuraVapid(): boolean {
+  if (vapidPronto) return true
+  const contatto = leggiEnv('CONTATTO_EMAIL')
+  const pubblica = leggiEnv('VAPID_PUBLIC_KEY')
+  const privata = leggiEnv('VAPID_PRIVATE_KEY')
+  if (!contatto || !pubblica || !privata) return false
+  webpush.setVapidDetails('mailto:' + contatto, pubblica, privata)
   vapidPronto = true
+  return true
 }
 
 export interface Notifica {
@@ -76,8 +86,15 @@ export async function notifica(n: Notifica): Promise<'push' | 'sms' | 'nessuno' 
 
   // L'SMS interviene solo se il push non è arrivato E la cosa è critica.
   if (!canale && CRITICI.has(n.tipo) && profilo.sms_attivi && profilo.telefono) {
-    await inviaSms(profilo.telefono, `${n.titolo}\n${n.testo}`)
-    canale = 'sms'
+    try {
+      await inviaSms(profilo.telefono, `${n.titolo}\n${n.testo}`)
+      canale = 'sms'
+    } catch (e) {
+      // Un fornitore assente o giù è un avviso non consegnato, non un
+      // lavoro fallito: chi ha chiamato questa funzione stava facendo
+      // altro, e quell'altro deve arrivare in fondo.
+      console.error('sms non inviato:', e)
+    }
   }
 
   if (!canale) return 'nessuno'
@@ -95,7 +112,7 @@ export async function notifica(n: Notifica): Promise<'push' | 'sms' | 'nessuno' 
 }
 
 async function inviaPush(n: Notifica): Promise<boolean> {
-  configuraVapid()
+  if (!configuraVapid()) return false
   const { data: iscrizioni } = await db
     .from('push_iscrizioni')
     .select('id, endpoint, p256dh, auth')
@@ -126,13 +143,20 @@ async function inviaPush(n: Notifica): Promise<boolean> {
 }
 
 async function inviaSms(numero: string, testo: string) {
+  const sid = leggiEnv('TWILIO_SID')
+  const token = leggiEnv('TWILIO_TOKEN')
+  const mittente = leggiEnv('TWILIO_MITTENTE')
+  // Senza fornitore non si manda: è un canale in meno, non un guasto.
+  if (!sid || !token || !mittente) throw new SmsNonConfigurati()
+
   const { default: twilio } = await import('twilio')
-  const client = twilio(requireEnv('TWILIO_SID'), requireEnv('TWILIO_TOKEN'))
-  await client.messages.create({
-    to: numero,
-    from: requireEnv('TWILIO_MITTENTE'),
-    body: testo,
-  })
+  const client = twilio(sid, token)
+  await client.messages.create({ to: numero, from: mittente, body: testo })
+}
+
+/** Non è un errore dell'utente: è un canale che su questo ambiente non c'è. */
+export class SmsNonConfigurati extends Error {
+  constructor() { super('SMS non configurati'); this.name = 'SmsNonConfigurati' }
 }
 
 /** Quanto sono costati gli SMS in un periodo. Serve a sapere se la regola tiene. */
