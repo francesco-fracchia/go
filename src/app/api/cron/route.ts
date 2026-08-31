@@ -25,6 +25,23 @@ const REGISTRO: Record<string, () => Promise<unknown>> = {
   dimentica_posizioni: dimenticaPosizioni,
 }
 
+/**
+ * Vercel chiama i cron in GET. Noi esportavamo solo POST.
+ *
+ * Risultato: `405 Method Not Allowed` a ogni esecuzione, per tutti e dieci i
+ * lavori, in silenzio — nessun errore applicativo, nessun log
+ * dell'applicazione, solo un codice di stato in una dashboard che nessuno
+ * guarda. Vuol dire che in produzione non è mai partita una cattura di
+ * pagamento, una ri-autorizzazione prima della scadenza Stripe, un
+ * promemoria, un rimatch, né la cancellazione delle posizioni.
+ *
+ * È il difetto più costoso trovato finora, e il più silenzioso: tutto il
+ * codice funzionava, non lo chiamava nessuno.
+ */
+export async function GET(req: Request) {
+  return POST(req)
+}
+
 export async function POST(req: Request) {
   const atteso = process.env.CRON_SECRET
   if (!atteso || req.headers.get('authorization') !== `Bearer ${atteso}`) {

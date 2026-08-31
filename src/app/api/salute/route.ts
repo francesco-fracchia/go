@@ -27,6 +27,10 @@ export async function GET() {
       // guida finisce l'iscrizione e resta sul sito di Stripe.
       ritorni: c('NEXT_PUBLIC_URL'),
       firmaWebhook: c('STRIPE_WEBHOOK_SECRET'),
+      /* Senza questo i lavori programmati rispondono 401 e non gira niente:
+         né la cattura dei pagamenti, né i promemoria, né la cancellazione
+         delle posizioni. Vale la pena poterlo controllare da fuori. */
+      lavori: c('CRON_SECRET'),
       notifiche: c('VAPID_PRIVATE_KEY'),
       sms: c('TWILIO_SID'),
     },
