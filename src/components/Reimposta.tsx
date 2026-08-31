@@ -47,6 +47,38 @@ export function Reimposta() {
           setPronto('si'); return
         }
       }
+      /**
+       * L'altro modo in cui Supabase consegna una sessione.
+       *
+       * Il collegamento chiesto dal browser porta `?code=`, e lo scambio
+       * qui sopra basta. Ma un collegamento generato dall'amministrazione
+       * — quello che si usa quando la posta non parte — non ha nessuna
+       * chiave PKCE da registrare, e Supabase ripiega sui gettoni nel
+       * FRAMMENTO: `#access_token=…&refresh_token=…`.
+       *
+       * La libreria quei gettoni li legge e poi li butta: `createBrowserClient`
+       * impone `flowType: 'pkce'`, e davanti a un ritorno implicito solleva
+       * «Not a valid PKCE flow url». Il risultato era una pagina che
+       * dichiarava scaduto un collegamento nato un minuto prima — e mandava
+       * a cercare la causa dove non era.
+       *
+       * `setSession` non guarda il flusso: prende i due gettoni e apre la
+       * sessione. È l'unico punto in cui i due modi si ricongiungono.
+       */
+      const frammento = new URLSearchParams(url.hash.replace(/^#/, ''))
+      const accesso = frammento.get('access_token')
+      const rinnovo = frammento.get('refresh_token')
+      if (accesso && rinnovo) {
+        const { error } = await c.auth.setSession({
+          access_token: accesso, refresh_token: rinnovo,
+        })
+        if (!error) {
+          // Come per il codice: i gettoni non restano nella barra.
+          window.history.replaceState({}, '', '/reimposta')
+          setPronto('si'); return
+        }
+      }
+
       const { data } = await c.auth.getSession()
       setPronto(data.session ? 'si' : 'no')
     })()
