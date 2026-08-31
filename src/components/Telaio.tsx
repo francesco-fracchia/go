@@ -68,8 +68,13 @@ export function Telaio({ children, attiva, modo = 'passeggero', utente, iniziale
     <div className="telaio" data-modo={modo}>
       <header className="intestazione">
         <div className="intestazione-dentro">
+          {/* Il logotipo per esteso, non il riquadro.
+              Il riquadro è un'icona: serve dove GO deve stare dentro una
+              casella che non è sua — la scheda del telefono, il segnalibro.
+              Qui la casella è nostra, e quello che si vede deve essere il
+              marchio, sfumatura compresa. */}
           <a href="/" className="marchio-collegamento" aria-label="GO">
-            <Marchio dimensione={30} />
+            <Marchio variante="nudo" dimensione={24} id="barra" />
           </a>
 
           {!vetrina && <Interruttore modo={modo} />}
