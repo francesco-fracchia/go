@@ -68,7 +68,6 @@ export function Conto({ c }: { c: DatiConto }) {
       <div className="fascia testata">
         <div className="dentro dentro-app testata-dentro">
           <div>
-            <p className="occhiello">Quello che entra</p>
             <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>Il tuo conto</h1>
             <p className="testata-sotto">
               Quanto ti rientra dalle corse concluse, e i bonifici che sono

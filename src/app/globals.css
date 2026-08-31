@@ -262,9 +262,6 @@ img, svg { max-width: 100%; }
   margin: 0;
 }
 .occhiello-accento { color: var(--accento); }
-/* Dentro una carta, dove il blocco è già delimitato dalla carta stessa, il
-   trattino sarebbe rumore: resta la sola parola. */
-.occhiello-muto::before { display: none; }
 .occhiello-muto { color: var(--tenue); font-size: 11.5px; letter-spacing: .12em; }
 
 .misura { max-width: var(--misura-testo); }
@@ -2028,7 +2025,6 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .telaio[data-modo="conducente"] .testata-titolo,
 .telaio[data-modo="conducente"] .testata .occhiello { color: var(--carta); }
 .telaio[data-modo="conducente"] .testata-sotto { color: rgba(255,255,255,.72); }
-.telaio[data-modo="conducente"] .testata .occhiello::before { background: var(--marchio-luce, #C9BEFF); }
 .telaio[data-modo="conducente"] .testata .azione-vuota {
   background: transparent; border-color: rgba(255,255,255,.28); color: var(--carta);
 }
