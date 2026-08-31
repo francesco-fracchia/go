@@ -1,4 +1,5 @@
 'use client'
+import { Cancellami } from './Cancellami.tsx'
 import { useEffect, useState } from 'react'
 import { Carta, MetodoSalvato } from './Carta.tsx'
 import { LuoghiSalvati, type Salvato } from './LuoghiSalvati.tsx'
@@ -142,6 +143,8 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
             qui.
           </p>
         </div>
+
+        <Cancellami />
       </div>
     </div>
     </>

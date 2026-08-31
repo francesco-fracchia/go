@@ -3,6 +3,7 @@ import { ErrorePrenotazione } from '../../server/prenotazioni.ts'
 import { ErroreCorsa } from '../../server/corse.ts'
 import { ErroreProfilo } from '../../server/profili.ts'
 import { ErroreComitiva } from '../../server/comitive.ts'
+import { ErroreCancellazione } from '../../server/cancellazione.ts'
 import { ViolazioneConformita } from '../../lib/pricing.ts'
 
 /**
@@ -16,7 +17,8 @@ export function rispostaErrore(e: unknown): Response {
   if (e instanceof NonAutenticato) return json({ errore: 'accedi per continuare' }, 401)
 
   if (e instanceof ErrorePrenotazione || e instanceof ErroreCorsa
-      || e instanceof ErroreProfilo || e instanceof ErroreComitiva) {
+      || e instanceof ErroreProfilo || e instanceof ErroreComitiva
+      || e instanceof ErroreCancellazione) {
     return json({ errore: e.message, codice: e.codice }, stato(e.codice))
   }
   if (e instanceof ViolazioneConformita) {
@@ -47,7 +49,7 @@ export function rispostaErrore(e: unknown): Response {
 const stato = (codice: string) => ({
   pieno: 409, doppia: 409, tardi: 410, sospeso: 403, limitato: 403,
   sistematicita: 403, dichiarazione: 428, telefono: 428, carta: 402, luogo: 422,
-  nome: 422, codice: 404, estraneo: 403,
+  nome: 422, codice: 404, estraneo: 403, impedimenti: 409, accesso: 500,
 }[codice] ?? 400)
 
 export const json = (corpo: unknown, stato = 200) =>
