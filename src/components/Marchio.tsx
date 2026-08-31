@@ -39,7 +39,23 @@ export function Marchio({ dimensione = 34, variante = 'quadrato', id = 'go' }: {
               cui si legge, e la stessa in cui si va. Vive solo qui, sul
               segno grande — a trenta pixel una sfumatura non si vede e
               costa un blocco di definizioni per niente. */}
-          <linearGradient id={sfumatura} x1="0" y1="0" x2="1" y2="0">
+          {/* `userSpaceOnUse`, e non è un dettaglio: è l'unica ragione per
+              cui il marchio si legge.
+
+              Per difetto una sfumatura usa `objectBoundingBox`, cioè le
+              coordinate del riquadro di ciascun elemento. La traversa
+              della G è una linea orizzontale: riquadro alto ZERO. Il
+              montante è verticale: riquadro largo ZERO. Su un riquadro
+              degenere quel sistema di coordinate non esiste, e per
+              specifica il browser NON DISEGNA l'elemento — senza errori,
+              senza avvisi.
+
+              Risultato: l'arco si vedeva, i due tratti che lo rendono una
+              G sparivano, e il marchio leggeva «CO». Erano lì, del colore
+              giusto, con l'opacità giusta. Lo spazio utente ha coordinate
+              vere anche per una riga dritta. */}
+          <linearGradient id={sfumatura} gradientUnits="userSpaceOnUse"
+            x1="12" y1="0" x2="206" y2="0">
             <stop offset="0" stopColor="var(--marchio-a)" />
             <stop offset="1" stopColor="var(--marchio-b)" />
           </linearGradient>
