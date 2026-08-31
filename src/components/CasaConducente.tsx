@@ -70,8 +70,7 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
       <div className="fascia testata">
         <div className="dentro dentro-app testata-dentro">
           <div>
-            <p className="occhiello">Stai andando comunque</p>
-            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
+            <h1 className="t-titolo testata-titolo">
               {nome ? `Dove vai, ${nome}?` : 'Dove stai andando?'}
             </h1>
             <p className="testata-sotto">

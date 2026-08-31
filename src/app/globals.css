@@ -251,16 +251,15 @@ img, svg { max-width: 100%; }
    didascalia, e una struttura sussurrata non struttura niente.
    Il trattino d'accento davanti fa due lavori: segna l'inizio e mette il
    viola dove prima c'era solo grigio. */
+/* L'etichetta di sezione, senza il trattino.
+   Il trattino colorato davanti a ogni micro-titolo era un tic: ripetuto
+   quaranta volte in un'applicazione smette di segnalare qualcosa e diventa
+   una texture. Restano le parole, che il lavoro lo facevano già loro. */
 .occhiello {
   display: flex; align-items: center; gap: 9px;
-  font-size: 12.5px; font-weight: 600; letter-spacing: .005em;
-  text-transform: uppercase; color: var(--inchiostro-2);
+  font-size: 12px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--tenue);
   margin: 0;
-}
-.occhiello::before {
-  content: ''; flex-shrink: 0;
-  width: 16px; height: 3px; border-radius: 2px;
-  background: var(--accento);
 }
 .occhiello-accento { color: var(--accento); }
 /* Dentro una carta, dove il blocco è già delimitato dalla carta stessa, il
@@ -2680,3 +2679,16 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .ruota { transition: none !important; }
 }
+
+
+/* ── L'uscita, in fondo all'elenco ─────────────────────────────────────
+   Non è un'azione come le altre: si vede che è un'altra cosa senza urlarlo
+   — il segno e il testo virano al rosso solo sotto il dito. Un rosso fisso
+   in mezzo a un elenco di impostazioni sembra un errore da riparare. */
+.voce-segno {
+  flex-shrink: 0; display: grid; place-items: center;
+  width: 22px; color: var(--tenue);
+}
+.voce-uscita { border-top: 1px solid var(--riga); margin-top: var(--s2); }
+.voce-uscita:hover { color: var(--rosso, #B4232A); }
+.voce-uscita:hover .voce-segno { color: var(--rosso, #B4232A); }

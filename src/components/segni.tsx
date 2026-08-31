@@ -52,6 +52,15 @@ export const SegnoViaggi = () => (
   </svg>
 )
 
+/** Una porta con la freccia che esce. */
+export const SegnoEsci = () => (
+  <svg {...base}>
+    <path d="M15 4.5H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3" />
+    <path d="M10 8.5 6 12l4 3.5" />
+    <path d="M6 12h8" />
+  </svg>
+)
+
 /** Tre teste vicine: un gruppo, non una persona. */
 export const SegnoComitiva = () => (
   <svg {...base}>

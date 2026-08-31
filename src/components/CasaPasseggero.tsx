@@ -50,8 +50,7 @@ export function CasaPasseggero({ nome, casa, mappa, vicino, prossimo, posti }: {
       <div className="fascia testata">
         <div className="dentro dentro-app testata-dentro">
           <div>
-            <p className="occhiello">Cerchi un passaggio</p>
-            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
+            <h1 className="t-titolo testata-titolo">
               {nome ? `Dove vai, ${nome}?` : 'Dove vai?'}
             </h1>
             <p className="testata-sotto">

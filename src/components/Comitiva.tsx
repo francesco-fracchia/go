@@ -90,7 +90,6 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
       <div className="fascia testata">
         <div className="dentro dentro-app testata-dentro">
           <div>
-            <p className="occhiello">La comitiva</p>
             <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>{nome}</h1>
             <p className="testata-sotto">
               {membri.length === 1

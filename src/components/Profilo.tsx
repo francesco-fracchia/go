@@ -1,4 +1,4 @@
-import { SegnoAvanti } from './segni.tsx'
+import { SegnoAvanti, SegnoEsci } from './segni.tsx'
 import { Invita } from './Invita.tsx'
 import { Foto } from './Foto.tsx'
 
@@ -122,26 +122,21 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
             {mio && (
               <section>
                 <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Il tuo account</p>
+                {/* Solo le cose che riguardano il TUO account.
+                    Domande frequenti, condizioni d'uso, privacy e contatti
+                    stavano qui dentro e non c'entravano niente: sono
+                    documenti, non impostazioni, e nessuno apre il proprio
+                    profilo per leggere le condizioni d'uso. Vivono già nel
+                    piede di ogni pagina, che è dove si cercano. */}
                 <div className="elenco-voci">
                   <Voce href="/conto" testo="Il tuo conto" nota="incassi e liquidazioni" />
                   <Voce href="/veicoli/nuovo" testo="Aggiungi un'auto" nota="serve per pubblicare" />
                   <Voce href="/impostazioni" testo="Notifiche, carta, aspetto" />
-                  <Voce href="/come-funziona" testo="Come funziona GO" nota="e perché costa così poco" />
-                  <Voce href="/aiuto" testo="Domande frequenti" />
-                  <Voce href="/legale/termini" testo="Condizioni d'uso" />
-                  <Voce href="/legale/privacy" testo="Come trattiamo i tuoi dati" />
-                  <Voce href="/legale/contatto" testo="Contatti" />
-                </div>
-
-                {/* Uscire deve stare dove uno lo cerca: nel proprio profilo.
-                    Era solo in fondo alle impostazioni, cioè dietro un altro
-                    tocco — e su un dispositivo condiviso «dov'è il logout»
-                    non è una domanda che si ha voglia di cercare. */}
-                <div className="impostazioni-uscita" style={{ marginTop: 'var(--s6)' }}>
-                  <a href="/api/esci" className="esci">Esci da questo dispositivo</a>
-                  <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
-                    Le tue prenotazioni e le tue corse restano dove sono.
-                  </p>
+                  {/* Ultima, e con il suo segno: uscire è la voce che si
+                      cerca guardando in fondo, non in mezzo. */}
+                  <Voce href="/api/esci" testo="Esci da questo dispositivo"
+                    nota="prenotazioni e corse restano dove sono"
+                    segno={<SegnoEsci />} pericolo />
                 </div>
               </section>
             )}
@@ -208,9 +203,15 @@ function Verifica({ ok, testo, nota }: { ok: boolean; testo: string; nota?: stri
   )
 }
 
-function Voce({ href, testo, nota }: { href: string; testo: string; nota?: string }) {
+function Voce({ href, testo, nota, segno, pericolo }: {
+  href: string; testo: string; nota?: string
+  segno?: React.ReactNode
+  /** L'uscita: si vede che è un'altra cosa, senza gridare. */
+  pericolo?: boolean
+}) {
   return (
-    <a href={href} className="voce-elenco">
+    <a href={href} className={`voce-elenco${pericolo ? ' voce-uscita' : ''}`}>
+      {segno && <span className="voce-segno">{segno}</span>}
       <span className="cresci">
         {testo}
         {nota && <span className="verifica-nota"> · {nota}</span>}

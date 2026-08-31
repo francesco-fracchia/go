@@ -96,7 +96,6 @@ export function QuantoCosta({ mappa = false }: { mappa?: boolean }) {
       <div className="fascia testata">
         <div className="dentro dentro-app testata-dentro">
           <div>
-            <p className="occhiello">Quanto costa davvero</p>
             <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
               La tua auto non costa la benzina.
             </h1>

@@ -54,10 +54,8 @@ export function FormVeicolo() {
   const [scelto, setScelto] = useState<Modello | null>(null)
   const [modelli, setModelli] = useState<Modello[]>([])
   const [aperto, setAperto] = useState(false)
-  const [aMano, setAMano] = useState(false)
+  const [cercando, setCercando] = useState(false)
 
-  const [marca, setMarca] = useState('')
-  const [modello, setModello] = useState('')
   const [fascia, setFascia] = useState('utilitaria')
   const [alimentazione, setAlimentazione] = useState('benzina')
   const [targa, setTarga] = useState('')
@@ -75,6 +73,7 @@ export function FormVeicolo() {
   useEffect(() => {
     if (attesa.current) clearTimeout(attesa.current)
     if (scelto || testo.trim().length < 2) { setModelli([]); return }
+    setCercando(true)
     attesa.current = setTimeout(async () => {
       try {
         const r = await fetch(`/api/modelli?testo=${encodeURIComponent(testo.trim())}`)
@@ -82,12 +81,15 @@ export function FormVeicolo() {
         const d = await r.json()
         setModelli(d.modelli ?? [])
         setAperto(true)
-      } catch { /* si può sempre proseguire a mano */ }
+      } catch { /* si riprova al tasto successivo */ }
+      finally { setCercando(false) }
     }, 280)
     return () => { if (attesa.current) clearTimeout(attesa.current) }
   }, [testo, scelto])
 
-  const pronta = (scelto || (aMano && marca && modello)) && targa.replace(/\s/g, '').length >= 5
+  // Senza un modello dell'elenco non si salva: il costo chilometrico deve
+  // venire da una riga vera della tabella ACI, non da una stima.
+  const pronta = !!scelto && targa.replace(/\s/g, '').length >= 5
 
   return (
     <div className="fascia">
@@ -99,7 +101,7 @@ export function FormVeicolo() {
         </p>
 
         {/* ── Il modello, dalle tabelle ACI ── */}
-        {!aMano && (
+        {(
           <div className="cerca-modello">
             <label className="campo">
               <span className="campo-nome">
@@ -142,48 +144,35 @@ export function FormVeicolo() {
                 non si può cambiare.
               </p>
             ) : (
-              <button type="button" className="collegamento-piccolo"
-                onClick={() => setAMano(true)}>
-                Non trovo la mia auto
-              </button>
+              /**
+               * Nessun ripiego a mano, e non è una semplificazione.
+               *
+               * Chi scriveva marca e modello a mano non incontrava nessuna
+               * riga ACI: il costo chilometrico finiva sul ripiego, che è
+               * il MINIMO della tabella per quell'alimentazione — l'auto
+               * più economica d'Italia. Sottostima sempre, quindi chi
+               * guida rientra meno di quanto gli spetterebbe, e la frase
+               * che diciamo ovunque — «il costo del modello esatto della
+               * tua auto» — non era vera per lui.
+               *
+               * In più i modelli scritti a mano arrivano con gli errori di
+               * battitura, e restano in vista nel profilo: «kia stoni».
+               */
+              testo.trim().length >= 2 && modelli.length === 0 && !cercando ? (
+                <p className="avviso-morbido" style={{ marginTop: 'var(--s3)' }}>
+                  Nessun modello con questo nome. Prova con meno parole —
+                  «Stonic» invece di «Kia Stonic 1.0 T-GDI» — o con la sola
+                  marca: l&apos;elenco ha quattromilaseicento modelli e la
+                  tua ci sarà. Se davvero non c&apos;è,{' '}
+                  <a href="/legale/contatto">scrivicelo</a> e la aggiungiamo.
+                </p>
+              ) : null
             )}
           </div>
         )}
 
-        {aMano && (
-          <div className="cerca-modello">
-            <div className="ingresso-coppia">
-              <Campo etichetta="Marca" valore={marca} onChange={setMarca} segnaposto="Fiat" />
-              <Campo etichetta="Modello" valore={modello} onChange={setModello} segnaposto="Panda" />
-            </div>
-            <div style={{ marginTop: 'var(--s4)' }}>
-              <p className="occhiello">Che tipo di auto è</p>
-              <div className="scelte-blocco">
-                {FASCE.map((f) => (
-                  <button key={f.v} type="button"
-                    className={`opzione${fascia === f.v ? ' opzione-scelta' : ''}`}
-                    onClick={() => setFascia(f.v)}>
-                    <span className="opzione-titolo">{f.t}</span>
-                    <span className="opzione-nota">{f.n}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="avviso-morbido" style={{ marginTop: 'var(--s4)' }}>
-              Senza il modello esatto usiamo una stima prudente per la tua
-              alimentazione: sarà più bassa del costo vero, quindi chi sale
-              paga meno e tu rientri meno. Se la trovi nell&apos;elenco, meglio.
-            </p>
-            <button type="button" className="collegamento-piccolo"
-              style={{ marginTop: 'var(--s3)' }}
-              onClick={() => { setAMano(false); setErrore(null) }}>
-              Torna a cercarla nell&apos;elenco
-            </button>
-          </div>
-        )}
-
         {/* ── Alimentazione: scelta dal modello, ma correggibile a mano ── */}
-        {(aMano || scelto) && (
+        {scelto && (
           <div style={{ marginTop: 'var(--s6)' }}>
             <p className="occhiello">Alimentazione</p>
             <div className="scelte-fila">
@@ -266,7 +255,7 @@ export function FormVeicolo() {
         </button>
         {!pronta && (
           <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
-            {!scelto && !aMano ? 'Scegli la tua auto dall’elenco.' : 'Manca la targa.'}
+            {!scelto ? 'Scegli la tua auto dall’elenco.' : 'Manca la targa.'}
           </p>
         )}
 
@@ -285,9 +274,9 @@ export function FormVeicolo() {
     const r = await fetch('/api/veicoli', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        marca: scelto?.marca ?? marca,
-        modello: scelto?.modello ?? modello,
-        aciModello: scelto?.id,
+        marca: scelto!.marca,
+        modello: scelto!.modello,
+        aciModello: scelto!.id,
         fascia, alimentazione, targa, colore,
         postiTotali: posti, fumo, animali, bagagli,
         consumoL100: consumo ? Number(consumo.replace(',', '.')) : null,
