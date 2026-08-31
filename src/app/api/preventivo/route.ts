@@ -2,7 +2,8 @@ import { db } from '../../../server/db.ts'
 import { richiediUtente } from '../../../server/auth.ts'
 import { percorso } from '../../../server/percorsi.ts'
 import {
-  costoBase, quotaApplicata, feePasseggero, preventivo, type Corsa,
+  costoBase, quotaApplicata, feePasseggero, preventivo, scontoPerLivello,
+  type Corsa, type LivelloRimborso, type Modalita,
 } from '../../../lib/pricing.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
 
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     // che macchina ha qualcun altro.
     const { data: v } = await db
       .from('veicoli')
-      .select('centesimi_per_km, posti_totali')
+      .select('centesimi_per_km, posti_totali, alimentazione, consumo_l100')
       .eq('id', b.veicoloId)
       .eq('proprietario', utente)
       .maybeSingle()
@@ -43,14 +44,30 @@ export async function POST(req: Request) {
 
     const p = await percorso(punti)
 
+    /**
+     * Il preventivo deve rispondere alla domanda che si sta facendo ADESSO.
+     *
+     * Prima calcolava sempre a corsa pubblica e a rimborso pieno: chi
+     * sceglieva «solo il carburante» per una corsa fra amici continuava a
+     * leggere «ti rientrano 8,70 €» mentre stava per rientrare di 2,60. Il
+     * numero su cui uno decide non può essere quello di un'altra corsa.
+     */
+    const modalita = (['pubblica', 'link', 'privata'] as const)
+      .find((m) => m === b.modalita) ?? 'pubblica' as Modalita
+    const livello = (['tutto', 'carburante_pedaggi', 'carburante', 'niente'] as const)
+      .find((l) => l === b.livelloRimborso) ?? 'tutto' as LivelloRimborso
+
     const corsa: Corsa = {
-      modalita: 'pubblica',
+      modalita,
       kmBase: p.km,
       centesimiPerKm: Number(v.centesimi_per_km),
       pedaggio: 0,
       parcheggio: 0,
       postiOfferti: posti,
     }
+    corsa.scontoConducente = scontoPerLivello(
+      corsa, livello, String(v.alimentazione), v.consumo_l100 as number | null,
+    )
 
     const quota = quotaApplicata(corsa)
     const fee = feePasseggero(corsa, posti)

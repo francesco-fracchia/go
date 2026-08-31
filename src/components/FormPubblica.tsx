@@ -131,6 +131,10 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
             origine: { lat: origine.lat, lng: origine.lng },
             destinazione: { lat: destinazione.lat, lng: destinazione.lng },
             postiOfferti: posti,
+            // Il preventivo deve rispondere alla corsa che stai
+            // configurando, non a una corsa pubblica a rimborso pieno.
+            modalita,
+            livelloRimborso: modalita === 'pubblica' ? 'tutto' : rimborso,
           }),
         })
         if (!vivo) return
@@ -146,7 +150,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
       finally { if (vivo) setContando(false) }
     }, 250)
     return () => { vivo = false; clearTimeout(t) }
-  }, [origine, destinazione, veicolo, posti])
+  }, [origine, destinazione, veicolo, posti, modalita, rimborso])
 
   if (veicoli.length === 0) {
     return (
