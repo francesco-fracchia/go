@@ -14,7 +14,8 @@ export async function GET(req: Request) {
     const filtri = {
       ...posizione,
       categoria: (q.get('categoria') as Categoria) || undefined,
-      raggioM: numero(q, 'raggio') ?? 30_000,
+      raggioM: numero(q, 'raggio') ?? 60_000,
+      minimoM: numero(q, 'minimo'),
     }
 
     let posti = await postiVicini(filtri)

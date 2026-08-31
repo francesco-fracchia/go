@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import type { Categoria, Posto } from '../server/posti.ts'
 import type { Modo } from '../server/modo.ts'
+import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
+import { SegnoAvanti } from './segni.tsx'
 
 /**
  * Dove si va.
@@ -42,11 +44,13 @@ const CATEGORIE: Array<{ v: Categoria | 'tutte'; t: string }> = [
   { v: 'palestra', t: 'Palestre' },
 ]
 
-export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
+export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa = false }: {
   iniziali: Posto[]
   categoriaIniziale?: Categoria
   modo?: Modo
+  mappa?: boolean
 }) {
+  const [altrove, setAltrove] = useState<LuogoScelto | null>(null)
   const [categoria, setCategoria] = useState<Categoria | 'tutte'>(categoriaIniziale ?? 'tutte')
   const [posti, setPosti] = useState(iniziali)
   const [caricando, setCaricando] = useState(false)
@@ -110,18 +114,45 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
    * richiede più. Senza, si mostrano i posti attorno al centro predefinito,
    * che in una provincia è già quasi giusto.
    */
-  function usaPosizione() {
+  /**
+   * La posizione si chiede solo se la si tocca.
+   *
+   * Chiederla all'apertura fa comparire il permesso del browser prima che
+   * l'utente abbia capito perché serve — e una volta negato non lo si
+   * richiede più.
+   *
+   * Ma il messaggio d'errore accusava chi lo leggeva: «hai negato la
+   * posizione» compariva anche a chi non se l'era vista chiedere. Il
+   * permesso può essere bloccato dal contesto — un riquadro dentro
+   * un'altra pagina, una regola aziendale — e in quel caso l'utente non ha
+   * negato niente: gli si sta dicendo che ha fatto una cosa che non ha
+   * fatto, e per giunta gli si indica una manopola che non risolve.
+   *
+   * Con l'API dei permessi si sa PRIMA in che stato siamo, e si dice la
+   * cosa vera. E in tutti i casi c'è la via d'uscita che prima non
+   * c'era: cercare un posto a mano.
+   */
+  async function usaPosizione() {
     setProblema(null)
 
-    // Il browser dà la posizione solo su HTTPS (o su localhost). Senza
-    // questo controllo la richiesta fallisce e basta, e sembra che il
-    // pulsante non faccia niente.
     if (!navigator.geolocation) {
-      setProblema('Il tuo browser non sa dirci dove sei.')
+      setProblema('Il tuo browser non sa dirci dove sei. Cerca il posto qui sopra.')
       return
     }
     if (!window.isSecureContext) {
-      setProblema('La posizione funziona solo su una connessione sicura.')
+      setProblema('La posizione funziona solo su una connessione sicura. Cerca il posto qui sopra.')
+      return
+    }
+
+    // Lo stato del permesso, quando il browser sa dircelo: distingue «devi
+    // ancora rispondere» da «hai già detto di no».
+    let stato: PermissionState | null = null
+    try {
+      stato = (await navigator.permissions?.query({ name: 'geolocation' }))?.state ?? null
+    } catch { /* non tutti lo sanno fare: si prova comunque */ }
+
+    if (stato === 'denied') {
+      setProblema('La posizione è bloccata per questo sito. Si riattiva dal lucchetto accanto all’indirizzo — oppure cerca il posto qui sopra.')
       return
     }
 
@@ -129,22 +160,34 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setPosizione(p); setVicino(true); carica(categoria, p)
+        setPosizione(p); setVicino(true); setAltrove(null); carica(categoria, p)
       },
       (e) => {
         setCaricando(false)
-        // Ogni motivo ha una via d'uscita diversa, e dirla è la differenza
-        // fra «non funziona» e «ecco cosa fare».
-        setProblema(
-          e.code === e.PERMISSION_DENIED
-            ? 'Hai negato la posizione. Puoi riattivarla dalle impostazioni del browser, oppure cercare per indirizzo.'
-            : e.code === e.POSITION_UNAVAILABLE
-              ? 'Non riusciamo a capire dove sei. Prova a cercare per indirizzo.'
-              : 'Ci ha messo troppo. Riprova, o cerca per indirizzo.',
-        )
+        if (e.code === e.PERMISSION_DENIED) {
+          // Se prima del tentativo il permesso NON era negato e adesso lo è,
+          // vuol dire che la richiesta non è nemmeno arrivata all'utente:
+          // l'ha bloccata il contesto.
+          setProblema(stato === 'prompt'
+            ? 'Il browser non ci ha lasciato chiedertelo — succede quando la pagina è dentro un riquadro o c’è una regola che lo impedisce. Cerca il posto qui sopra.'
+            : 'La posizione è bloccata per questo sito. Si riattiva dal lucchetto accanto all’indirizzo.')
+          return
+        }
+        setProblema(e.code === e.POSITION_UNAVAILABLE
+          ? 'Non riusciamo a capire dove sei. Cerca il posto qui sopra.'
+          : 'Ci ha messo troppo. Riprova, oppure cerca il posto qui sopra.')
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 },
     )
+  }
+
+  /** Guardare intorno a un posto qualsiasi, senza chiedere la posizione. */
+  function guardaAltrove(l: LuogoScelto | null) {
+    setAltrove(l)
+    if (!l) return
+    setVicino(false)
+    setPosizione({ lat: l.lat, lng: l.lng })
+    carica(categoria, { lat: l.lat, lng: l.lng })
   }
 
   return (
@@ -160,15 +203,16 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
                 : 'Scegline uno: se qualcuno ci va lo vedi, se nessuno ci va puoi dirlo.'}
             </p>
           </div>
-          <div className="testata-azioni">
-            {!vicino ? (
-              <button type="button" className="azione azione-vuota azione-piccola"
-                onClick={usaPosizione} disabled={caricando}>
-                {caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}
-              </button>
-            ) : (
-              <span className="pastiglia pastiglia-verde">dalla tua posizione</span>
-            )}
+          <div className="posti-comandi">
+            {/* La via d'uscita che prima non c'era: guardare un'altra zona
+                senza dover concedere la posizione. */}
+            <CampoLuogo mappa={mappa} etichetta="Guarda intorno a"
+              segnaposto="Una città, una via, un locale"
+              valore={altrove} onScegli={guardaAltrove} />
+            <button type="button" className="azione azione-vuota azione-piccola"
+              onClick={usaPosizione} disabled={caricando}>
+              {caricando ? 'Ti sto cercando…' : vicino ? 'Sei qui' : 'Usa la mia posizione'}
+            </button>
           </div>
         </div>
       </div>
@@ -176,7 +220,9 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
     <div className="fascia">
       <div className="dentro dentro-app posti-dentro">
 
-        {problema && <p className="t-corpo" style={{ maxWidth: '48ch' }}>{problema}</p>}
+        {problema && (
+          <p className="avviso-morbido" style={{ maxWidth: '58ch' }}>{problema}</p>
+        )}
 
         {/* Le categorie scorrono in orizzontale: su un telefono una griglia
             di dodici voci occupa mezzo schermo prima di mostrare un posto. */}
@@ -242,11 +288,14 @@ function Carta({ p, modo }: { p: Posto; modo: Modo }) {
 
   return (
     <div className="posto-carta">
-      <div className="fila-fra" style={{ alignItems: 'flex-start' }}>
-        <div className="cresci">
-          <div className="posto-titolo">{p.nome}</div>
-          <div className="t-nota">{[p.citta, distanza].filter(Boolean).join(' · ')}</div>
-        </div>
+      {/* Tutta la scheda porta all'azione principale: due pulsanti per
+          riga, su ventiquattro schede, sono quarantotto bersagli che
+          chiedono di scegliere prima ancora di aver letto il nome. */}
+      <a href={prima.href} className="posto-principale">
+        <span className="cresci">
+          <span className="posto-titolo">{p.nome}</span>
+          <span className="t-nota">{[p.citta, distanza].filter(Boolean).join(' · ')}</span>
+        </span>
         {p.corse > 0
           ? <span className="pastiglia pastiglia-verde">
               {p.corse} {p.corse === 1 ? 'passaggio' : 'passaggi'}
@@ -255,8 +304,9 @@ function Carta({ p, modo }: { p: Posto; modo: Modo }) {
             ? <span className="pastiglia pastiglia-viola">
                 {p.richieste} {p.richieste === 1 ? 'cerca' : 'cercano'}
               </span>
-            : <span className="pastiglia">nessuno ancora</span>}
-      </div>
+            : null}
+        <SegnoAvanti dimensione={16} />
+      </a>
 
       {/* Chi cerca qualcuno che lo porti è l'informazione che fa pubblicare
           un conducente: vale più di «ci vanno già in quattro». */}
@@ -266,10 +316,7 @@ function Carta({ p, modo }: { p: Posto; modo: Modo }) {
         </p>
       )}
 
-      <div className="posto-azioni">
-        <a href={prima.href} className="azione azione-piena azione-piccola">{prima.t}</a>
-        <a href={poi.href} className="azione azione-vuota azione-piccola">{poi.t}</a>
-      </div>
+      <a href={poi.href} className="posto-secondaria">{poi.t}</a>
     </div>
   )
 }

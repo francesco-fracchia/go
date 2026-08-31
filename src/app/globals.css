@@ -964,9 +964,12 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   .pannello-ricerca { padding: var(--s6); }
   .ricerca-luoghi { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
 }
-.ricerca-quando {
-  padding-top: var(--s4); margin-top: var(--s4);
-  border-top: 1px solid var(--riga-2);
+.ricerca-quando { margin-top: var(--s3); }
+@media (min-width: 720px) {
+  /* Tre campi in fila: è la forma che ha una ricerca di viaggi, e dice da
+     sola quante cose servono. */
+  .ricerca-luoghi { grid-template-columns: 1fr 1fr; }
+  .ricerca-quando { margin-top: var(--s4); }
 }
 .ricerca-fondo {
   display: grid; gap: var(--s3); align-items: center;
@@ -1513,7 +1516,8 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   padding: var(--s4) var(--s5); border-radius: var(--r-l);
   background: var(--carta); border: 1px solid var(--riga);
 }
-.posto-titolo { font-size: 17px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.posto-titolo { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.posto-principale .t-nota { display: block; }
 .posto-cercano { margin: 0; font-size: 13px; color: var(--accento); }
 .posto-azioni { display: flex; gap: var(--s2); margin-top: var(--s3); }
 .posto-azioni .azione { flex: 1; padding: 0 12px; font-size: 14px; }
@@ -1926,13 +1930,24 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
      · separa le due modalità con la temperatura invece che con le parole;
      · stacca il contenuto, che sotto respira su un terreno più chiaro.
 
-   Lavanda per chi cerca, inchiostro per chi guida: non è decorazione, è
-   l'unica cosa che si vede da lontano prima di aver letto una parola.
+   Chiaro per chi cerca, scuro per chi guida. La lavanda c'era prima, e
+   sbagliava bersaglio: metteva addosso alla schermata il colore del
+   marchio invece di usarlo dove si tocca, e su una superficie larga il
+   viola smette di essere un accento e diventa un fondo.
+
+   La polarità giusta è la luce. Chi cerca sta su un piano chiaro, sopra un
+   terreno tinto: la fascia è la cosa più chiara della pagina e si stacca
+   verso l'alto. Chi guida sta su inchiostro. Sono due ambienti diversi
+   prima di aver letto una parola, e il viola resta dov'è utile — il
+   trattino che segna le sezioni, il comando, lo stato attivo.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .testata {
-  background: var(--accento-velo);
-  border-bottom: 1px solid var(--accento-riga);
+  background: var(--carta);
+  border-bottom: 1px solid var(--riga);
+  /* Un'ombra che scende: dice che la fascia sta SOPRA il terreno, non che
+     è un rettangolo bianco appoggiato accanto a uno tinto. */
+  box-shadow: 0 1px 0 rgba(20,18,60,.03), 0 6px 18px -12px rgba(20,18,60,.18);
 }
 .testata-dentro {
   padding-top: var(--s6); padding-bottom: var(--s6);
@@ -1954,9 +1969,10 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .testata-azioni { display: flex; gap: var(--s3); flex-wrap: wrap; }
 
 /* Chi guida sta in un altro posto dell'applicazione, e la testata è dove
-   si vede per prima: fondo d'inchiostro, non lavanda. */
+   si vede per prima. */
 .telaio[data-modo="conducente"] .testata {
   background: var(--inchiostro); border-bottom-color: transparent;
+  box-shadow: none;
 }
 .telaio[data-modo="conducente"] .testata-titolo,
 .telaio[data-modo="conducente"] .testata .occhiello { color: var(--carta); }
@@ -2009,3 +2025,110 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   .ricerca-sospesa { margin-top: calc(var(--s7) * -1 - var(--s2)); }
   .testata + .fascia > .dentro { padding-top: var(--s7); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Il minimo automatico.
+
+   Un elemento dentro una griglia o un flex non scende sotto la larghezza
+   minima del suo contenuto, a meno che non glielo si dica. E dentro il
+   pannello di ricerca c'è una fila di pastiglie che scorre in orizzontale:
+   il suo minimo è tutta la fila, novecento pixel. Risultato, su un telefono
+   da 390 il pannello restava largo 940 e mezza schermata usciva dal bordo.
+
+   `min-width: 0` sui figli di ogni contenitore a griglia è la riga che
+   spegne questa classe di guasto una volta per tutte. Non è una
+   rifinitura: senza, qualunque contenuto scorrevole messo dentro una
+   griglia rompe il telefono, e lo scopre l'utente.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.casa-dentro > *, .viaggi-dentro > *, .dettaglio-dentro > *,
+.pubblica-dentro > *, .profilo-dentro > *, .posti-dentro > *,
+.conto-dentro > *, .impostazioni > *, .benvenuto > *,
+.aiuto-dentro > *, .testata-dentro > *, .risultati-corpo > *,
+.dettaglio-corpo > *, .pubblica-corpo > *, .profilo-corpo > *,
+.gruppo > *, .griglia > *, .griglia-elenco > * {
+  min-width: 0;
+}
+.pannello-ricerca { width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Quando: un campo, e un pannello dove le scelte hanno spazio.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.campo-tocco { text-align: left; cursor: pointer; }
+.campo-valore { display: block; padding-top: 2px; font-size: 16px; color: var(--inchiostro); }
+.campo-vuoto { color: var(--tenue); }
+
+.foglio-quando { max-width: 560px; }
+@media (min-width: 900px) { .foglio-quando { width: min(560px, calc(100vw - 80px)); } }
+
+.giorni {
+  display: flex; gap: var(--s2); margin-top: var(--s3);
+  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+}
+.giorni::-webkit-scrollbar { display: none; }
+.giorno {
+  flex: 1 0 auto; min-width: 62px;
+  display: grid; gap: 1px; justify-items: center;
+  padding: var(--s3) var(--s2); border-radius: var(--r-m);
+  border: 1px solid var(--riga); background: var(--carta); color: var(--inchiostro);
+  transition: background .13s ease, border-color .13s ease, transform .13s ease;
+}
+.giorno:hover { border-color: var(--inchiostro-2); }
+.giorno-scelto {
+  background: var(--accento); border-color: transparent; color: var(--su-accento);
+  transform: translateY(-1px);
+}
+.giorno-nome { font-size: 12px; font-weight: 500; opacity: .75; }
+.giorno-numero { font-family: var(--titoli); font-size: 20px; font-weight: 700; letter-spacing: -.03em; }
+.giorno-mese { font-size: 10.5px; opacity: .6; text-transform: uppercase; letter-spacing: .06em; }
+
+.altro-giorno {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  margin-top: var(--s3); padding: var(--s3) var(--s4);
+  border-radius: var(--r-s); background: var(--superficie);
+  font-size: 14px; color: var(--inchiostro-2);
+}
+.altro-giorno input {
+  border: none; background: transparent; font-family: var(--testo);
+  font-size: 15px; color: var(--inchiostro); outline: none;
+}
+
+.fasce { margin-top: var(--s3); width: 100%; }
+.fasce .segmento { flex: 1; }
+
+.ore {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: var(--s2); margin-top: var(--s3);
+}
+.ora {
+  min-height: 46px; border-radius: var(--r-s);
+  border: 1px solid var(--riga); background: var(--carta); color: var(--inchiostro);
+  font-size: 15px; font-weight: 500;
+  transition: background .13s ease, border-color .13s ease;
+}
+.ora:hover { border-color: var(--inchiostro-2); }
+.ora-scelta { background: var(--accento); border-color: transparent; color: var(--su-accento); font-weight: 600; }
+
+/* ── Dove si va: i comandi in testata e le schede ── */
+.posti-comandi { display: grid; gap: var(--s3); align-content: end; }
+@media (min-width: 860px) { .posti-comandi { width: 340px; } }
+
+.posto-carta { padding: 0; overflow: hidden; }
+.posto-principale {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  text-decoration: none; color: var(--inchiostro);
+  transition: background .12s ease;
+}
+.posto-principale:hover { background: var(--superficie); }
+.posto-principale svg { flex-shrink: 0; color: var(--accento); }
+.posto-principale .pastiglia { flex-shrink: 0; }
+.posto-secondaria {
+  display: block; padding: var(--s3) var(--s5);
+  border-top: 1px solid var(--riga-2);
+  font-size: 13.5px; font-weight: 600; color: var(--accento);
+  text-decoration: none;
+}
+.posto-secondaria:hover { background: var(--superficie); }
+.posto-cercano { margin: 0; padding: 0 var(--s5) var(--s3); font-size: 13px; color: var(--accento); }

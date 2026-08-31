@@ -1,5 +1,6 @@
 import { postiVicini, type Categoria } from '../../server/posti.ts'
 import { Posti } from '../../components/Posti.tsx'
+import { statoMappa } from '../../server/mappe.ts'
 
 export const revalidate = 120
 
@@ -25,9 +26,10 @@ export default async function Pagina({ searchParams }: {
   } catch { /* si mostra il vuoto */ }
 
   const g = await guscio()
+  const { attiva: mappa } = await statoMappa().catch(() => ({ attiva: false }))
   return (
     <Telaio attiva="/posti" {...g}>
-      <Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} modo={g.modo} />
+      <Posti iniziali={posti} categoriaIniziale={q.categoria as Categoria | undefined} modo={g.modo} mappa={mappa} />
     </Telaio>
   )
 }

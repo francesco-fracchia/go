@@ -103,9 +103,24 @@ export async function assicuraZona(lat: number, lng: number): Promise<number | n
   }
 }
 
+/**
+ * Sotto una certa distanza un passaggio non serve a nessuno.
+ *
+ * L'elenco proponeva la piazza a cento metri e il bar a centocinquanta:
+ * posti dove si va a piedi. Ogni riga di quelle è una riga che occupa il
+ * posto di una destinazione vera, e fa sembrare l'applicazione stupida —
+ * chi apre «dove si va» sta pensando alla serata a Milano, non all'angolo.
+ *
+ * Cinque chilometri è la soglia sotto la quale, in una provincia, ci si
+ * arriva senza chiedere niente a nessuno.
+ */
+export const DISTANZA_MINIMA_M = 5_000
+
 export async function postiVicini(opts: {
   lat: number; lng: number
   raggioM?: number
+  /** sotto questa distanza non si propone: ci si va a piedi o in bici */
+  minimoM?: number
   categoria?: Categoria
   limite?: number
 }): Promise<Posto[]> {
@@ -113,7 +128,9 @@ export async function postiVicini(opts: {
     p_geo: `SRID=4326;POINT(${opts.lng} ${opts.lat})`,
     p_raggio_m: opts.raggioM ?? 30_000,
     p_categoria: opts.categoria ?? null,
-    p_limite: opts.limite ?? 40,
+    // Si chiede qualcosa in più di quello che serve: il taglio dei posti
+    // troppo vicini avviene dopo, e senza margine si resterebbe corti.
+    p_limite: (opts.limite ?? 40) + 20,
   })
 
   // Un errore ingoiato qui diventa una schermata vuota che sembra «non ci
@@ -124,17 +141,22 @@ export async function postiVicini(opts: {
     return []
   }
 
-  return ((data ?? []) as Array<Record<string, unknown>>).map((r): Posto => ({
-    id: String(r.id),
-    nome: String(r.nome),
-    categoria: r.categoria as Categoria,
-    citta: (r.citta as string) ?? null,
-    distanzaM: Number(r.distanza_m),
-    corse: Number(r.corse),
-    richieste: Number(r.richieste),
-    lat: Number(r.lat),
-    lng: Number(r.lng),
-  }))
+  const minimo = opts.minimoM ?? DISTANZA_MINIMA_M
+
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map((r): Posto => ({
+      id: String(r.id),
+      nome: String(r.nome),
+      categoria: r.categoria as Categoria,
+      citta: (r.citta as string) ?? null,
+      distanzaM: Number(r.distanza_m),
+      corse: Number(r.corse),
+      richieste: Number(r.richieste),
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+    }))
+    .filter((p) => p.distanzaM >= minimo)
+    .slice(0, opts.limite ?? 40)
 }
 
 const OVERPASS = 'https://overpass-api.de/api/interpreter'

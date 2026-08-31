@@ -69,10 +69,10 @@ export function CercoPassaggio({ mappa = false, vicino, casa }: {
 
         <div className="pannello-ricerca">
           <div className="ricerca-luoghi">
-            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Vai a"
-              valore={destinazione} onScegli={setDestinazione} segnaposto="Fabrique, Milano" />
-            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Parti da"
-              valore={origine} onScegli={setOrigine} segnaposto="Lodi, piazza della Vittoria" />
+            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
+              valore={destinazione} onScegli={setDestinazione} segnaposto="Indirizzo, città o locale" />
+            <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Partenza"
+              valore={origine} onScegli={setOrigine} segnaposto="Da dove parti" />
           </div>
 
           <div className="ricerca-quando">

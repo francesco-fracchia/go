@@ -55,10 +55,10 @@ export function Ricerca({ casa, destinazione, mappa = false, vicino, compatta }:
   return (
     <div className={`pannello-ricerca${compatta ? ' pannello-ricerca-compatto' : ''}`}>
       <div className="ricerca-luoghi">
-        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Vai a"
-          valore={a} onScegli={setA} segnaposto="Fabrique, Milano" />
-        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Parti da"
-          valore={da} onScegli={setDa} segnaposto="Lodi, piazza della Vittoria" />
+        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
+          valore={a} onScegli={setA} segnaposto="Indirizzo, città o locale" />
+        <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Partenza"
+          valore={da} onScegli={setDa} segnaposto="Da dove parti" />
       </div>
 
       <div className="ricerca-quando">

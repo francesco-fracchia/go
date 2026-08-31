@@ -23,7 +23,7 @@ import { SegnoAvanti } from './segni.tsx'
  * l'applicazione è rotta.
  */
 
-type Schermata = 'entra' | 'registra' | 'codice' | 'dimenticata' | 'mandata'
+type Schermata = 'entra' | 'registra' | 'codice' | 'codiceEntra' | 'dimenticata' | 'mandata'
 
 const GOOGLE = process.env.NEXT_PUBLIC_OAUTH_GOOGLE === '1'
 const APPLE = process.env.NEXT_PUBLIC_OAUTH_APPLE === '1'
@@ -131,10 +131,52 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     window.location.href = `/benvenuto?ritorno=${encodeURIComponent(ritorno)}`
   }
 
+  /**
+   * Entrare con un codice, sempre.
+   *
+   * Chi si è registrato quando esisteva solo il codice NON HA una password:
+   * «non ricordo la password» gli chiede di ricordare una cosa che non è
+   * mai esistita, e se il collegamento di reimpostazione fa i capricci
+   * resta chiuso fuori da un account che funzionava.
+   *
+   * Il codice non ha niente da configurare e non può scadere in un
+   * cassetto: è la strada che regge sempre, e per questo resta in vista
+   * accanto alla password invece di essere nascosta in un ripiego.
+   */
+  async function mandaCodice() {
+    setAttesa(true); setErrore(null)
+    const { error } = await client().auth.signInWithOtp({
+      email: email(), options: { shouldCreateUser: false },
+    })
+    setAttesa(false)
+    if (error) { setErrore('Non siamo riusciti a mandare il codice. Controlla l’indirizzo.'); return }
+    setSchermata('codiceEntra')
+  }
+
+  async function verificaEntrata() {
+    setAttesa(true); setErrore(null)
+    const { data, error } = await client().auth.verifyOtp({
+      email: email(), token: codice.trim(), type: 'email',
+    })
+    setAttesa(false)
+    if (error || !data.user) { setErrore('Codice sbagliato o scaduto.'); return }
+    await prosegui()
+  }
+
   async function reimposta() {
     setAttesa(true); setErrore(null)
+    /**
+     * Il collegamento porta DIRITTO alla schermata della password, non a
+     * una rotta del server.
+     *
+     * Con il flusso PKCE la chiave di verifica resta nel browser che ha
+     * chiesto il reimposta: una rotta lato server non ce l'ha, e lo
+     * scambio fallisce sempre. È il motivo per cui il collegamento non
+     * funzionava. Il client del browser, invece, riconosce il codice
+     * nell'indirizzo da solo appena la pagina si apre.
+     */
     const { error } = await client().auth.resetPasswordForEmail(email(), {
-      redirectTo: `${window.location.origin}/auth/callback?vai=%2Freimposta`,
+      redirectTo: `${window.location.origin}/reimposta`,
     })
     setAttesa(false)
     if (error) { setErrore('Non siamo riusciti a mandare la mail.'); return }
@@ -173,10 +215,18 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
               {attesa ? 'Un attimo…' : 'Entra'}
             </button>
 
+            {/* Il codice non è un ripiego: per chi si è registrato prima
+                che esistessero le password è LA strada. */}
+            <button type="button" className="azione azione-vuota ingresso-invia"
+              aria-disabled={attesa || !indirizzo}
+              onClick={mandaCodice}>
+              Mandami un codice via email
+            </button>
+
             <div className="ingresso-sotto-azioni">
               <button type="button" className="collegamento-piccolo"
                 onClick={() => { setErrore(null); setSchermata('dimenticata') }}>
-                Non ricordo la password
+                Cambia password
               </button>
               <button type="button" className="collegamento-piccolo"
                 onClick={() => { setErrore(null); setSchermata('registra') }}>
@@ -227,6 +277,32 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
           </>
         )}
 
+        {schermata === 'codiceEntra' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Controlla la posta</h1>
+            <p className="ingresso-sotto">
+              Abbiamo mandato un codice a <strong>{email()}</strong>. Vale pochi
+              minuti.
+            </p>
+            <Campo etichetta="Codice" valore={codice} onChange={setCodice}
+              segnaposto="123456" completa="one-time-code" mono invio={verificaEntrata} />
+
+            {errore && <p className="errore">{errore}</p>}
+
+            <button type="button" className="azione azione-piena ingresso-invia"
+              aria-disabled={attesa || codice.trim().length < 6} onClick={verificaEntrata}>
+              {attesa ? 'Un attimo…' : 'Entra'}
+            </button>
+
+            <div className="ingresso-sotto-azioni">
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => { setErrore(null); setSchermata('entra') }}>
+                Torna indietro
+              </button>
+            </div>
+          </>
+        )}
+
         {schermata === 'codice' && (
           <>
             <h1 className="t-sezione ingresso-titolo">Controlla la posta</h1>
@@ -249,10 +325,11 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
 
         {schermata === 'dimenticata' && (
           <>
-            <h1 className="t-sezione ingresso-titolo">Reimposta la password</h1>
+            <h1 className="t-sezione ingresso-titolo">Scegli una password</h1>
             <p className="ingresso-sotto">
               Dicci il tuo indirizzo: ti mandiamo un collegamento per
-              sceglierne una nuova.
+              impostarne una. Se finora sei sempre entrato con il codice, va
+              bene lo stesso — puoi continuare così.
             </p>
             <Campo etichetta="Email" tipo="email" valore={indirizzo} onChange={setIndirizzo}
               segnaposto="nome@esempio.it" completa="email" invio={reimposta} />

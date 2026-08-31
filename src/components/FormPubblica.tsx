@@ -168,10 +168,10 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                   Il viaggio che faresti comunque. Metti i punti veri di
                   partenza e arrivo: è da lì che calcoliamo le spese.
                 </p>
-                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Parti da"
-                  valore={origine} onScegli={setOrigine} segnaposto="Lodi, piazza della Vittoria" />
-                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Arrivi a"
-                  valore={destinazione} onScegli={setDestinazione} segnaposto="Fabrique, Milano" />
+                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Partenza"
+                  valore={origine} onScegli={setOrigine} segnaposto="Da dove parti" />
+                <CampoLuogo mappa={mappa} vicino={vicino} etichetta="Destinazione"
+                  valore={destinazione} onScegli={setDestinazione} segnaposto="Dove stai andando" />
 
                 {veicoli.length > 1 && (
                   <div style={{ marginTop: 'var(--s5)' }}>
@@ -202,7 +202,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                   L&apos;ora di partenza la calcoliamo noi dal percorso, con dieci
                   minuti di margine.
                 </p>
-                <Quando valore={oraArrivo} onCambia={setOraArrivo} />
+                <Quando valore={oraArrivo} onCambia={setOraArrivo} etichetta="Vuoi essere lì" />
 
                 {suggerita && (
                   <div style={{ marginTop: 'var(--s5)' }}>
