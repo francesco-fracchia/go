@@ -30,5 +30,21 @@ export async function GET() {
       notifiche: c('VAPID_PRIVATE_KEY'),
       sms: c('TWILIO_SID'),
     },
+    /**
+     * I nomi che la funzione vede davvero — mai i valori.
+     *
+     * Esiste perché «l'ho messa e ho fatto redeploy» e «la chiave c'è» sono
+     * due fatti diversi, e da fuori si somigliano. Una variabile scritta
+     * STRIPE_WEBOOK_SECRET, o aggiunta all'ambiente Preview invece che
+     * Production, sparisce senza un errore: `process.env` risponde
+     * `undefined` e tace. Elencare i nomi trasforma mezz'ora di tentativi in
+     * una riga letta.
+     *
+     * Da togliere quando le chiavi sono al loro posto: i nomi non sono un
+     * segreto, ma non sono nemmeno affari di chi passa di qui.
+     */
+    nomiVisti: Object.keys(process.env)
+      .filter((n) => /stripe|webhook/i.test(n))
+      .sort(),
   })
 }
