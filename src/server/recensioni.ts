@@ -131,6 +131,29 @@ export async function recensioniDi(utenteId: string, limite = 20) {
 export const MINIMO_PER_RAPPORTO = 5
 
 /**
+ * I numeri di sintesi si contano su TUTTE, non sulla pagina mostrata.
+ *
+ * `recensioniDi` prende le ultime dieci perché dieci è quanto ha senso
+ * leggere. Calcolare «9 su 10 lo rifarebbero» su quelle dieci dà un
+ * rapporto che descrive la pagina, non la persona — e cambia da solo
+ * quando cambia il numero di righe che decidiamo di mostrare.
+ *
+ * Il limite alto è una difesa contro la memoria, non un campione: a
+ * cinquecento recensioni il rapporto è già stabile, e chi ne ha di più ha
+ * altri problemi.
+ */
+export async function numeriDi(utenteId: string) {
+  const { data } = await db
+    .from('recensioni_visibili')
+    .select('positiva, tag, descrittori')
+    .eq('destinatario', utenteId)
+    .limit(500)
+  return (data ?? []) as Array<{
+    positiva: boolean; tag: string[]; descrittori: string[] | null
+  }>
+}
+
+/**
  * Il riassunto, e quando NON darlo.
  *
  * Con tre viaggi una recensione negativa vale il trentatré per cento e non

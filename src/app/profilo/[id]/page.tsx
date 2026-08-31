@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { db } from '../../../server/db.ts'
 import { utenteCorrente } from '../../../server/auth.ts'
 import { distintivi } from '../../../server/profili.ts'
-import { recensioniDi, riassunto, abitudini } from '../../../server/recensioni.ts'
+import { recensioniDi, numeriDi, riassunto, abitudini } from '../../../server/recensioni.ts'
 import { codiceDi, quantiInvitati } from '../../../server/inviti.ts'
 import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
 
@@ -17,12 +17,14 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   const io = g.utente
 
   const mio = io === id
-  const [{ data: p }, d, recensioni, codice, portati] = await Promise.all([
+  const [{ data: p }, d, recensioni, tutte, codice, portati] = await Promise.all([
     db.from('profili')
       .select('id, nome, cognome, foto_url, data_nascita, bio, creato_il, telefono_ok, email_ok, stripe_pronto, veicoli(marca, modello, colore)')
       .eq('id', id).single(),
     distintivi(id),
     recensioniDi(id, 10),
+    // I numeri su tutte, il testo sulle ultime dieci.
+    numeriDi(id),
     mio ? codiceDi(id).catch(() => null) : Promise.resolve(null),
     mio ? quantiInvitati(id).catch(() => 0) : Promise.resolve(0),
   ])
@@ -55,8 +57,8 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       autore: r.ruolo_autore === 'conducente' ? 'Chi guidava' : 'Un passeggero',
       quando: new Date(r.creata_il).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' }),
     })),
-    sintesi: riassunto(recensioni as Array<{ positiva: boolean; tag: string[] }>),
-    abitudini: abitudini(recensioni as Array<{ descrittori?: string[] | null }>),
+    sintesi: riassunto(tutte),
+    abitudini: abitudini(tutte),
   }
 
   return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>
