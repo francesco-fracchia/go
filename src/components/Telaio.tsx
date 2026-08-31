@@ -143,6 +143,7 @@ function Piede() {
         <MarchioEsteso dimensione={30} id="piede" />
         <nav className="piede-voci" aria-label="Informazioni">
           <a href="/come-funziona">Come funziona</a>
+          <a href="/quanto-costa">Quanto costa un viaggio</a>
           <a href="/aiuto">Domande</a>
           <a href="/legale/termini">Condizioni d&apos;uso</a>
           <a href="/legale/privacy">Privacy</a>

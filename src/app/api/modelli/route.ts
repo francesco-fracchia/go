@@ -1,5 +1,4 @@
 import { db } from '../../../server/db.ts'
-import { richiediUtente } from '../../../server/auth.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
 import { numero } from '../_numeri.ts'
 
@@ -15,9 +14,18 @@ import { numero } from '../_numeri.ts'
  * meno di quello che gli spetterebbe, e la frase che diciamo ovunque — «il
  * costo del modello esatto della tua auto» — non era vera per nessuno.
  */
+/**
+ * Senza account, apposta.
+ *
+ * La tabella ACI è un documento pubblico: marca, modello, alimentazione e
+ * costo chilometrico. Non c'è dentro niente di nessuno. Chiedeva
+ * l'autenticazione solo perché il suo primo lettore era il modulo
+ * dell'auto — e quel requisito, ereditato senza motivo, avrebbe chiuso il
+ * calcolatore pubblico a chi non si è ancora registrato: cioè a tutti
+ * quelli per cui il calcolatore esiste.
+ */
 export async function GET(req: Request) {
   try {
-    await richiediUtente()
     const q = new URL(req.url).searchParams
     const testo = (q.get('testo') ?? '').trim()
     if (testo.length < 2) return json({ modelli: [] })

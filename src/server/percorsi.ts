@@ -12,6 +12,17 @@ export interface Punto { lat: number; lng: number }
 export interface Percorso { km: number; minuti: number; polilinea: [number, number][] }
 
 /**
+ * Le varianti di uno stesso viaggio.
+ *
+ * Per ora una sola: evitare l'autostrada. Non è un vezzo — su una tratta
+ * come Lodi-Milano il percorso ordinario e quello che sta sulle statali
+ * differiscono di pochi chilometri e di venti minuti, ma di un pedaggio
+ * intero. Chi decide se partire quel confronto lo fa comunque, a mente e
+ * male.
+ */
+export interface OpzioniPercorso { evitaAutostrada?: boolean }
+
+/**
  * Arrotondamento a circa 100 metri. È quello che rende la cache utile: due
  * partenze dalla stessa piazza non hanno mai le stesse coordinate al
  * centesimo di grado, ma sono lo stesso percorso.
@@ -19,7 +30,9 @@ export interface Percorso { km: number; minuti: number; polilinea: [number, numb
 const griglia = (p: Punto) => `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`
 const chiaveDi = (punti: Punto[]) => punti.map(griglia).join('|')
 
-export async function percorso(punti: Punto[]): Promise<Percorso> {
+export async function percorso(
+  punti: Punto[], opzioni: OpzioniPercorso = {},
+): Promise<Percorso> {
   if (punti.length < 2) throw new Error('servono almeno due punti')
 
   // Niente chiamate esterne in dimostrazione: si stima in linea d'aria con
@@ -29,7 +42,10 @@ export async function percorso(punti: Punto[]): Promise<Percorso> {
     return { km, minuti: Math.round(km * 1.1) + 5, polilinea: punti.map((p) => [p.lng, p.lat]) }
   }
 
-  const chiave = chiaveDi(punti)
+  // La variante fa parte dell'identità del percorso: senza il suffisso, il
+  // primo che chiede «senza autostrada» riceverebbe per sempre la risposta
+  // con l'autostrada, dalla cache, senza che nessuno se ne accorga.
+  const chiave = chiaveDi(punti) + (opzioni.evitaAutostrada ? '|senza-autostrada' : '')
 
   /**
    * La cache si rilegge con una funzione, non con una select.
@@ -54,7 +70,7 @@ export async function percorso(punti: Punto[]): Promise<Percorso> {
     }
   }
 
-  const calcolato = await calcolaConOrs(punti)
+  const calcolato = await calcolaConOrs(punti, opzioni)
   // `upsert` e non `insert`: se la riga c'è ma era illeggibile la si
   // sostituisce, invece di fallire sulla chiave e riprovare per sempre.
   await db.from('percorsi_cache').upsert({
@@ -86,14 +102,21 @@ export async function kmDeviazione(
 
 const ORS = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
 
-async function calcolaConOrs(punti: Punto[]): Promise<Percorso> {
+async function calcolaConOrs(
+  punti: Punto[], opzioni: OpzioniPercorso = {},
+): Promise<Percorso> {
   const chiave = leggiEnv('ORS_API_KEY')
   if (!chiave) throw new Error("variabile d'ambiente mancante: ORS_API_KEY")
 
   const risposta = await fetch(ORS, {
     method: 'POST',
     headers: { Authorization: chiave, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ coordinates: punti.map((p) => [p.lng, p.lat]) }),
+    body: JSON.stringify({
+      coordinates: punti.map((p) => [p.lng, p.lat]),
+      ...(opzioni.evitaAutostrada
+        ? { options: { avoid_features: ['highways'] } }
+        : {}),
+    }),
   })
   if (!risposta.ok) {
     throw new Error(`routing non riuscito: ${risposta.status} ${await risposta.text()}`)
@@ -135,4 +158,44 @@ function distanzaAerea(punti: Punto[]): number {
     km += 6371 * 2 * Math.atan2(Math.sqrt(m), Math.sqrt(1 - m))
   }
   return km
+}
+
+
+/**
+ * Il freno del calcolo percorsi.
+ *
+ * Fratello di `statoMappa`, e per la stessa ragione. Il calcolatore
+ * pubblico è raggiungibile senza account: chiunque, anche uno script,
+ * può chiedere percorsi, e ogni percorso che non è già in cache è una
+ * chiamata a OpenRouteService che consuma la quota gratuita.
+ *
+ * Le righe create oggi in `percorsi_cache` SONO le chiamate fatte oggi:
+ * la cache si scrive esattamente quando ORS risponde. Non serve un
+ * contatore a parte, e un contatore a parte sarebbe potuto andare fuori
+ * sincrono con la cosa che conta.
+ *
+ * Superata la soglia il calcolatore non si rompe: smette di accettare
+ * tratte NUOVE, e continua a rispondere su quelle già in cache — che
+ * sono le più chieste. Degrada, non si guasta.
+ */
+export const SOGLIA_PERCORSI_GIORNO = 1_500
+
+export async function percorsiNuoviOggi(): Promise<number> {
+  const inizio = new Date()
+  inizio.setHours(0, 0, 0, 0)
+  const { count } = await db
+    .from('percorsi_cache')
+    .select('chiave', { count: 'exact', head: true })
+    .gte('creato_il', inizio.toISOString())
+  return count ?? 0
+}
+
+/** Se questa coppia di punti è già stata calcolata, e quindi è gratis. */
+export async function giaInCache(
+  punti: Punto[], opzioni: OpzioniPercorso = {},
+): Promise<boolean> {
+  const chiave = chiaveDi(punti) + (opzioni.evitaAutostrada ? '|senza-autostrada' : '')
+  const { data } = await db.rpc('leggi_percorso', { p_chiave: chiave })
+  const riga = Array.isArray(data) ? data[0] : data
+  return Boolean(riga && leggiLinestring(riga.percorso).length > 0)
 }

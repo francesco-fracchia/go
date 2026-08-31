@@ -2542,3 +2542,50 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   .posto-numero, .opzione, .strada, .ruolo { transition: none !important; }
   .riga::before, .casa-tutti::after { display: none; }
 }
+
+
+/* ═══ La risposta del calcolatore ══════════════════════════════════════
+   Una schermata che esiste per dare UN numero. Tutto il resto della
+   pagina è il modulo per ottenerlo: qui il numero deve pesare come una
+   notizia, perché per quasi tutti lo è. */
+
+.risposta {
+  background: var(--carta); border: 1px solid var(--riga);
+  border-radius: var(--r-l); padding: var(--s6);
+}
+@media (min-width: 720px) { .risposta { padding: var(--s7); } }
+
+.risposta-cifra { margin: var(--s3) 0 0; color: var(--inchiostro); }
+.risposta-tratta {
+  margin: var(--s3) 0 0; font-size: 14.5px; color: var(--inchiostro-2);
+}
+
+/* La frase che fa il lavoro della pagina: dice dove va il resto dei
+   soldi. Sta su fondo tinto perché è un'obiezione anticipata, non una
+   didascalia. */
+.risposta-benzina {
+  margin: var(--s5) 0 0; padding: var(--s4) var(--s5);
+  background: var(--superficie-2); border-radius: var(--r-m);
+  font-size: 14.5px; line-height: 1.55; color: var(--inchiostro-2);
+}
+.risposta-benzina strong { color: var(--inchiostro); }
+
+.divisione { margin-top: var(--s6); padding-top: var(--s6); border-top: 1px solid var(--riga); }
+.divisione-elenco {
+  list-style: none; margin: var(--s4) 0 0; padding: 0;
+  display: grid; gap: var(--s2);
+}
+.divisione-elenco li {
+  display: grid; grid-template-columns: 5.5rem auto 1fr;
+  align-items: baseline; gap: var(--s3);
+  padding: var(--s3) 0; border-bottom: 1px solid var(--riga-tenue, var(--riga));
+}
+.divisione-elenco li:last-child { border-bottom: none; }
+.divisione-persone { font-size: 14.5px; color: var(--inchiostro-2); }
+.divisione-cifra {
+  font-family: var(--mono); font-size: 19px; font-weight: 600;
+  letter-spacing: -.02em; color: var(--inchiostro);
+}
+.divisione-nota { font-size: 13px; color: var(--tenue); }
+
+.risposta-azione { width: 100%; margin-top: var(--s6); }
