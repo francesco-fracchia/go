@@ -37,6 +37,7 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
   const disponibili = membri.filter((m) => m.disponibile)
   const ioNonGuido = !membri.find((m) => m.id === io)?.disponibile
   const scelto = membri.find((m) => m.id === tocca) ?? null
+  const totale = membri.reduce((s, m) => s + m.volte, 0)
 
   /**
    * La ruota si ferma DOVE È GIÀ DECISO.
@@ -186,14 +187,19 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
                     <>
                       <p className="occhiello">Tocca a</p>
                       <p className="t-monumento ruota-nome">{scelto.nome}</p>
+                      {/* Con il turno vuoto non c'è niente da confrontare:
+                          «ha guidato zero volte su 0» è aritmetica, non una
+                          frase. E il pulsante non può dire «lui»: il nome
+                          estratto è appena stato Bea. */}
                       <p className="t-guida">
-                        Ha guidato {scelto.volte === 0 ? 'zero volte' : scelto.volte === 1
-                          ? 'una volta' : `${scelto.volte} volte`} su {membri.reduce((s, m) => s + m.volte, 0)}.
+                        {totale === 0
+                          ? 'Non ha ancora guidato nessuno: il turno comincia da qui.'
+                          : `Ha guidato ${dette(scelto.volte)} su ${totale}.`}
                       </p>
                       <button type="button" className="azione azione-piena"
                         style={{ marginTop: 'var(--s5)' }} aria-disabled={attesa}
                         onClick={() => segnaGuidato(scelto.id)}>
-                        {attesa ? 'Un attimo…' : 'Ha guidato lui, segna'}
+                        {attesa ? 'Un attimo…' : 'Segna che ha guidato'}
                       </button>
                     </>
                   ) : (
@@ -232,8 +238,17 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
                   <span className="conto-volte">
                     {m.volte === 1 ? '1 volta' : `${m.volte} volte`}
                   </span>
-                  <span className={`conto-saldo${m.saldo > 0 ? ' conto-credito' : m.saldo < 0 ? ' conto-debito' : ''}`}>
-                    {m.saldo > 0 ? `+${m.saldo}` : m.saldo === 0 ? '—' : m.saldo}
+                  {/* Arrotondato al passaggio intero.
+                      Lo scarto dalla media è la misura giusta, ma «-0,2
+                      passaggi» non vuol dire niente a nessuno: un passaggio
+                      non si divide in quinti. Il numero esatto resta nei
+                      dati, qui si mostra quello che una persona può usare —
+                      quanti passaggi deve, o quanti gliene devono. */}
+                  <span className={`conto-saldo${Math.round(m.saldo) > 0 ? ' conto-credito'
+                    : Math.round(m.saldo) < 0 ? ' conto-debito' : ''}`}>
+                    {Math.round(m.saldo) > 0 ? `+${Math.round(m.saldo)}`
+                      : Math.round(m.saldo) < 0 ? String(Math.round(m.saldo))
+                        : 'in pari'}
                   </span>
                 </li>
               ))}
@@ -260,6 +275,9 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
     </>
   )
 }
+
+/** «una volta», «tre volte» — mai «1 volte». */
+const dette = (n: number) => n === 1 ? 'una volta' : `${n} volte`
 
 /** Uno spicchio di ruota: dal centro, lungo l'arco del suo settore. */
 function settore(i: number, n: number): string {
