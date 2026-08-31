@@ -64,6 +64,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const [flessibilita, setFlessibilita] = useState<Flessibilita | null>(null)
   const [invio, setInvio] = useState(false)
   const [errore, setErrore] = useState<string | null>(null)
+  const [dettaglio, setDettaglio] = useState<string | null>(null)
   const [serveNumero, setServeNumero] = useState(false)
   const [conto, setConto] = useState<Preventivo | null>(null)
   const [contando, setContando] = useState(false)
@@ -330,7 +331,12 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                     mostra il campo per metterlo, qui, senza perdere il
                     modulo compilato. */}
                 {serveNumero && <AggiungiTelefono suSalvato={() => { setServeNumero(false); setErrore(null) }} />}
-                {errore && !serveNumero && <p className="errore">{errore}</p>}
+                {errore && !serveNumero && (
+                  <>
+                    <p className="errore">{errore}</p>
+                    {dettaglio && <p className="errore-dettaglio">{dettaglio}</p>}
+                  </>
+                )}
 
                 <div className="pubblica-piede">
                   <button type="button" className="collegamento-piccolo" onClick={indietro}>
@@ -416,18 +422,18 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
 
   async function pubblica() {
     if (!dichiarato || invio) return
-    setInvio(true); setErrore(null)
+    setInvio(true); setErrore(null); setDettaglio(null)
     const r = await fetch('/api/corse', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         veicoloId: veicolo,
         origine: { label: origine!.etichetta, lat: origine!.lat, lng: origine!.lng },
         destinazione: { label: destinazione!.etichetta, lat: destinazione!.lat, lng: destinazione!.lng },
-        oraArrivo, postiOfferti: posti, modalita,
+        oraArrivo: istante(oraArrivo), postiOfferti: posti, modalita,
         prenotaImmediata: immediata,
         deviazioniRitiro: deviazioni, deviazioniDeposito: deviazioni,
         politica, note,
-        oraRitorno: oraRitorno || undefined,
+        oraRitorno: oraRitorno ? istante(oraRitorno) : undefined,
         flessibilitaMin: scelta,
         // La spunta È l'atto: viaggia con la pubblicazione, e il server la
         // registra con la data prima di creare la corsa.
@@ -437,7 +443,9 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
     const d = await r.json()
     if (!r.ok) {
       if (d.codice === 'telefono') { setServeNumero(true); setInvio(false); return }
-      setErrore(d.errore ?? 'Non è andata'); setInvio(false); return
+      setErrore(d.errore ?? 'Non è andata')
+      setDettaglio(d.dettaglio ?? null)
+      setInvio(false); return
     }
     window.location.href = `/corsa/${d.corsa.id}`
   }
@@ -483,6 +491,22 @@ function Opzioni({ titolo, opzioni, valore, onCambia }: {
       </div>
     </div>
   )
+}
+
+/**
+ * Da «quando» a «quale istante».
+ *
+ * I campi dell'orario danno una stringa senza fuso — «2026-08-31T02:00» —
+ * e chi la legge decide da sé cosa significa: il browser la intende come
+ * ora locale, un server che vive a UTC la intende come UTC. Due ore di
+ * differenza d'estate, su una corsa notturna, sono il passaggio perso.
+ *
+ * Si converte qui, nel browser, che è l'unico posto dove si sa davvero in
+ * che fuso è chi sta pubblicando.
+ */
+function istante(locale: string): string {
+  const d = new Date(locale)
+  return Number.isNaN(d.getTime()) ? locale : d.toISOString()
 }
 
 /**

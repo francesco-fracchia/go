@@ -236,6 +236,10 @@ img, svg { max-width: 100%; }
 .misura { max-width: var(--misura-testo); }
 .viola  { color: var(--accento); font-style: normal; }
 
+/* Un promemoria per chi verrà dopo: su un elemento che porta anche
+   `.dentro`, il `padding` abbreviato cancella i lati. Si usano sempre
+   `padding-top` e `padding-bottom`. */
+
 /* ─── 4. Impaginato ─────────────────────────────────────────────────────
    `.fascia` sanguina da bordo a bordo. `.dentro` è la colonna che ci vive.
    Separarli è tutto: senza, «pieno schermo» diventa testo largo duemila
@@ -1076,7 +1080,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
    I risultati: si CONFRONTANO, quindi si incolonnano.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.risultati-dentro { padding: var(--s5) 0 var(--s9); }
+.risultati-dentro { padding-top: var(--s5); padding-bottom: var(--s9); }
 .risultati-testa {
   display: flex; align-items: flex-start; gap: var(--s4);
   flex-wrap: wrap; margin-bottom: var(--s6);
@@ -1196,7 +1200,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 @media (min-width: 900px) { .foglio-ricerca { width: min(680px, calc(100vw - 80px)); } }
 
 /* ── I miei viaggi ── */
-.viaggi-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s6); }
+.viaggi-dentro { padding-top: var(--s6); padding-bottom: var(--s9); display: grid; gap: var(--s6); }
 .viaggi-sospesi { display: block; }
 .viaggi-schede { align-self: start; }
 .segmento-conta {
@@ -1207,7 +1211,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
    Il dettaglio di una corsa: due colonne, e l'azione sempre visibile.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.dettaglio-dentro { padding: var(--s5) 0 var(--s9); display: grid; gap: var(--s6); }
+.dettaglio-dentro { padding-top: var(--s5); padding-bottom: var(--s9); display: grid; gap: var(--s6); }
 .dettaglio-testa { max-width: 46ch; }
 
 .dettaglio-corpo { display: grid; gap: var(--s5); }
@@ -1316,7 +1320,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
    Pubblicare: una domanda per volta, e il numero sempre accanto.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.pubblica-dentro { padding: var(--s5) 0 var(--s9); display: grid; gap: var(--s6); }
+.pubblica-dentro { padding-top: var(--s5); padding-bottom: var(--s9); display: grid; gap: var(--s6); }
 
 /* La spina: quattro passi con il nome. Sapere quanti ne restano è la
    differenza fra compilare e abbandonare. */
@@ -1418,14 +1422,14 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .conto-onesto strong { color: var(--inchiostro); }
 
 /* ── Cerco un passaggio ── */
-.cerco-dentro { padding: var(--s6) 0 var(--s9); }
+.cerco-dentro { padding-top: var(--s6); padding-bottom: var(--s9); }
 .riuscito {
   padding: var(--s7) var(--s6); border-radius: var(--r-xl);
   background: var(--accento-velo); border: 1px solid var(--accento-riga);
 }
 
 /* ── Il profilo ── */
-.profilo-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s5); }
+.profilo-dentro { padding-top: var(--s6); padding-bottom: var(--s9); display: grid; gap: var(--s5); }
 .profilo-testa { display: flex; gap: var(--s4); align-items: center; }
 .profilo-faccia { width: 76px; height: 76px; font-size: 28px; }
 .profilo-sotto { margin: var(--s2) 0 0; font-size: 14.5px; color: var(--tenue); }
@@ -1459,7 +1463,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .voce-elenco svg { color: var(--tenue); flex-shrink: 0; }
 
 /* ── Dove si va ── */
-.posti-dentro { padding: var(--s6) 0 var(--s9); display: grid; gap: var(--s5); }
+.posti-dentro { padding-top: var(--s6); padding-bottom: var(--s9); display: grid; gap: var(--s5); }
 .posti-testa { display: flex; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; }
 .posto-carta {
   display: grid; gap: var(--s2); align-content: start;
@@ -1506,4 +1510,13 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
     padding: var(--s6); border-radius: var(--r-xl);
     background: var(--carta); border: 1px solid var(--riga); box-shadow: var(--ombra);
   }
+}
+
+/* Il dettaglio tecnico di un guasto: piccolo, monospaziato, e distinto dal
+   messaggio che lo precede — è per chi sta costruendo, non per chi usa. */
+.errore-dettaglio {
+  margin: var(--s2) 0 0; padding: var(--s3);
+  border-radius: var(--r-s); background: var(--superficie-2);
+  font-family: var(--mono); font-size: 12px; line-height: 1.5;
+  color: var(--tenue); overflow-wrap: anywhere;
 }

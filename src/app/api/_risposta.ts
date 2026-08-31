@@ -24,8 +24,23 @@ export function rispostaErrore(e: unknown): Response {
     console.error('violazione di conformità:', e.message)
     return json({ errore: 'questa combinazione non è possibile' }, 409)
   }
+  /**
+   * Il guasto che non sappiamo tradurre.
+   *
+   * Il messaggio resta generico — un errore di sistema mostrato all'utente
+   * non lo aiuta e a volte racconta più del dovuto — ma il `dettaglio`
+   * viaggia accanto, perché finché GO non è aperto al pubblico l'unica
+   * persona che vede questa schermata è chi lo sta costruendo, e «qualcosa
+   * è andato storto» le costa un'ora di indagine ogni volta.
+   *
+   * Da togliere prima di aprire le iscrizioni: allora il posto giusto per
+   * il dettaglio saranno i registri, e questa riga diventa una perdita.
+   */
   console.error(e)
-  return json({ errore: 'qualcosa è andato storto' }, 500)
+  return json({
+    errore: 'qualcosa è andato storto',
+    dettaglio: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+  }, 500)
 }
 
 const stato = (codice: string) => ({

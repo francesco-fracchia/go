@@ -135,7 +135,9 @@ export function CercoPassaggio({ mappa = false, vicino, casa }: {
         origineLabel: origine!.etichetta, origineLat: origine!.lat, origineLng: origine!.lng,
         destinazioneLabel: destinazione!.etichetta,
         destinazioneLat: destinazione!.lat, destinazioneLng: destinazione!.lng,
-        oraArrivo: quando, flessibilitaMin: Math.max(15, flessibilita), posti,
+        // Con il fuso, non la stringa nuda: il server vive a UTC e
+        // leggerebbe «02:00» come le due di notte a Greenwich.
+        oraArrivo: new Date(quando).toISOString(), flessibilitaMin: Math.max(15, flessibilita), posti,
       }),
     })
     if (!r.ok) {
