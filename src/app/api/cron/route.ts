@@ -1,5 +1,7 @@
 import * as lavori from '../../../server/lavori.ts'
-import { chiudiContestazioni } from '../../../server/liquidazioni.ts'
+import {
+  chiudiContestazioni, liquidaSettimanaScorsa, fondiNonRitirati,
+} from '../../../server/liquidazioni.ts'
 import { dimenticaPosizioni } from '../../../server/posizione.ts'
 import { json } from '../_risposta.ts'
 
@@ -22,6 +24,11 @@ const REGISTRO: Record<string, () => Promise<unknown>> = {
   scadi_proposte: lavori.scadiProposte,
   chiudi_arrivate: lavori.chiudiArrivate,
   chiudi_contestazioni: chiudiContestazioni,
+  /* I due lavori che pagano chi guida. Erano scritti, corretti, e non
+     chiamati da nessuna parte: il denaro si catturava dai passeggeri e
+     restava fermo sul saldo. */
+  liquida: liquidaSettimanaScorsa,
+  fondi_non_ritirati: fondiNonRitirati,
   dimentica_posizioni: dimenticaPosizioni,
 }
 

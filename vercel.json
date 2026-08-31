@@ -39,6 +39,14 @@
     {
       "path": "/api/cron?lavoro=dimentica_posizioni",
       "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron?lavoro=liquida",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron?lavoro=fondi_non_ritirati",
+      "schedule": "0 9 1 * *"
     }
   ]
 }

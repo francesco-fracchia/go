@@ -103,3 +103,30 @@ export async function fondiNonRitirati() {
     .lt('corse.ora_partenza', limite.toISOString())
   return data ?? []
 }
+
+/**
+ * Il lunedì, sulla settimana appena chiusa.
+ *
+ * `liquidaSettimana` esisteva, era corretta, ed era irraggiungibile: non
+ * compariva nel registro dei lavori né in `vercel.json`. Il risultato è che
+ * il denaro veniva catturato dai passeggeri, restava sul saldo, e non
+ * arrivava mai a chi aveva guidato — l'unico anello della catena che, se si
+ * rompe, non se ne accorge nessuno finché qualcuno non chiede dove sono i
+ * suoi soldi.
+ *
+ * La settimana è quella PRECEDENTE, troncata al lunedì come nella vista
+ * `maturato_conducente`. Girare sulla settimana in corso liquiderebbe corse
+ * su cui la finestra delle contestazioni non è ancora chiusa.
+ */
+export function settimanaScorsa(adesso = new Date()): string {
+  const d = new Date(Date.UTC(
+    adesso.getUTCFullYear(), adesso.getUTCMonth(), adesso.getUTCDate(),
+  ))
+  // getUTCDay(): domenica è 0. Si porta indietro al lunedì di questa
+  // settimana, poi indietro di altri sette giorni.
+  const giorno = (d.getUTCDay() + 6) % 7
+  d.setUTCDate(d.getUTCDate() - giorno - 7)
+  return d.toISOString().slice(0, 10)
+}
+
+export const liquidaSettimanaScorsa = () => liquidaSettimana(settimanaScorsa())
