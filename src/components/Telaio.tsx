@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Marchio, MarchioEsteso } from './Marchio.tsx'
 import { Interruttore } from './Modo.tsx'
-import { SegnoCerca, SegnoGuida, SegnoPosti, SegnoViaggi, SegnoTu, SegnoPiu } from './segni.tsx'
+import { SegnoCerca, SegnoGuida, SegnoPosti, SegnoViaggi, SegnoComitiva, SegnoTu, SegnoPiu } from './segni.tsx'
 import type { Modo } from '../server/modo.ts'
 
 /**
@@ -38,11 +38,13 @@ const VOCI: Record<Modo, Voce[]> = {
     { href: '/', testo: 'Cerca', segno: SegnoCerca },
     { href: '/posti', testo: 'Dove si va', corto: 'Posti', segno: SegnoPosti },
     { href: '/viaggi', testo: 'I miei viaggi', corto: 'Viaggi', segno: SegnoViaggi },
+    { href: '/comitive', testo: 'La comitiva', corto: 'Comitiva', segno: SegnoComitiva },
   ],
   conducente: [
     { href: '/', testo: 'Le mie corse', corto: 'Corse', segno: SegnoGuida },
     { href: '/pubblica', testo: 'Pubblica un viaggio', corto: 'Pubblica', segno: SegnoPiu },
     { href: '/viaggi', testo: 'I miei viaggi', corto: 'Viaggi', segno: SegnoViaggi },
+    { href: '/comitive', testo: 'La comitiva', corto: 'Comitiva', segno: SegnoComitiva },
   ],
 }
 

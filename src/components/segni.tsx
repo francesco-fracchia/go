@@ -52,6 +52,16 @@ export const SegnoViaggi = () => (
   </svg>
 )
 
+/** Tre teste vicine: un gruppo, non una persona. */
+export const SegnoComitiva = () => (
+  <svg {...base}>
+    <circle cx="8.5" cy="8" r="3" />
+    <circle cx="16" cy="9.5" r="2.4" />
+    <path d="M3 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+    <path d="M16 14.2c2.6.2 4.5 2 4.5 4.8" />
+  </svg>
+)
+
 /** Una persona. */
 export const SegnoTu = () => (
   <svg {...base}>
