@@ -108,6 +108,13 @@ function Lettere({ colore }: { colore: string }) {
           con un trattino accanto: ferma dentro l'anello si legge come un
           nodo, portata fuori diventa la barra della G. */}
       <path d="M 58 60 H 102.5" strokeLinecap="butt" />
+      {/* Il montante: la barra scende e incontra l'anello.
+          Senza, a trenta pixel la barra si perdeva dentro il tratto e il
+          segno si leggeva «CO» — che è il modo peggiore in cui un marchio
+          può sbagliare, perché non sembra brutto: sembra un'altra parola.
+          È il montante che in ogni G geometrica — Futura, Circular — toglie
+          l'equivoco, e costa un tratto. */}
+      <path d="M 92 60 V 84" strokeLinecap="butt" />
       {/* O: anello chiuso.
           Il vuoto fra le due lettere è il 13% della loro larghezza. Prima
           era il 4: si toccavano quasi, e a dimensione piccola la G e la O

@@ -167,3 +167,80 @@ export function Tracciato({ altezza = 130 }: { altezza?: number }) {
     </svg>
   )
 }
+
+/* ── La rete ──────────────────────────────────────────────────────────
+   Le città e le strade fra loro, sulla forma dell'Italia.
+
+   È il disegno che mancava all'apertura. Il tracciato fra due punti dice
+   «da qui a lì»; questo dice un'altra cosa, che è quella su cui il prodotto
+   sta in piedi: le strade esistono già, sono percorse ogni giorno da
+   qualcuno, e GO non ne inventa nessuna — ci mette dentro le persone.
+
+   Le coordinate sono quelle vere, proiettate senza fronzoli: un'Italia
+   riconoscibile fatta di punti e linee, non una mappa. Una mappa vera a
+   questa dimensione si legge peggio e costa una chiave.
+*/
+
+interface Citta { n: string; x: number; y: number; g?: boolean }
+
+/** lat/lng reali, proiettate su una griglia di 460×420. */
+const CITTA: Citta[] = [
+  { n: 'Torino', x: 47, y: 76 },
+  { n: 'Milano', x: 98, y: 63, g: true },
+  { n: 'Venezia', x: 205, y: 63 },
+  { n: 'Bologna', x: 171, y: 96 },
+  { n: 'Firenze', x: 169, y: 120 },
+  { n: 'Roma', x: 211, y: 184, g: true },
+  { n: 'Napoli', x: 271, y: 219 },
+  { n: 'Bari', x: 359, y: 210 },
+  { n: 'Palermo', x: 240, y: 312 },
+]
+
+const TRATTE: Array<[string, string]> = [
+  ['Torino', 'Milano'], ['Milano', 'Venezia'], ['Milano', 'Bologna'],
+  ['Bologna', 'Firenze'], ['Firenze', 'Roma'], ['Roma', 'Napoli'],
+]
+
+export function Rete() {
+  const dove = (n: string) => CITTA.find((c) => c.n === n)!
+
+  return (
+    <svg className="visivo rete" viewBox="0 0 460 420" fill="none"
+      role="img" aria-label="Le città italiane e le strade che le collegano">
+      <defs>
+        <radialGradient id="rete-alone" cx="50%" cy="45%" r="55%">
+          <stop offset="0" stopColor="var(--accento)" stopOpacity=".10" />
+          <stop offset="1" stopColor="var(--accento)" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="215" cy="190" r="205" fill="url(#rete-alone)" />
+
+      {TRATTE.map(([a, b]) => {
+        const p = dove(a), q = dove(b)
+        // Una curva leggera invece di una retta: le strade non sono righe,
+        // e due punti uniti da un segmento sembrano uno schema di rete.
+        const mx = (p.x + q.x) / 2 + (q.y - p.y) * 0.12
+        const my = (p.y + q.y) / 2 - (q.x - p.x) * 0.12
+        return (
+          <path key={`${a}-${b}`} d={`M ${p.x} ${p.y} Q ${mx} ${my} ${q.x} ${q.y}`}
+            stroke="var(--accento)" strokeWidth="1.6" opacity=".55" strokeLinecap="round" />
+        )
+      })}
+
+      {/* Un gettone che percorre la dorsale: è l'unica cosa che si muove, e
+          dice che quelle strade sono percorse adesso. */}
+      <circle r="4.5" fill="var(--accento)" className="gettone-rete" />
+
+      {CITTA.map((c) => (
+        <g key={c.n}>
+          <circle cx={c.x} cy={c.y} r={c.g ? 6 : 4.5}
+            fill="var(--carta)" stroke="var(--accento)" strokeWidth={c.g ? 3 : 2} />
+          <text x={c.x + (c.g ? 11 : 9)} y={c.y + 4}
+            fill="var(--inchiostro-2)" fontSize="11.5" fontFamily="var(--testo)">
+            {c.n}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}

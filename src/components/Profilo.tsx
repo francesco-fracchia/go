@@ -132,6 +132,17 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                   <Voce href="/legale/privacy" testo="Come trattiamo i tuoi dati" />
                   <Voce href="/legale/contatto" testo="Contatti" />
                 </div>
+
+                {/* Uscire deve stare dove uno lo cerca: nel proprio profilo.
+                    Era solo in fondo alle impostazioni, cioè dietro un altro
+                    tocco — e su un dispositivo condiviso «dov'è il logout»
+                    non è una domanda che si ha voglia di cercare. */}
+                <div className="impostazioni-uscita" style={{ marginTop: 'var(--s6)' }}>
+                  <a href="/api/esci" className="esci">Esci da questo dispositivo</a>
+                  <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
+                    Le tue prenotazioni e le tue corse restano dove sono.
+                  </p>
+                </div>
               </section>
             )}
           </div>

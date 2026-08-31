@@ -1,6 +1,8 @@
 import { Marchio } from './Marchio.tsx'
-import { Incontro, Notte, Spese, Tracciato } from './visivi.tsx'
-import { SegnoAvanti, SegnoQuota, SegnoFiducia, SegnoVicino } from './segni.tsx'
+import { Rete, Notte, Spese, Tracciato } from './visivi.tsx'
+import {
+  SegnoAvanti, SegnoQuota, SegnoFiducia, SegnoVicino, SegnoCerca, SegnoGuida,
+} from './segni.tsx'
 import { Domande, TutteLeDomande, PER_CHI_CERCA, PER_CHI_OFFRE } from './Domande.tsx'
 import { quotaApplicata, feePasseggero, type Corsa } from '../lib/pricing.ts'
 
@@ -70,10 +72,12 @@ function Apertura({ v }: { v: Inviti }) {
     <section className="fascia apertura">
       <div className="dentro apertura-dentro">
         <div className="apertura-parola affiora">
+          <p className="occhiello occhiello-muto">Condivisione di viaggio</p>
+
           {/* Il logotipo per esteso, non il riquadro: qui GO è il
               soggetto, non l'etichetta di chi ospita la pagina. */}
           <div className="apertura-marchio">
-            <Marchio variante="nudo" dimensione={40} />
+            <Marchio variante="nudo" dimensione={44} />
           </div>
 
           <h1 className="t-monumento apertura-promessa">
@@ -81,13 +85,26 @@ function Apertura({ v }: { v: Inviti }) {
           </h1>
 
           <p className="t-guida apertura-guida">
-            Trova qualcuno che sta già andando nella tua direzione.
-            Oppure condividi i posti liberi della tua macchina.
+            Trova qualcuno che sta già andando nella tua direzione. Oppure
+            condividi i posti liberi della tua macchina — le spese si
+            dividono, non si moltiplicano.
           </p>
 
-          <div className="azioni apertura-azioni">
-            <a href={v.cerco} className="azione azione-piena">Trova un posto</a>
-            <a href={v.offro} className="azione azione-vuota">Offri un posto</a>
+          {/*
+            Ogni azione si porta dietro la sua ragione.
+            «Trova un posto» e «Offri un posto» sono due verbi che non
+            dicono in quale delle due situazioni ti trovi: la riga sotto lo
+            dice, e a quel punto non c'è più niente da capire.
+          */}
+          <div className="apertura-azioni">
+            <a href={v.cerco} className="scelta-grande scelta-grande-piena">
+              <span className="scelta-grande-titolo"><SegnoCerca /> Trova un posto</span>
+              <span className="scelta-grande-nota">Qualcuno sta già andando</span>
+            </a>
+            <a href={v.offro} className="scelta-grande">
+              <span className="scelta-grande-titolo"><SegnoGuida /> Offri un posto</span>
+              <span className="scelta-grande-nota">Condividi le spese del viaggio</span>
+            </a>
           </div>
 
           <p className="t-nota apertura-nota">
@@ -95,7 +112,7 @@ function Apertura({ v }: { v: Inviti }) {
           </p>
         </div>
 
-        <div className="apertura-disegno affiora affiora-2"><Incontro /></div>
+        <div className="apertura-disegno affiora affiora-2"><Rete /></div>
       </div>
     </section>
   )

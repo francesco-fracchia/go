@@ -2389,3 +2389,142 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .etichetta-nuova:focus { border-style: solid; border-color: var(--accento); }
 .salvataggio-fatto { margin: 7px 0 0; font-size: 13px; color: var(--verde); }
+
+/* ── La rete ── */
+.rete { max-width: 560px; margin: 0 auto; }
+.gettone-rete {
+  offset-path: path('M 98 63 Q 139 100 171 96 Q 176 111 169 120 Q 197 145 211 184 Q 245 194 271 219');
+  animation: viaggia 9s cubic-bezier(.5,0,.5,1) infinite;
+}
+
+/* ── Le due azioni dell'apertura ──
+   Ogni azione si porta dietro la sua ragione: «trova un posto» e «offri un
+   posto» sono due verbi che non dicono in quale delle due situazioni ti
+   trovi, e la riga sotto lo dice. */
+.apertura-azioni {
+  display: grid; gap: var(--s3); margin-top: var(--s6);
+}
+@media (min-width: 460px) {
+  .apertura-azioni { grid-template-columns: repeat(2, minmax(0, 210px)); }
+}
+.scelta-grande {
+  display: grid; gap: 5px; padding: var(--s4) var(--s5);
+  border-radius: var(--r-m); border: 1px solid var(--riga);
+  background: var(--carta); color: var(--inchiostro); text-decoration: none;
+  transition: transform .14s ease, box-shadow .18s ease, border-color .14s ease;
+}
+.scelta-grande:hover { transform: translateY(-2px); box-shadow: var(--ombra); border-color: var(--inchiostro-2); }
+.scelta-grande-titolo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 16px; font-weight: 600; letter-spacing: -.02em;
+}
+.scelta-grande-titolo svg { width: 19px; height: 19px; flex-shrink: 0; }
+.scelta-grande-nota { font-size: 13px; color: var(--tenue); line-height: 1.4; }
+.scelta-grande-piena {
+  background: var(--inchiostro); border-color: transparent; color: var(--carta);
+}
+.scelta-grande-piena:hover { border-color: transparent; }
+.scelta-grande-piena .scelta-grande-nota { color: rgba(255,255,255,.66); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Le microinterazioni.
+
+   Erano tutte lo stesso gesto: due pixel in su e un'ombra, con la stessa
+   durata e la stessa curva. Un'interfaccia in cui ogni cosa reagisce
+   uguale non dà informazione — dice solo «hai il mouse sopra qualcosa»,
+   che si sapeva già.
+
+   Qui ogni tipo di elemento reagisce come quello che è: una carta si
+   solleva e si accende sul bordo d'accento, una riga di elenco fa scorrere
+   la freccia verso dove porta, un comando principale respira, una pastiglia
+   di categoria anima il suo segno. La curva è la stessa ovunque — partenza
+   decisa, arrivo morbido — perché è quella che fa sembrare le cose leggere
+   invece che lente.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root { --molla: cubic-bezier(.22, 1, .3, 1); }
+
+/* ── I comandi ── */
+.azione {
+  transition: transform .2s var(--molla), box-shadow .25s var(--molla),
+              background .18s ease, border-color .18s ease;
+}
+.azione svg { transition: transform .24s var(--molla); }
+.azione-piena:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--marchio-alone); }
+.azione-piena:hover svg { transform: translateX(3px); }
+.azione-piena:active { transform: translateY(0) scale(.985); box-shadow: none; }
+.azione-vuota:hover { transform: translateY(-2px); border-color: var(--inchiostro); box-shadow: var(--ombra); }
+.azione-vuota:active { transform: translateY(0) scale(.985); }
+.azione-scura:hover, .azione-chiara:hover { transform: translateY(-2px); box-shadow: var(--ombra-alta); }
+
+/* ── Le carte ── */
+.carta-tocco, .strada, .posto-gettone, .ruolo, .prossimo, .invito,
+.decisione-uscita, .riquadro-tocco {
+  transition: transform .22s var(--molla), box-shadow .26s var(--molla),
+              border-color .18s ease;
+}
+.carta-tocco:hover, .posto-gettone:hover, .ruolo:hover,
+.prossimo:hover, .invito:hover, .decisione-uscita:hover {
+  transform: translateY(-3px); box-shadow: var(--ombra-alta);
+}
+.strada:hover { transform: translateY(-4px); box-shadow: var(--ombra-alta); }
+
+/* ── Le righe di elenco: la freccia va dove porta la riga ── */
+.riga, .posto-principale, .sospeso, .voce-elenco, .cerca-riga {
+  transition: background .16s ease, transform .2s var(--molla);
+}
+.riga svg, .posto-principale svg, .sospeso svg, .voce-elenco svg {
+  transition: transform .24s var(--molla);
+}
+.riga:hover svg, .posto-principale:hover svg,
+.sospeso:hover svg, .voce-elenco:hover svg { transform: translateX(4px); }
+
+/* Una barra d'accento che cresce da sinistra: dice quale riga è sotto il
+   dito senza spostare niente di quello che c'è scritto. */
+.riga { position: relative; }
+.riga::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  border-radius: 0 3px 3px 0; background: var(--accento);
+  transform: scaleY(0); transform-origin: center;
+  transition: transform .22s var(--molla);
+}
+.riga:hover::before { transform: scaleY(1); }
+
+/* ── Le pastiglie: il segno si anima, non la pastiglia ── */
+.categoria { transition: border-color .16s ease, background .16s ease, color .16s ease, transform .18s var(--molla); }
+.categoria svg { transition: transform .24s var(--molla); }
+.categoria:hover { transform: translateY(-1px); }
+.categoria:hover svg { transform: scale(1.12) rotate(-4deg); }
+
+.scelta, .ora, .giorno, .posto-numero, .opzione, .etichetta-pronta {
+  transition: transform .18s var(--molla), background .16s ease,
+              border-color .16s ease, color .16s ease;
+}
+.scelta:hover, .ora:not(.ora-passata):hover, .giorno:hover,
+.posto-numero:hover, .etichetta-pronta:hover { transform: translateY(-2px); }
+.opzione:hover { transform: translateX(2px); }
+
+/* ── I collegamenti: il tratto cresce da sinistra ── */
+.casa-tutti, .cerca-azione, .posto-secondaria, .strada-azione {
+  position: relative;
+}
+.casa-tutti::after, .cerca-azione::after, .strada-azione::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -3px; height: 1.5px;
+  background: currentColor; transform: scaleX(0); transform-origin: left;
+  transition: transform .24s var(--molla);
+}
+.casa-tutti:hover::after, .cerca-azione:hover::after, .strada-azione:hover::after {
+  transform: scaleX(1);
+}
+
+/* ── L'uscita: rossa solo quando la tocchi ── */
+.esci { transition: color .16s ease, transform .18s var(--molla); }
+.esci:hover { transform: translateX(2px); }
+
+/* Chi ha chiesto meno movimento non ne riceve nessuno: le regole qui sopra
+   non sono decorazione, ma nemmeno informazione indispensabile. */
+@media (prefers-reduced-motion: reduce) {
+  .azione, .carta-tocco, .riga, .categoria, .scelta, .ora, .giorno,
+  .posto-numero, .opzione, .strada, .ruolo { transition: none !important; }
+  .riga::before, .casa-tutti::after { display: none; }
+}

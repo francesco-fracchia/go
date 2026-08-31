@@ -52,6 +52,9 @@ def dentro_segno(mx, my):
     # la barra della G
     if 58 <= mx <= 102.5 and abs(my - 60) <= 10.5:
         return True
+    # il montante: senza, a trenta pixel il segno si legge «CO»
+    if abs(mx - 92) <= 10.5 and 60 <= my <= 84:
+        return True
     # O: anello chiuso
     return 29.5 <= math.hypot(mx - 166, my - 60) <= 50.5
 
