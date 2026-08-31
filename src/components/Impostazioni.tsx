@@ -54,9 +54,21 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   }
 
   return (
+    <>
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">Il tuo account</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>Impostazioni</h1>
+            <p className="testata-sotto">
+              Poche cose, ciascuna con la sua conseguenza scritta accanto.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div className="fascia">
       <div className="dentro dentro-app impostazioni">
-        <h1 className="t-titolo">Impostazioni</h1>
 
         <Gruppo titolo="I tuoi posti"
           nota="Casa e lavoro compaiono al primo tocco, prima ancora di scrivere.">
@@ -132,6 +144,7 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

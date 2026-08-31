@@ -1,6 +1,6 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import type { Modo } from '../server/modo.ts'
 
 /**
@@ -29,7 +29,40 @@ export function Interruttore({ modo }: { modo: Modo }) {
   const router = useRouter()
   const percorso = usePathname()
   const [ottimista, setOttimista] = useState(modo)
+  const [inAttesa, setInAttesa] = useState(false)
   const [, avvia] = useTransition()
+
+  /**
+   * Il cambio di modalità rifà l'albero sul server: la casa di chi guida e
+   * quella di chi cerca sono due interrogazioni diverse, e ci vuole
+   * qualche secondo. Finché non arrivava niente, l'interruttore si
+   * spostava e la pagina restava quella di prima — che si legge come «non
+   * ha funzionato», e infatti si tocca di nuovo.
+   *
+   * Lo stato si segna sulla radice del documento invece di passarlo per
+   * proprietà: chi deve reagire è il telaio, che sta tre livelli sopra e
+   * non è nemmeno un componente cliente.
+   */
+  useEffect(() => {
+    document.documentElement.dataset.cambio = inAttesa ? 'si' : ''
+    return () => { document.documentElement.dataset.cambio = '' }
+  }, [inAttesa])
+
+  /**
+   * L'attesa finisce quando la modalità NUOVA arriva dal server, non quando
+   * una promessa si risolve: `router.refresh()` in questa versione non passa
+   * dalla transizione, quindi `isPending` resta falso e l'indicatore non si
+   * accendeva mai. Il segnale affidabile è la proprietà che scende dal
+   * telaio, che cambia solo quando la pagina è stata davvero ridisegnata.
+   */
+  useEffect(() => { setInAttesa(false) }, [modo])
+
+  /** Se qualcosa va storto la pagina non resta spenta per sempre. */
+  useEffect(() => {
+    if (!inAttesa) return
+    const t = setTimeout(() => setInAttesa(false), 8000)
+    return () => clearTimeout(t)
+  }, [inAttesa])
 
   function cambia(m: Modo) {
     /**
@@ -44,7 +77,7 @@ export function Interruttore({ modo }: { modo: Modo }) {
      * ritroverebbe di nuovo da conducente.
      */
     if (m === ottimista && m === modo) return
-    setOttimista(m)
+    setOttimista(m); setInAttesa(true)
     document.cookie = `modo=${m}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
     avvia(() => {
       if (AMBEDUE.includes(percorso ?? '/')) router.refresh()

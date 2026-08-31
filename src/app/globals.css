@@ -21,20 +21,27 @@
   /* Bianco, inchiostro quasi nero, grigi chiarissimi. Niente sfumature
      calde: «sali in macchina con uno sconosciuto alle due di notte» non si
      racconta in beige artigianale. */
+  /* Una carta bianca su un foglio bianco non è una carta: è un rettangolo
+     con un filo intorno. Il terreno adesso è TINTO — appena, e verso il
+     viola del marchio, non verso il grigio — e sopra ci stanno oggetti
+     bianchi. È da questa differenza che nasce la struttura: senza, ogni
+     schermata è una lista di righe sottili su niente. */
   --carta:        #FFFFFF;
-  --superficie:   #FFFFFF;
-  --superficie-2: #F4F4F7;
-  --superficie-3: #ECECF1;
-  --inchiostro:   #0A0A0E;
-  --inchiostro-2: #3A3A45;
-  --tenue:        #75758A;
-  --riga:         #E4E4EB;
-  --riga-2:       #F0F0F4;
+  --superficie:   #F1F2F8;   /* i campi: pieni, non contornati */
+  --superficie-2: #E9EAF3;
+  --superficie-3: #DDDEEB;
+  --inchiostro:   #0B0B14;
+  --inchiostro-2: #3B3B4C;
+  --tenue:        #6E6E86;
+  --riga:         #DEDFEC;
+  --riga-2:       #ECEDF5;
 
   /* Il fondo della pagina. È la sola cosa che cambia fra le due modalità:
      il resto del linguaggio resta identico, ed è quello che le tiene
      riconoscibili come lo stesso prodotto. */
-  --foglio:       #FFFFFF;
+  /* Il terreno della modalità passeggero. Quella conducente lo scurisce di
+     un gradino: vedi `.telaio[data-modo]`. */
+  --foglio:       #F4F5FA;
   /* Il corpo delle strade disegnate: deve avere peso su carta bianca. */
   --strada:       #DFDFEA;
 
@@ -77,8 +84,11 @@
   --raggio: var(--r-m); --raggio-s: var(--r-s);
 
   /* ── Ombre: due, e si vedono appena ── */
-  --ombra:      0 1px 2px rgba(10,10,14,.04), 0 4px 14px rgba(10,10,14,.05);
-  --ombra-alta: 0 2px 6px rgba(10,10,14,.06), 0 18px 44px rgba(10,10,14,.12);
+  /* Un'ombra che non si vede non solleva niente. Tinte di viola invece che
+     di nero: un'ombra grigia su un fondo tinto sporca, una dello stesso
+     colore del terreno affonda. */
+  --ombra:      0 1px 2px rgba(20,18,60,.05), 0 3px 10px rgba(20,18,60,.07);
+  --ombra-alta: 0 2px 6px rgba(20,18,60,.07), 0 20px 46px rgba(20,18,60,.16);
 
   /* ── Carattere: uno solo, usato bene ── */
   --testo: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -108,16 +118,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="chiaro"]) {
-    --carta:        #14141C;
-    --superficie:   #14141C;
-    --superficie-2: #1D1D28;
-    --superficie-3: #262633;
-    --inchiostro:   #F2F2F6;
-    --inchiostro-2: #C0C0CE;
-    --tenue:        #85859B;
-    --riga:         #282835;
-    --riga-2:       #1E1E29;
-    --foglio:       #0A0A0F;
+    --carta:        #171722;
+    --superficie:   #1E1E2C;
+    --superficie-2: #23233340;
+    --superficie-3: #2C2C3E;
+    --inchiostro:   #F3F3F8;
+    --inchiostro-2: #C2C2D2;
+    --tenue:        #8888A0;
+    --riga:         #2C2C3C;
+    --riga-2:       #22222F;
+    --foglio:       #0C0C14;
     --strada:       #22222E;
     --accento:      #8A78FF;
     --accento-vivo: #A897FF;
@@ -137,16 +147,16 @@
 }
 
 :root[data-tema="scuro"] {
-  --carta:        #14141C;
-  --superficie:   #14141C;
-  --superficie-2: #1D1D28;
-  --superficie-3: #262633;
-  --inchiostro:   #F2F2F6;
-  --inchiostro-2: #C0C0CE;
-  --tenue:        #85859B;
-  --riga:         #282835;
-  --riga-2:       #1E1E29;
-  --foglio:       #0A0A0F;
+  --carta:        #171722;
+  --superficie:   #1E1E2C;
+  --superficie-2: #23233340;
+  --superficie-3: #2C2C3E;
+  --inchiostro:   #F3F3F8;
+  --inchiostro-2: #C2C2D2;
+  --tenue:        #8888A0;
+  --riga:         #2C2C3C;
+  --riga-2:       #22222F;
+  --foglio:       #0C0C14;
   --strada:       #22222E;
   --accento:      #8A78FF;
   --accento-vivo: #A897FF;
@@ -235,12 +245,28 @@ img, svg { max-width: 100%; }
 .t-corpo { font-size: 1rem; line-height: 1.6; color: var(--inchiostro-2); }
 .t-nota  { font-size: .84rem; line-height: 1.5; color: var(--tenue); }
 
+/* L'occhiello era mono, undici pixel, maiuscolo, grigio tenue: un
+   sussurro. Ma in quasi tutta l'applicazione è la SOLA cosa che dice dove
+   finisce un blocco e ne comincia un altro — cioè è struttura, non
+   didascalia, e una struttura sussurrata non struttura niente.
+   Il trattino d'accento davanti fa due lavori: segna l'inizio e mette il
+   viola dove prima c'era solo grigio. */
 .occhiello {
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
-  letter-spacing: .18em; text-transform: uppercase; color: var(--tenue);
+  display: flex; align-items: center; gap: 9px;
+  font-size: 12.5px; font-weight: 600; letter-spacing: .005em;
+  text-transform: uppercase; color: var(--inchiostro-2);
   margin: 0;
 }
+.occhiello::before {
+  content: ''; flex-shrink: 0;
+  width: 16px; height: 3px; border-radius: 2px;
+  background: var(--accento);
+}
 .occhiello-accento { color: var(--accento); }
+/* Dentro una carta, dove il blocco è già delimitato dalla carta stessa, il
+   trattino sarebbe rumore: resta la sola parola. */
+.occhiello-muto::before { display: none; }
+.occhiello-muto { color: var(--tenue); font-size: 11.5px; letter-spacing: .12em; }
 
 .misura { max-width: var(--misura-testo); }
 .viola  { color: var(--accento); font-style: normal; }
@@ -280,12 +306,12 @@ img, svg { max-width: 100%; }
 /* La modalità conducente cambia il TERRENO, non la marca. È il segnale che
    si legge da lontano, senza parole e senza un secondo colore: sei in un
    posto diverso dell'applicazione. */
-.telaio[data-modo="conducente"] { --foglio: var(--superficie-2); }
+.telaio[data-modo="conducente"] { --foglio: #EBECF5; }
 .telaio[data-modo="conducente"] .intestazione { background: var(--foglio); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] { --foglio: #101019; }
+  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] { --foglio: #12121E; }
 }
-:root[data-tema="scuro"] .telaio[data-modo="conducente"] { --foglio: #101019; }
+:root[data-tema="scuro"] .telaio[data-modo="conducente"] { --foglio: #12121E; }
 
 .contenuto {
   flex-grow: 1; width: 100%;
@@ -435,11 +461,17 @@ img, svg { max-width: 100%; }
 .campo {
   display: block; width: 100%;
   padding: 11px 15px;
-  border: 1px solid var(--riga); border-radius: var(--r-s);
+  border: 1px solid transparent; border-radius: var(--r-s);
   background: var(--superficie);
-  transition: border-color .14s ease, box-shadow .14s ease;
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
 }
-.campo-nome { display: block; font-size: 12px; color: var(--tenue); font-weight: 500; }
+.campo:hover { background: var(--superficie-2); }
+/* L'etichetta è struttura, non didascalia: sta in inchiostro. Grigia su
+   grigio spariva, e restava un rettangolo senza nome. */
+.campo-nome {
+  display: block; font-size: 12px; font-weight: 600;
+  letter-spacing: .01em; color: var(--inchiostro-2);
+}
 .campo input, .campo textarea {
   width: 100%; border: none; background: transparent; padding: 2px 0 0;
   font-size: 16px; font-family: var(--testo); color: var(--inchiostro);
@@ -477,9 +509,9 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .scelta {
   flex-shrink: 0; scroll-snap-align: start;
   display: inline-flex; align-items: baseline; gap: 5px;
-  min-height: 40px; padding: 0 13px;
+  min-height: 42px; padding: 0 14px;
   border-radius: var(--r-s); border: 1px solid var(--riga);
-  background: var(--superficie); color: var(--inchiostro);
+  background: var(--carta); color: var(--inchiostro);
   font-size: 14.5px; font-weight: 500;
   white-space: nowrap;
   transition: background .12s ease, border-color .12s ease, color .12s ease;
@@ -932,7 +964,10 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   .pannello-ricerca { padding: var(--s6); }
   .ricerca-luoghi { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
 }
-.ricerca-quando { padding-top: var(--s2); }
+.ricerca-quando {
+  padding-top: var(--s4); margin-top: var(--s4);
+  border-top: 1px solid var(--riga-2);
+}
 .ricerca-fondo {
   display: grid; gap: var(--s3); align-items: center;
   padding-top: var(--s4); margin-top: var(--s2);
@@ -1371,8 +1406,8 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .scelte-fila { display: flex; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap; }
 .opzione {
   text-align: left; display: grid; gap: 2px;
-  padding: var(--s3) var(--s4); border-radius: var(--r-s);
-  border: 1px solid var(--riga); background: var(--superficie);
+  padding: var(--s4) var(--s4); border-radius: var(--r-s);
+  border: 1px solid var(--riga); background: var(--carta);
   color: var(--inchiostro);
   transition: border-color .14s ease, background .14s ease;
 }
@@ -1390,7 +1425,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .posti-scelta { display: flex; gap: var(--s2); }
 .posto-numero {
   flex: 1; padding: var(--s5) 0; border-radius: var(--r-m);
-  border: 1px solid var(--riga); background: var(--superficie);
+  border: 1px solid var(--riga); background: var(--carta);
   color: var(--inchiostro);
   font-family: var(--titoli); font-weight: 700; font-size: 22px; letter-spacing: -.03em;
   transition: transform .12s ease, background .14s ease, border-color .14s ease;
@@ -1831,3 +1866,146 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   font-size: 13px; color: var(--su-accento);
 }
 .spunta-accesa { background: var(--accento); border-color: transparent; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   L'attesa.
+
+   Due casi diversi. Cambiando modalità la pagina resta e si rifà sotto:
+   serve una riga che avanza e il contenuto che arretra, non uno schermo
+   vuoto — quello butterebbe via una schermata ancora valida. Navigando
+   davvero, invece, la vecchia schermata non c'è più, e allora c'è il segno.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.intestazione::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; background: var(--accento);
+  transform: scaleX(0); transform-origin: left;
+  opacity: 0; pointer-events: none;
+}
+:root[data-cambio="si"] .intestazione::after {
+  opacity: 1;
+  animation: avanza 2s cubic-bezier(.15,.85,.25,1) forwards;
+}
+@keyframes avanza {
+  0%   { transform: scaleX(0) }
+  40%  { transform: scaleX(.55) }
+  100% { transform: scaleX(.93) }
+}
+
+:root[data-cambio="si"] .contenuto {
+  opacity: .38; pointer-events: none;
+  transition: opacity .16s ease;
+}
+:root[data-cambio="si"] .modo { opacity: .7; pointer-events: none; }
+
+.attesa {
+  min-height: 60dvh; display: grid; place-items: center;
+  padding: var(--s9) var(--bordo);
+}
+.attesa svg { animation: respira 1.5s ease-in-out infinite; }
+@keyframes respira {
+  0%, 100% { opacity: .28 }
+  50%      { opacity: 1 }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   La testata di schermata.
+
+   È il pezzo che mancava, ed è la ragione per cui l'applicazione sembrava
+   «grigia e senza struttura». Ogni schermata era una pila di blocchi tutti
+   dello stesso peso, tutti bianchi, tutti a distanza uguale: nessun punto
+   d'ingresso per l'occhio, nessuna gerarchia, e il viola confinato ai
+   pulsanti.
+
+   La testata è una fascia a tutta larghezza che porta il titolo della
+   schermata, una riga che dice a cosa serve, e — dove c'è — il comando
+   principale. Fa quattro cose insieme:
+
+     · dà un elemento dominante, che è quello che mancava;
+     · mette il colore dove serve, in una superficie e non in un bordino;
+     · separa le due modalità con la temperatura invece che con le parole;
+     · stacca il contenuto, che sotto respira su un terreno più chiaro.
+
+   Lavanda per chi cerca, inchiostro per chi guida: non è decorazione, è
+   l'unica cosa che si vede da lontano prima di aver letto una parola.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.testata {
+  background: var(--accento-velo);
+  border-bottom: 1px solid var(--accento-riga);
+}
+.testata-dentro {
+  padding-top: var(--s6); padding-bottom: var(--s6);
+  display: grid; gap: var(--s4);
+}
+@media (min-width: 860px) {
+  .testata-dentro {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end; gap: var(--s6);
+    padding-top: var(--s7); padding-bottom: var(--s7);
+  }
+}
+.testata-titolo { margin: 0; }
+.testata-sotto {
+  margin: var(--s3) 0 0; max-width: 46ch;
+  font-size: clamp(.98rem, 1.3vw, 1.12rem); line-height: 1.55;
+  color: var(--inchiostro-2);
+}
+.testata-azioni { display: flex; gap: var(--s3); flex-wrap: wrap; }
+
+/* Chi guida sta in un altro posto dell'applicazione, e la testata è dove
+   si vede per prima: fondo d'inchiostro, non lavanda. */
+.telaio[data-modo="conducente"] .testata {
+  background: var(--inchiostro); border-bottom-color: transparent;
+}
+.telaio[data-modo="conducente"] .testata-titolo,
+.telaio[data-modo="conducente"] .testata .occhiello { color: var(--carta); }
+.telaio[data-modo="conducente"] .testata-sotto { color: rgba(255,255,255,.72); }
+.telaio[data-modo="conducente"] .testata .occhiello::before { background: var(--marchio-luce, #C9BEFF); }
+.telaio[data-modo="conducente"] .testata .azione-vuota {
+  background: transparent; border-color: rgba(255,255,255,.28); color: var(--carta);
+}
+.telaio[data-modo="conducente"] .testata .azione-vuota:hover { border-color: rgba(255,255,255,.6); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] .testata { background: #1A1A2A; }
+  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] .testata-titolo { color: var(--inchiostro); }
+  :root:not([data-tema="chiaro"]) .telaio[data-modo="conducente"] .testata-sotto { color: var(--inchiostro-2); }
+}
+:root[data-tema="scuro"] .telaio[data-modo="conducente"] .testata { background: #1A1A2A; }
+:root[data-tema="scuro"] .telaio[data-modo="conducente"] .testata-titolo { color: var(--inchiostro); }
+:root[data-tema="scuro"] .telaio[data-modo="conducente"] .testata-sotto { color: var(--inchiostro-2); }
+
+/* Il corpo che segue una testata non ha più bisogno del proprio respiro
+   in cima: la fascia l'ha già dato. */
+.testata + .fascia > .dentro { padding-top: var(--s6); }
+
+/* ─── Il livello che mancava alla scala ────────────────────────────────
+   Fra il titolo di schermata e il testo corrente non c'era niente: tutte
+   le carte avevano titoli da quindici pixel, cioè il peso di una nota. */
+.t-blocco {
+  font-size: clamp(1.05rem, 1.5vw, 1.32rem);
+  font-weight: 600; letter-spacing: -.028em; line-height: 1.25;
+  margin: 0;
+}
+
+/* ─── Tre pesi di carta, non uno ───────────────────────────────────────
+   Prima erano tutte identiche: stesso bianco, stesso bordo, stesso raggio.
+   Una schermata in cui niente pesa più di altro non ha gerarchia. */
+.carta-viva {
+  background: var(--accento-velo); border-color: var(--accento-riga);
+}
+.carta-scura {
+  background: var(--inchiostro); border-color: transparent; color: var(--carta);
+}
+.carta-scura .t-blocco, .carta-scura .numero { color: var(--carta); }
+.carta-scura .t-corpo, .carta-scura .t-nota { color: rgba(255,255,255,.7); }
+
+/* Il pannello di ricerca a cavallo del bordo della testata: è il comando
+   principale della schermata, e sedersi sul confine lo dice senza doverlo
+   scrivere. Su telefono no — lì lo spazio è poco e la sovrapposizione
+   diventa solo un margine negativo che stringe. */
+.ricerca-sospesa { margin-top: 0; }
+@media (min-width: 860px) {
+  .ricerca-sospesa { margin-top: calc(var(--s7) * -1 - var(--s2)); }
+  .testata + .fascia > .dentro { padding-top: var(--s7); }
+}

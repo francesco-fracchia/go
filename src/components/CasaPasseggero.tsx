@@ -43,25 +43,36 @@ export function CasaPasseggero({ nome, casa, mappa, vicino, prossimo, posti }: {
   posti?: PostoVicino[]
 }) {
   return (
+    <>
+      {/* La testata: la domanda che questa schermata fa, su una superficie
+          sua. Prima era un titolo nero su bianco in mezzo ad altri blocchi
+          bianchi, e non si capiva dove cominciasse la schermata. */}
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">Cerchi un passaggio</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
+              {nome ? `Dove vai, ${nome}?` : 'Dove vai?'}
+            </h1>
+            <p className="testata-sotto">
+              Dicci dove devi arrivare e a che ora. Guardiamo chi sta già
+              facendo quella strada.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div className="fascia">
       <div className="dentro dentro-app casa-dentro">
 
-        {/* ── Quello che devi fare adesso, se c'è ──
-            Prima della ricerca: chi ha un viaggio fra due ore non è venuto
-            a cercarne un altro. */}
+        {/* Il pannello sale dentro la fascia: è il comando principale della
+            schermata, e sedersi a cavallo del bordo lo dice senza scriverlo. */}
+        <div className="ricerca-sospesa">
+          <Ricerca casa={casa} mappa={mappa} vicino={vicino} />
+        </div>
+
+        {/* ── Quello che devi fare adesso, se c'è ── */}
         {prossimo && <Prossimo v={prossimo} />}
-
-        <section className="casa-testa">
-          <h1 className="t-titolo">
-            {nome ? `Dove vai, ${nome}?` : 'Dove vai?'}
-          </h1>
-          <p className="t-guida" style={{ maxWidth: '38ch' }}>
-            Dicci dove devi arrivare e a che ora. Guardiamo chi sta già
-            facendo quella strada.
-          </p>
-        </section>
-
-        <Ricerca casa={casa} mappa={mappa} vicino={vicino} />
 
         {/* ── Dove vanno tutti ──
             Chi apre l'applicazione il sabato pomeriggio non ha in mente un
@@ -103,6 +114,7 @@ export function CasaPasseggero({ nome, casa, mappa, vicino, prossimo, posti }: {
         </section>
       </div>
     </div>
+    </>
   )
 }
 

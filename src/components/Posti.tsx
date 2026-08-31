@@ -148,25 +148,33 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
   }
 
   return (
-    <div className="fascia">
-      <div className="dentro dentro-app posti-dentro">
-        <header className="posti-testa">
-          <div className="cresci">
-            <h1 className="t-titolo">Dove si va</h1>
-            <p className="t-guida" style={{ marginTop: 'var(--s3)', maxWidth: '44ch' }}>
+    <>
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">Qui intorno</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>Dove si va</h1>
+            <p className="testata-sotto">
               {modo === 'conducente'
-                ? 'I posti qui intorno. Se qualcuno ci sta cercando un passaggio lo vedi, e puoi pubblicare la corsa in due tocchi.'
-                : 'I posti qui intorno. Scegline uno: se qualcuno ci va lo vedi, se nessuno ci va puoi dirlo.'}
+                ? 'Se qualcuno ci sta cercando un passaggio lo vedi, e puoi pubblicare la corsa in due tocchi.'
+                : 'Scegline uno: se qualcuno ci va lo vedi, se nessuno ci va puoi dirlo.'}
             </p>
           </div>
-          {!vicino && (
-            <button type="button" className="azione azione-vuota azione-piccola"
-              onClick={usaPosizione} disabled={caricando}>
-              {caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}
-            </button>
-          )}
-          {vicino && <span className="pastiglia pastiglia-verde">dalla tua posizione</span>}
-        </header>
+          <div className="testata-azioni">
+            {!vicino ? (
+              <button type="button" className="azione azione-vuota azione-piccola"
+                onClick={usaPosizione} disabled={caricando}>
+                {caricando ? 'Ti sto cercando…' : 'Usa la mia posizione'}
+              </button>
+            ) : (
+              <span className="pastiglia pastiglia-verde">dalla tua posizione</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+    <div className="fascia">
+      <div className="dentro dentro-app posti-dentro">
 
         {problema && <p className="t-corpo" style={{ maxWidth: '48ch' }}>{problema}</p>}
 
@@ -214,6 +222,7 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero' }: {
         )}
       </div>
     </div>
+    </>
   )
 }
 

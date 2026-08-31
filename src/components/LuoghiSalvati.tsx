@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { Etichetta } from './base.tsx'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
 
 /**
@@ -68,10 +67,6 @@ export function LuoghiSalvati({ iniziali, mappa = false }: {
 
   return (
     <section>
-      <Etichetta>i tuoi posti</Etichetta>
-      <p style={{ fontSize: 13, color: 'var(--tenue)', margin: '6px 0 12px', lineHeight: 1.5 }}>
-        Compaiono appena tocchi un campo, prima di scrivere.
-      </p>
 
       <div style={{ display: 'grid', gap: 2 }}>
         <Riga tipo="casa" luogo={casa}

@@ -1,6 +1,5 @@
 import { euro } from './base.tsx'
 import { SegnoAvanti, SegnoPiu } from './segni.tsx'
-import { Tracciato } from './visivi.tsx'
 
 /**
  * La casa di chi offre un posto.
@@ -61,34 +60,32 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
   const daFare = corse.filter((c) => c.daFare)
 
   return (
-    <div className="fascia">
-      <div className="dentro dentro-app casa-dentro">
-
-        <section className="guida-testa">
-          <div className="cresci">
+    <>
+      {/* Fondo d'inchiostro, non lavanda: chi guida sta in un altro posto
+          dell'applicazione, e la testata è la prima cosa che lo dice. */}
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
             <p className="occhiello">Stai andando comunque</p>
-            <h1 className="t-titolo" style={{ margin: 'var(--s3) 0 var(--s4)' }}>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
               {nome ? `Dove vai, ${nome}?` : 'Dove stai andando?'}
             </h1>
-            <p className="t-guida" style={{ maxWidth: '36ch' }}>
+            <p className="testata-sotto">
               Pubblica il viaggio che faresti comunque. Chi sale divide con te
               quello che spendi.
             </p>
-            <div className="azioni" style={{ marginTop: 'var(--s5)' }}>
-              <a href={haVeicolo ? '/pubblica' : '/veicoli/nuovo'} className="azione azione-piena">
-                <SegnoPiu />
-                {haVeicolo ? 'Pubblica un viaggio' : 'Aggiungi la tua auto'}
-              </a>
-            </div>
-            {!haVeicolo && (
-              <p className="t-nota" style={{ marginTop: 'var(--s3)', maxWidth: '40ch' }}>
-                Ci servono marca e modello per sapere quanto ti costa un
-                chilometro: è da lì che esce la quota di chi sale.
-              </p>
-            )}
           </div>
-          <div className="guida-disegno" aria-hidden="true"><Tracciato altezza={150} /></div>
-        </section>
+          <div className="testata-azioni">
+            <a href={haVeicolo ? '/pubblica' : '/veicoli/nuovo'} className="azione azione-chiara">
+              <SegnoPiu />
+              {haVeicolo ? 'Pubblica un viaggio' : 'Aggiungi la tua auto'}
+            </a>
+          </div>
+        </div>
+      </div>
+
+    <div className="fascia">
+      <div className="dentro dentro-app casa-dentro">
 
         {/* ── Quello che manca per incassare ── */}
         {cose.some((c) => !c.fatta) && (
@@ -201,6 +198,7 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
         </section>
       </div>
     </div>
+    </>
   )
 }
 

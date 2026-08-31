@@ -52,9 +52,22 @@ export function Conto({ c }: { c: DatiConto }) {
   }
 
   return (
+    <>
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">Quello che entra</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>Il tuo conto</h1>
+            <p className="testata-sotto">
+              Quanto ti rientra dalle corse concluse, e i bonifici che sono
+              partiti. I soldi arrivano dopo il viaggio, mai prima.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div className="fascia">
       <div className="dentro dentro-app conto-dentro">
-        <h1 className="t-titolo">Il tuo conto</h1>
 
         {!c.contoCollegato && (
           <section className="collega">
@@ -145,5 +158,6 @@ export function Conto({ c }: { c: DatiConto }) {
         </p>
       </div>
     </div>
+    </>
   )
 }

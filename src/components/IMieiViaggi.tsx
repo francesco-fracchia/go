@@ -58,9 +58,24 @@ export function IMieiViaggi({ prossimi, passati, modo = 'passeggero' }: {
   if (tutti.length === 0) return <Nessuno modo={modo} />
 
   return (
+    <>
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">{modo === 'conducente' ? 'Le corse che guidi' : 'I passaggi che hai preso'}</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
+              I miei viaggi
+            </h1>
+            <p className="testata-sotto">
+              Quelli a cui partecipi e quelli che hai pubblicato, tenuti
+              separati: il ruolo cambia cosa puoi fare.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div className="fascia">
       <div className="dentro dentro-app viaggi-dentro">
-        <h1 className="t-titolo">I miei viaggi</h1>
 
         {/* ── Quello che devi fare TU, di qualunque ruolo sia ── */}
         {daFare.length > 0 && (
@@ -120,6 +135,7 @@ export function IMieiViaggi({ prossimi, passati, modo = 'passeggero' }: {
         )}
       </div>
     </div>
+    </>
   )
 }
 
@@ -182,9 +198,24 @@ function VuotoScheda({ ruolo }: { ruolo: Viaggio['ruolo'] }) {
 
 function Nessuno({ modo }: { modo: Modo }) {
   return (
+    <>
+      <div className="fascia testata">
+        <div className="dentro dentro-app testata-dentro">
+          <div>
+            <p className="occhiello">{modo === 'conducente' ? 'Le corse che guidi' : 'I passaggi che hai preso'}</p>
+            <h1 className="t-titolo testata-titolo" style={{ marginTop: 'var(--s3)' }}>
+              I miei viaggi
+            </h1>
+            <p className="testata-sotto">
+              Quelli a cui partecipi e quelli che hai pubblicato, tenuti
+              separati: il ruolo cambia cosa puoi fare.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div className="fascia">
       <div className="dentro dentro-app viaggi-dentro">
-        <h1 className="t-titolo">I miei viaggi</h1>
         <div className="vuoto" style={{ marginTop: 'var(--s5)' }}>
           <h2 className="t-sezione">Ancora niente</h2>
           <p className="vuoto-testo" style={{ marginTop: 'var(--s3)' }}>
@@ -203,5 +234,6 @@ function Nessuno({ modo }: { modo: Modo }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
