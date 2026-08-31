@@ -156,10 +156,22 @@ export function Comitiva({ id, nome, codice, membri: iniziali, tocca: toccaInizi
                         const r = 62
                         const x = 100 + r * Math.cos(a * Math.PI / 180)
                         const y = 100 + r * Math.sin(a * Math.PI / 180)
+                        /**
+                         * Il nome segue il raggio, ma non si capovolge.
+                         *
+                         * Una rotazione tangenziale è giusta nella metà
+                         * superiore e sottosopra in quella inferiore: con
+                         * quattro persone, due nomi su quattro si leggevano
+                         * a testa in giù. Girato di mezzo giro dove
+                         * servirebbe, il testo esce dal centro invece di
+                         * entrarci — e resta dritto ovunque.
+                         */
+                        let rot = ((a + 90) % 360 + 360) % 360
+                        if (rot > 90 && rot < 270) rot -= 180
                         return (
                           <text key={m.id} x={x} y={y} fill="#fff" fontSize="11"
                             fontWeight="600" textAnchor="middle" dominantBaseline="middle"
-                            transform={`rotate(${a + 90} ${x} ${y})`}>
+                            transform={`rotate(${rot} ${x} ${y})`}>
                             {m.nome.slice(0, 9)}
                           </text>
                         )
