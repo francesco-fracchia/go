@@ -81,6 +81,7 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
    * ancora in volo.
    */
   const richiesta = useRef<AbortController | null>(null)
+  const striscia = useRef<HTMLDivElement | null>(null)
   const [vicino, setVicino] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const [importando, setImportando] = useState(false)
@@ -279,12 +280,18 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
 
         {/* Le categorie scorrono in orizzontale: su un telefono una griglia
             di dodici voci occupa mezzo schermo prima di mostrare un posto. */}
-        <div className="categorie" role="group" aria-label="Categoria">
+        <div className="categorie" role="group" aria-label="Categoria" ref={striscia}>
           {CATEGORIE.map(({ v, t, Segno }) => (
             <button key={v} type="button"
               className={`categoria${categoria === v ? ' categoria-scelta' : ''}`}
               aria-pressed={categoria === v}
-              onClick={() => cambia(v)}>
+              onClick={(e) => {
+                cambia(v)
+                // Scegliendone una mezza fuori dallo schermo, restava mezza
+                // fuori: la si porta dentro, altrimenti si sceglie qualcosa
+                // e non si vede cosa si è scelto.
+                e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+              }}>
               <Segno /> {t}
             </button>
           ))}

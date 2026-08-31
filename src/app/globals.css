@@ -2249,12 +2249,30 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
    tutte. Con un segno davanti si punta alla forma, e la parola conferma.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Su schermo largo le categorie vanno a capo: sono dodici, e in fila
+   occupano milletrecento pixel — trecento restavano oltre il bordo, tagliati
+   a metà parola e senza niente che dicesse che ce n'erano altre. Andare a
+   capo le mostra tutte, che è l'unico modo per cui un filtro si sceglie a
+   colpo d'occhio invece che cercandolo. */
 .categorie {
-  display: flex; gap: var(--s2);
-  overflow-x: auto; scrollbar-width: none;
-  padding: 3px 3px 8px; margin: -3px -3px -8px; scroll-padding: 3px;
+  display: flex; gap: var(--s2); flex-wrap: wrap;
+  padding: 3px; margin: -3px;
 }
-.categorie::-webkit-scrollbar { display: none; }
+
+/* Sul telefono non ci stanno comunque: lì scorrono, e la sfumatura sul
+   bordo dice che continuano. Un contenuto tagliato di netto si legge come
+   un difetto; sfumato si legge come «scorri». */
+@media (max-width: 899px) {
+  .categorie {
+    flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none;
+    padding: 3px var(--bordo) 8px; margin: -3px calc(var(--bordo) * -1) -8px;
+    scroll-padding: var(--bordo);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--bordo),
+                #000 calc(100% - 28px), transparent 100%);
+  }
+  .categorie::-webkit-scrollbar { display: none; }
+}
 .categoria {
   flex-shrink: 0;
   display: inline-flex; align-items: center; gap: 7px;
