@@ -22,7 +22,11 @@ export async function GET() {
       supabase: c('NEXT_PUBLIC_SUPABASE_URL') && c('SUPABASE_SERVICE_ROLE_KEY'),
       percorsi: c('ORS_API_KEY'),
       mappe: c('NEXT_PUBLIC_MAPTILER_KEY'),
-      pagamenti: c('STRIPE_SECRET_KEY'),
+      pagamenti: c('STRIPE_SECRET_KEY') && c('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'),
+      // Il collegamento di rientro dopo l'iscrizione a Stripe: senza, chi
+      // guida finisce l'iscrizione e resta sul sito di Stripe.
+      ritorni: c('NEXT_PUBLIC_URL'),
+      firmaWebhook: c('STRIPE_WEBHOOK_SECRET'),
       notifiche: c('VAPID_PRIVATE_KEY'),
       sms: c('TWILIO_SID'),
     },
