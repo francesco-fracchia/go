@@ -1,4 +1,5 @@
 import { SegnoAvanti } from './segni.tsx'
+import { Invita } from './Invita.tsx'
 
 /**
  * Il profilo.
@@ -18,6 +19,8 @@ import { SegnoAvanti } from './segni.tsx'
  */
 
 export interface DatiProfilo {
+  /** il codice personale e quante persone ha portato: solo sul proprio */
+  invito?: { codice: string; portati: number }
   id: string
   nome: string
   cognome: string
@@ -102,6 +105,13 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                     : 'Ancora nessuna recensione. Le lascia solo chi ha davvero viaggiato, entro due settimane dal viaggio.'}
                 </p>
               </div>
+            )}
+
+            {mio && p.invito && (
+              <section>
+                <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Porta qualcuno</p>
+                <Invita codice={p.invito.codice} portati={p.invito.portati} nome={p.nome} />
+              </section>
             )}
 
             {mio && (

@@ -3,6 +3,7 @@ import { db } from '../../../server/db.ts'
 import { utenteCorrente } from '../../../server/auth.ts'
 import { distintivi } from '../../../server/profili.ts'
 import { recensioniDi } from '../../../server/recensioni.ts'
+import { codiceDi, quantiInvitati } from '../../../server/inviti.ts'
 import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
 
 export const dynamic = 'force-dynamic'
@@ -15,12 +16,15 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   const g = await guscio()
   const io = g.utente
 
-  const [{ data: p }, d, recensioni] = await Promise.all([
+  const mio = io === id
+  const [{ data: p }, d, recensioni, codice, portati] = await Promise.all([
     db.from('profili')
       .select('id, nome, cognome, foto_url, data_nascita, bio, creato_il, telefono_ok, email_ok, stripe_pronto, veicoli(marca, modello, colore)')
       .eq('id', id).single(),
     distintivi(id),
     recensioniDi(id, 10),
+    mio ? codiceDi(id).catch(() => null) : Promise.resolve(null),
+    mio ? quantiInvitati(id).catch(() => 0) : Promise.resolve(0),
   ])
   if (!p) notFound()
 
@@ -37,6 +41,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     // e mostrarlo verificato quando lo è è un segnale di fiducia gratuito.
     documentoOk: p.stripe_pronto === true,
     veicoli: (p.veicoli ?? []) as unknown as DatiProfilo['veicoli'],
+    invito: codice ? { codice, portati } : undefined,
     recensioni: recensioni.map((r) => ({
       id: r.id, positiva: r.positiva, tag: r.tag ?? [], testo: r.testo,
       autore: (r.autore as unknown as { nome: string } | null)?.nome ?? '',
@@ -44,7 +49,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     })),
   }
 
-  return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={io === id} /></Telaio>
+  return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>
 }
 
 const eta = (n: string) => {

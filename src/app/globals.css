@@ -2150,3 +2150,82 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .posto-secondaria:hover { background: var(--superficie); }
 .posto-cercano { margin: 0; padding: 0 var(--s5) var(--s3); font-size: 13px; color: var(--accento); }
+
+/* Un'ora già passata resta visibile ma spenta: toglierla farebbe saltare la
+   griglia e perdere il riferimento di dove ci si trova nella giornata. */
+.ora-passata {
+  opacity: .34; cursor: not-allowed;
+  text-decoration: line-through; text-decoration-thickness: 1px;
+}
+.ora-passata:hover { border-color: var(--riga); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Le opzioni di pubblicazione: una domanda, le risposte in fila.
+
+   Erano impilate — quattro domande da tre risposte facevano una colonna di
+   dodici rettangoli alta due schermate, e chi arrivava in fondo non sapeva
+   più a che domanda stesse rispondendo. In orizzontale la domanda e le sue
+   risposte stanno insieme sotto l'occhio.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.altre {
+  margin-top: var(--s5); border-radius: var(--r-l);
+  border: 1px solid var(--riga); background: var(--carta);
+}
+.altre-titolo {
+  list-style: none; cursor: pointer;
+  padding: var(--s4) var(--s5);
+  display: grid; gap: 3px;
+}
+.altre-titolo::-webkit-details-marker { display: none; }
+.altre-titolo > span:first-child {
+  font-size: 15.5px; font-weight: 600; letter-spacing: -.02em;
+}
+.altre-titolo::after {
+  content: 'apri'; position: absolute; right: var(--s5);
+  font-size: 13px; font-weight: 600; color: var(--accento);
+}
+.altre[open] .altre-titolo::after { content: 'chiudi'; }
+.altre-titolo { position: relative; padding-right: 76px; }
+.altre-sotto { font-size: 12.5px; color: var(--tenue); line-height: 1.45; }
+.altre[open] .altre-sotto { display: none; }
+.altre-corpo {
+  padding: 0 var(--s5) var(--s5);
+  display: grid; gap: var(--s5);
+  border-top: 1px solid var(--riga-2); padding-top: var(--s5);
+}
+
+.opzione-gruppo { display: grid; gap: var(--s3); }
+.opzione-testa {
+  display: flex; align-items: center; gap: 8px; margin: 0;
+  font-size: 13.5px; font-weight: 600; color: var(--inchiostro-2);
+}
+.opzione-testa svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--accento); }
+.opzione-fila {
+  display: grid; gap: var(--s2);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.opzione-fila .opzione { height: 100%; align-content: start; }
+
+/* Il conto in forma breve, dove la colonna di destra non arriva. */
+.riepilogo {
+  display: flex; gap: var(--s6); align-items: flex-end;
+  padding: var(--s4) var(--s5); border-radius: var(--r-m);
+  background: var(--carta); border: 1px solid var(--riga);
+}
+.riepilogo-voce { display: grid; gap: 2px; }
+.riepilogo-cifra { font-size: 24px; color: var(--accento); }
+.riepilogo-piccola { font-size: 17px; font-weight: 600; }
+
+/* ── Inviti ── */
+.invito { padding-top: var(--s8); padding-bottom: var(--s9); }
+.invita { background: var(--accento-velo); border-color: var(--accento-riga); }
+.invita-codice {
+  display: grid; gap: 3px; margin-top: var(--s4);
+  padding: var(--s3) var(--s4); border-radius: var(--r-s);
+  background: var(--carta); border: 1px solid var(--accento-riga);
+}
+.invita-codice code {
+  font-family: var(--mono); font-size: 14px; color: var(--inchiostro);
+  overflow-wrap: anywhere;
+}

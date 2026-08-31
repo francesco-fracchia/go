@@ -104,3 +104,50 @@ export const SegnoVicino = () => (
     <circle cx="10.8" cy="13.2" r="2.2" />
   </svg>
 )
+
+/* ── I segni delle opzioni di pubblicazione ────────────────────────────
+   Su un elenco di scelte, l'icona non decora: dice di cosa si parla prima
+   che si legga il titolo, e permette di saltare le domande che non
+   riguardano. */
+
+/** Un occhio: chi può vedere la corsa. */
+export const SegnoOcchio = () => (
+  <svg {...base}>
+    <path d="M2 12s3.6-6.2 10-6.2S22 12 22 12s-3.6 6.2-10 6.2S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="2.9" />
+  </svg>
+)
+
+/** Due persone: chi sale. */
+export const SegnoPersone = () => (
+  <svg {...base}>
+    <circle cx="9" cy="8.4" r="3.4" />
+    <path d="M2.9 19.6a6.6 6.6 0 0 1 12.2 0" />
+    <path d="M16.4 5.6a3.4 3.4 0 0 1 0 5.6M17.8 14.4a6.6 6.6 0 0 1 3.3 5.2" />
+  </svg>
+)
+
+/** Una strada che devia: passare a prendere qualcuno. */
+export const SegnoDeviazione = () => (
+  <svg {...base}>
+    <path d="M4 20c4.6 0 5.4-6.4 9.4-8.6" />
+    <path d="M8.6 20c1.8-2.6 1.4-6.6 4.8-8.6" />
+    <path d="M13.4 11.4h5.4M18.8 11.4l-2.6-2.6M18.8 11.4l-2.6 2.6" />
+  </svg>
+)
+
+/** Un orologio: entro quando si può disdire. */
+export const SegnoOrologio = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="8.6" />
+    <path d="M12 7.2V12l3.2 2" />
+  </svg>
+)
+
+/** Una nota: cosa dire a chi sale. */
+export const SegnoNota = () => (
+  <svg {...base}>
+    <path d="M20.2 13.4V6.2a2 2 0 0 0-2-2H5.8a2 2 0 0 0-2 2v11.6a2 2 0 0 0 2 2H13Z" />
+    <path d="M13 19.8v-4.4a2 2 0 0 1 2-2h5.2ZM7.6 9h8.8M7.6 12.6h5.6" />
+  </svg>
+)

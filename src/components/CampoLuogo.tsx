@@ -24,6 +24,8 @@ export interface LuogoScelto {
   comune?: string
   fonte?: 'salvato' | 'posto' | 'indirizzo'
   corse?: number
+  /** quanto è lontano da dove stai cercando: distingue due omonimi */
+  distanzaKm?: number
 }
 
 /**
@@ -175,9 +177,17 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
                   )}
                 </span>
 
-                {/* Quante corse ci vanno adesso: è l'informazione che il
-                    geocoder di chiunque altro non ha, ed è quella che fa
-                    scegliere fra due posti con nomi simili. */}
+                {/* Quanto è lontano: fra due omonimi è quello che fa
+                    scegliere, e sbagliare qui sbaglia percorso e prezzo. */}
+                {l.distanzaKm !== undefined && (
+                  <span style={{
+                    flexShrink: 0, fontSize: 12, color: 'var(--tenue)',
+                    fontFamily: 'var(--mono)',
+                  }}>{l.distanzaKm < 1
+                    ? `${Math.round(l.distanzaKm * 1000)} m`
+                    : `${String(l.distanzaKm).replace('.', ',')} km`}</span>
+                )}
+
                 {l.corse ? (
                   <span style={{
                     flexShrink: 0, fontSize: 12, fontWeight: 600,

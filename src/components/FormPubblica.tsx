@@ -5,7 +5,9 @@ import { TESTO_DICHIARAZIONE } from './testi.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
 import { Quando } from './Quando.tsx'
 import { AggiungiTelefono } from './AggiungiTelefono.tsx'
-import { SegnoAvanti } from './segni.tsx'
+import {
+  SegnoAvanti, SegnoOcchio, SegnoPersone, SegnoDeviazione, SegnoOrologio, SegnoNota,
+} from './segni.tsx'
 import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '../lib/flessibilita.ts'
 
 /**
@@ -28,10 +30,27 @@ import { proponi, etichetta, SCELTE, type Flessibilita, type Categoria } from '.
  * nessun numero.
  */
 
-type Passo = 'dove' | 'quando' | 'posti' | 'condizioni'
-const PASSI: Passo[] = ['dove', 'quando', 'posti', 'condizioni']
+/**
+ * Tre passi, non quattro.
+ *
+ * Chi pubblica un passaggio lo fa mentre sta facendo altro — sta uscendo,
+ * sta chiudendo lo zaino, è già in ritardo. Ogni schermata in più è un
+ * punto in cui si molla, e una corsa non pubblicata è il vero costo: senza
+ * offerta non c'è mercato.
+ *
+ * I posti erano una schermata per sé, per una domanda a cui si risponde con
+ * un tocco e che ha una risposta giusta quasi sempre (tutti quelli che hai).
+ * Adesso stanno sulla conferma, insieme al numero e alla dichiarazione.
+ *
+ * E le sei domande di dettaglio — chi la vede, chi sale, le deviazioni, le
+ * disdette, la nota — sono chiuse dietro «altre opzioni»: hanno già la
+ * risposta giusta per quasi tutti, e chiederle in fila a chi sta uscendo di
+ * casa significa farsi rispondere a caso o farsi abbandonare.
+ */
+type Passo = 'dove' | 'quando' | 'conferma'
+const PASSI: Passo[] = ['dove', 'quando', 'conferma']
 const NOMI: Record<Passo, string> = {
-  dove: 'Dove vai', quando: 'Quando', posti: 'I posti', condizioni: 'Le condizioni',
+  dove: 'Dove vai', quando: 'Quando', conferma: 'Pubblica',
 }
 
 interface Preventivo {
@@ -68,6 +87,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const [serveNumero, setServeNumero] = useState(false)
   const [conto, setConto] = useState<Preventivo | null>(null)
   const [contando, setContando] = useState(false)
+  const [altreOpzioni, setAltreOpzioni] = useState(false)
   /**
    * Perché il conto non c'è.
    *
@@ -84,8 +104,12 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
     ? proponi({ categoria, oraArrivo: new Date(oraArrivo) })
     : null
   const scelta = flessibilita ?? suggerita?.minuti ?? 0
-  const massimo = conto?.postiMassimi
-    ?? (veicoli.find((v) => v.id === veicolo)?.postiTotali ?? 5) - 1
+  const auto = veicoli.find((v) => v.id === veicolo)
+  const massimo = conto?.postiMassimi ?? (auto?.postiTotali ?? 5) - 1
+  /** Dirlo per nome: «quanti posti hai» è una domanda a cui l'auto ha già
+      risposto in anagrafica, e ripeterla senza mostrare la risposta fa
+      dubitare che l'abbiamo registrata. */
+  const nomeAuto = auto ? `${auto.marca} ${auto.modello}` : null
 
   /**
    * Il conto si chiede appena ci sono i due punti e l'auto, e si rifà
@@ -250,76 +274,81 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
               </>
             )}
 
-            {passo === 'posti' && (
+            {passo === 'conferma' && (
               <>
                 <h1 className="t-titolo">Quanti posti hai?</h1>
                 <p className="t-guida pubblica-guida">
-                  Oltre al tuo. Il costo del viaggio si divide fra tutti quelli
-                  che sono in macchina, te compresa.
+                  {nomeAuto
+                    ? `Oltre al tuo. La tua ${nomeAuto} ne ha ${massimo}.`
+                    : 'Oltre al tuo.'}{' '}
+                  Il costo si divide fra tutti quelli che sono in macchina, te
+                  compresa.
                 </p>
                 <div className="posti-scelta">
-                  {Array.from({ length: Math.min(massimo, 5) }, (_, n) => n + 1).map((n) => (
+                  {Array.from({ length: Math.min(massimo, 6) }, (_, n) => n + 1).map((n) => (
                     <button key={n} type="button"
                       className={`posto-numero${posti === n ? ' posto-numero-scelto' : ''}`}
                       onClick={() => setPosti(n)} aria-pressed={posti === n}>{n}</button>
                   ))}
                 </div>
 
-                <Piede avanti={avanti} indietro={indietro} pronto manca="" />
-              </>
-            )}
-
-            {passo === 'condizioni' && (
-              <>
-                <h1 className="t-titolo">Ultime cose</h1>
-                <p className="t-guida pubblica-guida">
-                  Sono già impostate come vanno bene quasi sempre. Cambia solo
-                  quello che ti riguarda.
-                </p>
-
-                <Opzioni titolo="Chi può vederla" valore={modalita}
-                  onCambia={(v) => setModalita(v as typeof modalita)}
-                  opzioni={[
-                    { v: 'pubblica', t: 'Tutti', n: 'Compare nelle ricerche' },
-                    { v: 'link', t: 'Chi ha il link', n: 'Non compare, ma chi ha il link prenota' },
-                    { v: 'privata', t: 'Chi invito io', n: 'Solo le persone che aggiungi tu' },
-                  ]} />
-
-                <Opzioni titolo="Chi sale" valore={immediata ? 'si' : 'no'}
-                  onCambia={(v) => setImmediata(v === 'si')}
-                  opzioni={[
-                    { v: 'no', t: 'Decido io', n: 'Ricevi una richiesta e rispondi' },
-                    { v: 'si', t: 'Chiunque', n: 'Si riempie prima, ma non scegli chi' },
-                  ]} />
-
-                <Opzioni titolo="Puoi fare qualche deviazione?" valore={deviazioni ? 'si' : 'no'}
-                  onCambia={(v) => setDeviazioni(v === 'si')}
-                  opzioni={[
-                    { v: 'si', t: 'Sì, se è di strada', n: 'Riempie molto di più: ti chiedono, decidi tu, e i km in più li pagano loro' },
-                    { v: 'no', t: 'No, parto e arrivo dove ho detto', n: 'Salgono e scendono solo ai punti che hai indicato' },
-                  ]} />
-
-                {!deviazioni && (
-                  <p className="avviso-morbido">
-                    Va benissimo, ma sappilo: la maggior parte di chi cerca un
-                    passaggio non abita esattamente sul tuo percorso.
-                  </p>
-                )}
-
-                <Opzioni titolo="Se disdicono" valore={politica}
-                  onCambia={(v) => setPolitica(v as typeof politica)}
-                  opzioni={[
-                    { v: 'flessibile', t: 'Fino a un’ora prima', n: 'Più gente prenota, ma può saltare' },
-                    { v: 'rigida', t: 'Fino a sei ore prima', n: 'Posto più sicuro, meno prenotazioni' },
-                  ]} />
-
-                <div style={{ marginTop: 'var(--s5)' }}>
-                  <p className="occhiello">Vuoi dire qualcosa a chi sale</p>
-                  <label className="campo" style={{ marginTop: 'var(--s3)' }}>
-                    <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
-                      placeholder="Parto puntuale · musica alta · niente bagagli grandi" />
-                  </label>
+                {/* Il conto qui sotto su telefono: è la ragione per cui uno
+                    sta pubblicando, e sulla colonna di destra non si vede. */}
+                <div className="solo-telefono" style={{ marginTop: 'var(--s5)' }}>
+                  <Riepilogo conto={conto} contando={contando} rotto={contoRotto} />
                 </div>
+
+                {/* ── Le sei domande di dettaglio, chiuse ──
+                    Hanno già la risposta giusta per quasi tutti. Chi ha un
+                    caso particolare le apre; gli altri non le vedono. */}
+                <details className="altre" open={altreOpzioni}
+                  onToggle={(e) => setAltreOpzioni((e.target as HTMLDetailsElement).open)}>
+                  <summary className="altre-titolo">
+                    <span>Altre opzioni</span>
+                    <span className="altre-sotto">
+                      {riassunto(modalita, immediata, deviazioni, politica)}
+                    </span>
+                  </summary>
+
+                  <div className="altre-corpo">
+                    <Opzioni titolo="Chi può vederla" segno={<SegnoOcchio />} valore={modalita}
+                      onCambia={(v) => setModalita(v as typeof modalita)}
+                      opzioni={[
+                        { v: 'pubblica', t: 'Tutti', n: 'Compare nelle ricerche' },
+                        { v: 'link', t: 'Chi ha il link', n: 'Non compare, ma chi ha il link prenota' },
+                        { v: 'privata', t: 'Chi invito io', n: 'Solo chi aggiungi tu' },
+                      ]} />
+
+                    <Opzioni titolo="Chi sale" segno={<SegnoPersone />} valore={immediata ? 'si' : 'no'}
+                      onCambia={(v) => setImmediata(v === 'si')}
+                      opzioni={[
+                        { v: 'no', t: 'Decido io', n: 'Ricevi una richiesta e rispondi' },
+                        { v: 'si', t: 'Chiunque', n: 'Si riempie prima, ma non scegli' },
+                      ]} />
+
+                    <Opzioni titolo="Deviazioni" segno={<SegnoDeviazione />} valore={deviazioni ? 'si' : 'no'}
+                      onCambia={(v) => setDeviazioni(v === 'si')}
+                      opzioni={[
+                        { v: 'si', t: 'Se è di strada', n: 'Riempie molto di più: i km in più li pagano loro' },
+                        { v: 'no', t: 'No, parto e arrivo', n: 'Solo ai punti che hai indicato' },
+                      ]} />
+
+                    <Opzioni titolo="Se disdicono" segno={<SegnoOrologio />} valore={politica}
+                      onCambia={(v) => setPolitica(v as typeof politica)}
+                      opzioni={[
+                        { v: 'flessibile', t: 'Fino a un’ora prima', n: 'Più gente prenota, ma può saltare' },
+                        { v: 'rigida', t: 'Fino a sei ore prima', n: 'Posto più sicuro, meno prenotazioni' },
+                      ]} />
+
+                    <div className="opzione-gruppo">
+                      <p className="opzione-testa"><SegnoNota /> Vuoi dire qualcosa a chi sale</p>
+                      <label className="campo">
+                        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                          placeholder="Parto puntuale · musica alta · niente bagagli grandi" />
+                      </label>
+                    </div>
+                  </div>
+                </details>
 
                 <label className="riquadro riquadro-spunta" style={{ marginTop: 'var(--s5)' }}>
                   <input type="checkbox" checked={dichiarato}
@@ -451,6 +480,45 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   }
 }
 
+/** Cosa c'è dietro «altre opzioni», in una riga: chi apre lo fa sapendo. */
+function riassunto(
+  modalita: string, immediata: boolean, deviazioni: boolean, politica: string,
+): string {
+  return [
+    modalita === 'pubblica' ? 'visibile a tutti' : modalita === 'link' ? 'solo con il link' : 'solo su invito',
+    immediata ? 'prenotano subito' : 'decidi tu chi sale',
+    deviazioni ? 'deviazioni sì' : 'niente deviazioni',
+    politica === 'flessibile' ? 'disdetta fino a un’ora prima' : 'disdetta fino a sei ore prima',
+  ].join(' · ')
+}
+
+/** Il conto, in forma breve, per quando la colonna di destra non c'è. */
+function Riepilogo({ conto, contando, rotto }: {
+  conto: Preventivo | null; contando: boolean; rotto: string | null
+}) {
+  if (!conto) {
+    return (
+      <p className="t-nota">
+        {rotto ? `${rotto}. Puoi pubblicare lo stesso.`
+          : contando ? 'Calcoliamo le spese…'
+            : 'Appena metti partenza e arrivo ti diciamo quanto ti rientra.'}
+      </p>
+    )
+  }
+  return (
+    <div className="riepilogo">
+      <span className="riepilogo-voce">
+        <span className="t-nota">Ti rientrano</span>
+        <span className="numero riepilogo-cifra">{euro(conto.rientroPienoCent)}</span>
+      </span>
+      <span className="riepilogo-voce">
+        <span className="t-nota">Chi sale paga</span>
+        <span className="riepilogo-piccola">{euro(conto.pagaPasseggeroCent)}</span>
+      </span>
+    </div>
+  )
+}
+
 function Piede({ avanti, indietro, pronto, manca }: {
   avanti: () => void; indietro?: () => void; pronto: boolean; manca: string
 }) {
@@ -470,16 +538,26 @@ function Piede({ avanti, indietro, pronto, manca }: {
   )
 }
 
-function Opzioni({ titolo, opzioni, valore, onCambia }: {
+/**
+ * Una domanda, con le risposte in fila.
+ *
+ * Erano impilate: quattro domande da tre risposte ciascuna facevano una
+ * colonna di dodici rettangoli alta due schermate, e per arrivare in fondo
+ * si scorreva senza più sapere a che domanda si stava rispondendo. In
+ * orizzontale la domanda e le sue risposte stanno insieme sotto l'occhio,
+ * e il segno dice di cosa si parla prima ancora che si legga il titolo.
+ */
+function Opzioni({ titolo, segno, opzioni, valore, onCambia }: {
   titolo: string
+  segno: React.ReactNode
   opzioni: Array<{ v: string; t: string; n: string }>
   valore: string
   onCambia: (v: string) => void
 }) {
   return (
-    <div style={{ marginTop: 'var(--s5)' }}>
-      <p className="occhiello">{titolo}</p>
-      <div className="scelte-blocco">
+    <div className="opzione-gruppo">
+      <p className="opzione-testa">{segno} {titolo}</p>
+      <div className="opzione-fila">
         {opzioni.map((o) => (
           <button key={o.v} type="button"
             className={`opzione${valore === o.v ? ' opzione-scelta' : ''}`}

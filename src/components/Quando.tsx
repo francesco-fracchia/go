@@ -58,7 +58,32 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
   const [fascia, setFascia] = useState<keyof typeof ORE>('sera')
   const [altriGiorni, setAltriGiorni] = useState(false)
 
-  const oggi = new Date(); oggi.setHours(0, 0, 0, 0)
+  const adesso = new Date()
+  const oggi = new Date(adesso); oggi.setHours(0, 0, 0, 0)
+
+  /**
+   * Un'ora già passata non si può scegliere.
+   *
+   * Selezionando «oggi» restavano cliccabili anche le sette del mattino
+   * alle undici di sera: si sceglieva, si andava avanti, e il server
+   * rispondeva «per arrivare a quell'ora bisognerebbe essere già partiti».
+   * Un errore che si poteva prevedere due schermate prima va impedito due
+   * schermate prima, non spiegato dopo.
+   *
+   * Il margine di un'ora c'è perché una corsa che parte fra dieci minuti
+   * non la prenota nessuno: pubblicarla o cercarla è tempo perso.
+   */
+  const oggiScelto = giorno?.toDateString() === oggi.toDateString()
+  const limite = new Date(adesso.getTime() + 60 * 60_000)
+
+  function passata(ora: string, min: string): boolean {
+    if (!oggiScelto) return false
+    const d = new Date(oggi)
+    d.setHours(Number(ora), Number(min), 0, 0)
+    // Le ore piccole sono la notte DOPO, non la mattina di oggi.
+    if (Number(ora) < 5) d.setDate(d.getDate() + 1)
+    return d < limite
+  }
 
   /**
    * I giorni, come schede che scorrono.
@@ -84,6 +109,21 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
     const h = new Date().getHours()
     setFascia(h >= 5 && h < 17 ? 'giorno' : h >= 17 || h < 2 ? 'sera' : 'notte')
   }, [])
+
+  /**
+   * Scegliendo oggi ci si sposta su una fascia che abbia ancora qualcosa:
+   * aprire su «di giorno» alle undici di sera mostra otto bottoni tutti
+   * spenti, cioè una schermata che sembra rotta.
+   */
+  useEffect(() => {
+    if (!oggiScelto) return
+    const viva = (f: keyof typeof ORE) => ORE[f].some((o) => !passata(o, '00'))
+    if (!viva(fascia)) {
+      const prossima = (Object.keys(ORE) as Array<keyof typeof ORE>).find(viva)
+      if (prossima) setFascia(prossima)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oggiScelto, giorno])
 
   function componi(g: Date | null, o: string) {
     if (!g || !o) return
@@ -153,26 +193,33 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
             </div>
 
             <div className="ore">
-              {ORE[fascia].map((o) => (
-                <button key={o} type="button"
-                  className={`ora${ora === o ? ' ora-scelta' : ''}`}
-                  aria-pressed={ora === o}
-                  onClick={() => { setOra(o); componi(giorno, `${o}:${minuto}`) }}>{o}</button>
-              ))}
+              {ORE[fascia].map((o) => {
+                const fuori = passata(o, minuto)
+                return (
+                  <button key={o} type="button"
+                    className={`ora${ora === o ? ' ora-scelta' : ''}${fuori ? ' ora-passata' : ''}`}
+                    aria-pressed={ora === o} disabled={fuori}
+                    title={fuori ? 'è già passata' : undefined}
+                    onClick={() => { setOra(o); componi(giorno, `${o}:${minuto}`) }}>{o}</button>
+                )
+              })}
             </div>
 
             <p className="occhiello occhiello-muto" style={{ marginTop: 'var(--s5)' }}>
               E i minuti
             </p>
             <div className="minuti">
-              {MINUTI.map((m) => (
-                <button key={m} type="button"
-                  className={`ora${minuto === m ? ' ora-scelta' : ''}`}
-                  aria-pressed={minuto === m}
-                  onClick={() => { setMinuto(m); if (ora) componi(giorno, `${ora}:${m}`) }}>
-                  :{m}
-                </button>
-              ))}
+              {MINUTI.map((m) => {
+                const fuori = !!ora && passata(ora, m)
+                return (
+                  <button key={m} type="button"
+                    className={`ora${minuto === m ? ' ora-scelta' : ''}${fuori ? ' ora-passata' : ''}`}
+                    aria-pressed={minuto === m} disabled={fuori}
+                    onClick={() => { setMinuto(m); if (ora) componi(giorno, `${ora}:${m}`) }}>
+                    :{m}
+                  </button>
+                )
+              })}
             </div>
 
             <div className="quando-piede">

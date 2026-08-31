@@ -13,6 +13,8 @@ import { db, DEMO, leggiEnv } from './db.ts'
  */
 
 export interface Luogo {
+  /** in linea d'aria dal punto attorno a cui si sta cercando */
+  distanzaKm?: number
   etichetta: string
   lat: number
   lng: number
@@ -80,10 +82,20 @@ export async function suggerisci(
     cercaFraPosti(q, vicino),
   ])
 
-  // L'indirizzo si chiede solo se serve: se i posti già rispondono, una
-  // chiamata al geocoder è una chiamata sprecata su una quota che finisce.
+  /**
+   * L'indirizzo si chiede quasi sempre.
+   *
+   * Prima bastavano quattro risposte locali per non interrogare il
+   * geocoder: una quota risparmiata al prezzo di non trovare quello che
+   * uno sta cercando. Chi scrive il nome di un posto preciso e riceve
+   * quattro locali che si chiamano quasi così non ha trovato niente — ha
+   * trovato del rumore, e prosegue con un indirizzo approssimativo.
+   *
+   * Adesso si salta solo quando i posti conosciuti sono davvero tanti,
+   * cioè quando è quasi certo che la risposta sia lì dentro.
+   */
   const bastano = salvati.length + posti.length
-  const indirizzi = bastano >= 4 || q.length < 3
+  const indirizzi = bastano >= 6 || q.length < 3
     ? []
     : (DEMO ? luoghiDemo(q) : await geocodifica(q, vicino))
 
@@ -99,9 +111,50 @@ export async function suggerisci(
    * `Number(undefined)` fa NaN, e in JSON NaN diventa `null` senza che
    * nessuno se ne accorga.
    */
-  return unifica([...salvati, ...posti, ...indirizzi])
-    .filter(haCoordinate)
-    .slice(0, 8)
+  /**
+   * La distanza accanto a ogni riga.
+   *
+   * Fra due «Piazza della Vittoria» — una a tre chilometri e una a
+   * duecento — il nome non basta a scegliere, e sbagliare qui vuol dire
+   * sbagliare il percorso, il prezzo e il punto di ritrovo. È in linea
+   * d'aria e non su strada: i minuti veri costerebbero una chiamata al
+   * servizio di navigazione PER OGNI riga dell'elenco, a ogni tasto
+   * premuto, e non li promettiamo perché non possiamo pagarli.
+   */
+  let tutti = unifica([...salvati, ...posti, ...indirizzi]).filter(haCoordinate)
+
+  /**
+   * Se non si trova niente, si cerca con meno parole.
+   *
+   * Scrivere di più dava MENO risultati: «fitactive lodi» non trovava
+   * nulla mentre «fitactive» trovava tre palestre. Chi aggiunge la città
+   * lo fa per essere più preciso, e vedersi svuotare l'elenco insegna che
+   * la ricerca non funziona — così si smette di specificare, che è il
+   * contrario di quello che serve.
+   *
+   * Si riprova togliendo l'ultima parola, e l'ordine per distanza fa il
+   * resto: la città che avevi scritto è quasi sempre quella vicina.
+   */
+  const parole = q.split(/\s+/)
+  if (tutti.length === 0 && parole.length > 1) {
+    const piuCorta = parole.slice(0, -1).join(' ')
+    const ripiego = DEMO ? luoghiDemo(piuCorta) : await geocodifica(piuCorta, vicino)
+    tutti = unifica([...ripiego]).filter(haCoordinate)
+  }
+  const conDistanza = vicino
+    ? tutti.map((l) => ({ ...l, distanzaKm: kmInLineaDAria(vicino, l) }))
+    : tutti
+  return conDistanza.slice(0, 8)
+}
+
+/** Distanza in linea d'aria, in chilometri. */
+function kmInLineaDAria(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371
+  const dLat = (b.lat - a.lat) * Math.PI / 180
+  const dLng = (b.lng - a.lng) * Math.PI / 180
+  const m = a.lat * Math.PI / 180, n = b.lat * Math.PI / 180
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(m) * Math.cos(n)
+  return Math.round(2 * R * Math.asin(Math.sqrt(x)) * 10) / 10
 }
 
 /** Un luogo si può usare solo se si sa dov'è, e se è su questo pianeta. */
