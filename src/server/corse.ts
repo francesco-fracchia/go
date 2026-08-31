@@ -2,7 +2,10 @@ import { db } from './db.ts'
 import { percorso, type Punto } from './percorsi.ts'
 import { risolvi } from './luoghi.ts'
 import { SMS_DISPONIBILE, dichiaraPrivato } from './profili.ts'
-import { quotaPiena, costoBase, preventivo, type Corsa, type Modalita } from '../lib/pricing.ts'
+import {
+  quotaPiena, costoBase, preventivo, scontoPerLivello,
+  type Corsa, type Modalita, type LivelloRimborso,
+} from '../lib/pricing.ts'
 import type { Cents } from '../lib/money.ts'
 
 export class ErroreCorsa extends Error {
@@ -39,6 +42,15 @@ export interface RichiestaPubblicazione {
   pedaggio?: Cents
   parcheggio?: Cents
   scontoCent?: Cents
+  /**
+   * Quanto vuole rientrare chi guida, su una corsa fra amici.
+   *
+   * Arriva come NOME, mai come importo: il client non scrive euro. È la
+   * stessa regola di `centesimi_per_km` — l'importo lo calcola il motore,
+   * qui, dove i chilometri e il costo dell'auto esistono davvero. Un
+   * livello mandato su una corsa pubblica non fa niente, per costruzione.
+   */
+  livelloRimborso?: LivelloRimborso
   politica?: 'flessibile' | 'rigida'
   note?: string
   /**
@@ -120,7 +132,7 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
 
   const { data: veicolo } = await db
     .from('veicoli')
-    .select('id, posti_totali, centesimi_per_km, attivo')
+    .select('id, posti_totali, centesimi_per_km, alimentazione, consumo_l100, attivo')
     .eq('id', req.veicoloId)
     .eq('proprietario', req.conducenteId)
     .single()
@@ -155,6 +167,15 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
     parcheggio: req.parcheggio ?? 0,
     postiOfferti: req.postiOfferti,
     scontoConducente: req.scontoCent ?? 0,
+  }
+
+  // Il livello vince sullo sconto grezzo se c'è: è l'unico dei due che
+  // qualcuno può scegliere da un'interfaccia.
+  if (req.livelloRimborso) {
+    corsa.scontoConducente = scontoPerLivello(
+      corsa, req.livelloRimborso,
+      String(veicolo.alimentazione), veicolo.consumo_l100 as number | null,
+    )
   }
 
   const { data: riga, error } = await db.from('corse').insert({

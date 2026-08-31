@@ -66,6 +66,7 @@ export function FormVeicolo() {
   const [fumo, setFumo] = useState(false)
   const [animali, setAnimali] = useState(false)
   const [bagagli, setBagagli] = useState<typeof BAGAGLI[number]['v']>('medi')
+  const [consumo, setConsumo] = useState('')
   const [errore, setErrore] = useState<string | null>(null)
   const [invio, setInvio] = useState(false)
   const attesa = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -229,6 +230,24 @@ export function FormVeicolo() {
           </div>
         </div>
 
+        {/* Facoltativo, e in fondo apposta.
+            Serve a una cosa sola: farsi rimborsare il solo carburante su
+            una corsa fra amici. Chiederlo obbligatorio costerebbe più
+            conducenti di quanti ne renda felici — e senza c'è comunque il
+            consumo tipico dell'alimentazione, che è una stima onesta. */}
+        <div style={{ marginTop: 'var(--s6)' }}>
+          <p className="occhiello">Quanto consuma, se lo sai</p>
+          <label className="campo" style={{ marginTop: 'var(--s3)' }}>
+            <span className="campo-nome">Litri per 100 km — facoltativo</span>
+            <input inputMode="decimal" value={consumo} placeholder="5,8"
+              onChange={(e) => setConsumo(e.target.value)} />
+          </label>
+          <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
+            Non cambia il costo chilometrico né quanto ti rientra. Serve solo
+            se un giorno vorrai chiedere agli amici la sola benzina.
+          </p>
+        </div>
+
         <div style={{ marginTop: 'var(--s6)' }}>
           <p className="occhiello">In macchina</p>
           <div style={{ marginTop: 'var(--s3)' }}>
@@ -271,6 +290,7 @@ export function FormVeicolo() {
         aciModello: scelto?.id,
         fascia, alimentazione, targa, colore,
         postiTotali: posti, fumo, animali, bagagli,
+        consumoL100: consumo ? Number(consumo.replace(',', '.')) : null,
       }),
     })
     if (!r.ok) {

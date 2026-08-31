@@ -74,6 +74,8 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
   const [posti, setPosti] = useState(3)
   const [veicolo, setVeicolo] = useState(veicoli[0]?.id ?? '')
   const [modalita, setModalita] = useState<'pubblica' | 'link' | 'privata'>('pubblica')
+  const [rimborso, setRimborso] = useState<
+    'tutto' | 'carburante_pedaggi' | 'carburante' | 'niente'>('tutto')
   const [immediata, setImmediata] = useState(false)
   const [deviazioni, setDeviazioni] = useState(true)
   const [politica, setPolitica] = useState<'flessibile' | 'rigida'>('flessibile')
@@ -319,6 +321,31 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                         { v: 'privata', t: 'Chi invito io', n: 'Solo chi aggiungi tu' },
                       ]} />
 
+                    {/* Solo fuori dalle corse pubbliche.
+                        Non per proteggere chi guida: perché in un mercato
+                        chi chiede solo il carburante batte chi chiede la
+                        quota onesta, e nel giro di poche settimane il
+                        prezzo normale diventa il carburante. A quel punto
+                        i conducenti smettono di pubblicare, e GO scivola
+                        da «dividere una spesa» a «trasporto a poco
+                        prezzo» — la riga che non attraversiamo.
+
+                        Fra amici invece il costo ACI pieno, che dentro ha
+                        la svalutazione, non è antipatico: è irreale.
+                        Nessuno ha mai chiesto a un amico la svalutazione,
+                        e se l'applicazione lo pretende ci si mette
+                        d'accordo in contanti fuori di qui. */}
+                    {modalita !== 'pubblica' && (
+                      <Opzioni titolo="Quanto ti fai rimborsare" segno={<SegnoOcchio />}
+                        valore={rimborso} onCambia={(v) => setRimborso(v as typeof rimborso)}
+                        opzioni={[
+                          { v: 'tutto', t: 'Quello che costa', n: 'Il costo pieno, usura compresa' },
+                          { v: 'carburante_pedaggi', t: 'Carburante e pedaggi', n: 'Niente usura né svalutazione' },
+                          { v: 'carburante', t: 'Solo il carburante', n: 'Quello che lasci al distributore' },
+                          { v: 'niente', t: 'Offro io', n: 'Non paga nessuno' },
+                        ]} />
+                    )}
+
                     <Opzioni titolo="Chi sale" segno={<SegnoPersone />} valore={immediata ? 'si' : 'no'}
                       onCambia={(v) => setImmediata(v === 'si')}
                       opzioni={[
@@ -459,6 +486,9 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
         origine: { label: origine!.etichetta, lat: origine!.lat, lng: origine!.lng },
         destinazione: { label: destinazione!.etichetta, lat: destinazione!.lat, lng: destinazione!.lng },
         oraArrivo: istante(oraArrivo), postiOfferti: posti, modalita,
+        // Un nome, non un importo: gli euro li calcola il server, dove i
+        // chilometri e il costo dell'auto esistono davvero.
+        livelloRimborso: modalita === 'pubblica' ? 'tutto' : rimborso,
         prenotaImmediata: immediata,
         deviazioniRitiro: deviazioni, deviazioniDeposito: deviazioni,
         politica, note,

@@ -529,3 +529,56 @@ test('nessun modo di far incassare al conducente più del costo', () => {
   }
   assert.ok(provate > 500, `solo ${provate} combinazioni provate`)
 })
+
+
+// ─── I livelli di rimborso fra amici ──────────────────────────────────
+
+import { scontoPerLivello } from './pricing.ts'
+import { scomponi } from './carburante.ts'
+
+const amici = (extra: Partial<Corsa> = {}): Corsa => ({
+  modalita: 'privata', kmBase: 100, centesimiPerKm: 50,
+  pedaggio: 0, parcheggio: 0, postiOfferti: 3, ...extra,
+})
+
+test('«tutto» non sconta niente', () => {
+  assert.equal(scontoPerLivello(amici(), 'tutto', 'benzina'), 0)
+})
+
+test('«offro io» azzera la quota, non di più', () => {
+  const c = amici()
+  const sconto = scontoPerLivello(c, 'niente', 'benzina')
+  assert.equal(quotaApplicata({ ...c, scontoConducente: sconto }), 0)
+})
+
+test('«solo carburante» divide il carburante per tutti, conducente compreso', () => {
+  const c = amici()                       // 100 km, 50 c/km, 3 posti → 4 persone
+  const { carburanteCent } = scomponi({ km: 100, centesimiPerKm: 50, alimentazione: 'benzina' })
+  const quota = quotaApplicata({ ...c, scontoConducente: scontoPerLivello(c, 'carburante', 'benzina') })
+  assert.equal(quota, Math.round(carburanteCent / 4))
+  // e resta molto sotto la quota piena: 50 € diviso 4 = 12,50 €
+  assert.ok(quota < quotaPiena(c))
+})
+
+test('un consumo dichiarato vince sul tipico', () => {
+  const c = amici()
+  const parco = scontoPerLivello(c, 'carburante', 'benzina', 3)
+  const assetato = scontoPerLivello(c, 'carburante', 'benzina', 12)
+  // Chi consuma di più chiede di più, quindi sconta di meno.
+  assert.ok(assetato < parco)
+})
+
+test('su una corsa pubblica nessun livello si applica', () => {
+  const c = amici({ modalita: 'pubblica' })
+  assert.equal(scontoPerLivello(c, 'carburante', 'benzina'), 0)
+  assert.equal(scontoPerLivello(c, 'niente', 'benzina'), 0)
+})
+
+test('lo sconto non può mai far salire la quota', () => {
+  // Un consumo assurdo chiederebbe più del costo pieno: la differenza
+  // sarebbe negativa, e non deve diventare un sovrapprezzo.
+  const c = amici()
+  const sconto = scontoPerLivello(c, 'carburante_pedaggi', 'benzina', 39)
+  assert.ok(sconto >= 0)
+  assert.ok(quotaApplicata({ ...c, scontoConducente: sconto }) <= quotaPiena(c))
+})

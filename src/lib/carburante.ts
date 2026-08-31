@@ -69,10 +69,22 @@ export function scomponi(opts: {
   km: number
   centesimiPerKm: number
   alimentazione: string
+  /**
+   * Consumo dichiarato da chi guida, litri per 100 km. Facoltativo.
+   *
+   * Quando c'è vince sul tipico, perché è un dato e il tipico è una
+   * stima: chi sa quanto beve la sua auto lo sa meglio di una media di
+   * categoria. Quando non c'è non si chiede — il consumo è la cosa che
+   * fa abbandonare un modulo.
+   */
+  consumoL100?: number | null
 }): Scomposizione {
   const totale = Math.round(opts.km * opts.centesimiPerKm)
 
-  const consumo = CONSUMO_TIPICO[opts.alimentazione] ?? CONSUMO_TIPICO.benzina!
+  const dichiarato = opts.consumoL100
+  const consumo = (dichiarato && Number.isFinite(dichiarato) && dichiarato > 0)
+    ? dichiarato
+    : CONSUMO_TIPICO[opts.alimentazione] ?? CONSUMO_TIPICO.benzina!
   const prezzo = PREZZO_LITRO_CENT[opts.alimentazione] ?? PREZZO_LITRO_CENT.benzina!
   let carburante = Math.round((opts.km * consumo / 100) * prezzo)
 

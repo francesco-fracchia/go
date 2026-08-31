@@ -2590,6 +2590,17 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 
 .risposta-azione { width: 100%; margin-top: var(--s6); }
 
+/* La barra della scomposizione: la parte piena è il carburante, ed è
+   volutamente PICCOLA. È l'unica figura di questa pagina, e dice da sola
+   la cosa che il testo poi spiega. */
+.scomposizione { margin-top: var(--s5); }
+.scomposizione-barra {
+  height: 10px; border-radius: 999px; overflow: hidden;
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+}
+.scomposizione-carburante { display: block; height: 100%; background: var(--accento); }
+.scomposizione .risposta-benzina { margin-top: var(--s3); }
+
 
 /* ═══ La comitiva ══════════════════════════════════════════════════════ */
 

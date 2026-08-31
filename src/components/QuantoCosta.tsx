@@ -27,7 +27,8 @@ interface Modello {
 
 interface Esito {
   km: number; minuti: number
-  totaleCent: number; pedaggioCent: number; benzinaCent: number | null
+  totaleCent: number; pedaggioCent: number
+  benzinaCent: number; usuraCent: number
   aTesta: Array<{ persone: number; cent: number }>
 }
 
@@ -42,7 +43,6 @@ export function QuantoCosta({ mappa = false }: { mappa?: boolean }) {
   const [senzaAutostrada, setSenzaAutostrada] = useState(false)
 
   const [consumo, setConsumo] = useState('')
-  const [prezzoLitro, setPrezzoLitro] = useState('')
   const [pedaggio, setPedaggio] = useState('')
 
   const [attesa, setAttesa] = useState(false)
@@ -75,11 +75,11 @@ export function QuantoCosta({ mappa = false }: { mappa?: boolean }) {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           centesimiPerKm: auto.centesimiPerKm,
+          alimentazione: auto.alimentazione,
           origine: { lat: da.lat, lng: da.lng },
           destinazione: { lat: a.lat, lng: a.lng },
           evitaAutostrada: senzaAutostrada,
           consumo: consumo ? Number(consumo.replace(',', '.')) : undefined,
-          prezzoLitro: prezzoLitro ? Number(prezzoLitro.replace(',', '.')) : undefined,
           pedaggioCent: pedaggio ? Math.round(Number(pedaggio.replace(',', '.')) * 100) : 0,
         }),
       })
@@ -166,19 +166,14 @@ export function QuantoCosta({ mappa = false }: { mappa?: boolean }) {
                 dare una risposta anche a chi non compila niente. */}
             <details className="altre">
               <summary>
-                <span className="altre-titolo">Vuoi anche la parte benzina?</span>
-                <span className="altre-nota">Consumo, prezzo al litro, pedaggio — facoltativi</span>
+                <span className="altre-titolo">Sai quanto consuma, o quanto paghi di pedaggio?</span>
+                <span className="altre-nota">Facoltativi — servono solo a stringere la stima</span>
               </summary>
               <div className="altre-corpo">
                 <label className="campo">
                   <span className="campo-nome">Consumo, litri per 100 km</span>
                   <input inputMode="decimal" value={consumo} placeholder="5,8"
                     onChange={(e) => setConsumo(e.target.value)} />
-                </label>
-                <label className="campo">
-                  <span className="campo-nome">Prezzo al litro</span>
-                  <input inputMode="decimal" value={prezzoLitro} placeholder="1,79"
-                    onChange={(e) => setPrezzoLitro(e.target.value)} />
                 </label>
                 <label className="campo">
                   <span className="campo-nome">Pedaggio, se c&apos;è</span>
@@ -222,13 +217,20 @@ function Risposta({ e, da, a, senzaAutostrada }: {
           {senzaAutostrada && ' · senza autostrada'}
         </p>
 
-        {e.benzinaCent !== null && (
+        {/* La riga per cui esiste la pagina. Il totale sorprende, ma è
+            vedere quanto POCO sia il carburante che cambia idea. */}
+        <div className="scomposizione">
+          <div className="scomposizione-barra">
+            <span className="scomposizione-carburante"
+              style={{ width: `${Math.round(e.benzinaCent / e.totaleCent * 100)}%` }} />
+          </div>
           <p className="risposta-benzina">
-            Di cui benzina <strong>{euro(e.benzinaCent)}</strong>. Il resto sono
-            gomme, manutenzione, bollo, assicurazione e svalutazione: non li
-            paghi al distributore, li paghi lo stesso, un chilometro alla volta.
+            Al distributore ne lasci <strong>{euro(e.benzinaCent)}</strong>. Gli
+            altri <strong>{euro(e.usuraCent)}</strong> sono gomme, manutenzione,
+            bollo, assicurazione e svalutazione: non li paghi stasera, li paghi
+            lo stesso — un chilometro alla volta.
           </p>
-        )}
+        </div>
         {e.pedaggioCent > 0 && (
           <p className="risposta-benzina">Pedaggio compreso: {euro(e.pedaggioCent)}.</p>
         )}

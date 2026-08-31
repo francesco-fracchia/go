@@ -3,6 +3,7 @@ import {
   percorso, giaInCache, percorsiNuoviOggi, SOGLIA_PERCORSI_GIORNO, type Punto,
 } from '../../../server/percorsi.ts'
 import { costoBase, type Corsa } from '../../../lib/pricing.ts'
+import { scomponi } from '../../../lib/carburante.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
 
 /**
@@ -21,14 +22,13 @@ import { json, rispostaErrore } from '../_risposta.ts'
 
 interface Corpo {
   centesimiPerKm?: number
+  alimentazione?: string
   origine?: Punto
   destinazione?: Punto
   evitaAutostrada?: boolean
   pedaggioCent?: number
-  /** litri per 100 km, dichiarati da chi chiede. Facoltativo. */
+  /** litri per 100 km, se chi chiede li sa. Facoltativo: affina la stima. */
   consumo?: number
-  /** euro al litro, dichiarati da chi chiede. Facoltativo. */
-  prezzoLitro?: number
 }
 
 const valido = (p?: Punto): p is Punto =>
@@ -84,28 +84,33 @@ export async function POST(req: Request) {
     const totale = costoBase(corsa)
 
     /**
-     * La benzina viene dai TUOI numeri, non dai nostri.
+     * La scomposizione fra carburante e usura.
      *
-     * La tabella ACI che abbiamo ha una cifra sola, tutto compreso: non
-     * contiene la scomposizione fra carburante, gomme, manutenzione,
-     * assicurazione, bollo e svalutazione. Ricavarne una a occhio sarebbe
-     * inventare un dato dentro l'unica pagina il cui argomento è che il
-     * dato è vero. Quindi il carburante si calcola solo se dichiari
-     * consumo e prezzo al litro, e resta dichiaratamente tuo.
+     * Non è una stima inventata qui: la fa `scomponi`, che tiene il prezzo
+     * alla pompa e il consumo tipico PER ALIMENTAZIONE — perché su
+     * un'utilitaria a GPL il carburante è un quinto del totale e su un SUV
+     * a benzina quasi un terzo, e una percentuale unica sbaglierebbe
+     * entrambe. Se chi chiede sa quanto consuma la sua auto, quel numero
+     * vince sul tipico.
+     *
+     * È la riga per cui esiste la pagina: il totale sorprende, ma è
+     * VEDERE quanto poco sia la benzina che cambia idea a qualcuno.
      */
     const consumo = Number(b.consumo)
-    const prezzoLitro = Number(b.prezzoLitro)
-    const benzinaCent = (Number.isFinite(consumo) && consumo > 0
-      && Number.isFinite(prezzoLitro) && prezzoLitro > 0)
-      ? Math.round((p.km * consumo / 100) * prezzoLitro * 100)
-      : null
+    const parti = scomponi({
+      km: p.km,
+      centesimiPerKm,
+      alimentazione: String(b.alimentazione ?? 'benzina'),
+      consumoL100: Number.isFinite(consumo) && consumo > 0 ? consumo : null,
+    })
 
     return json({
       km: p.km,
       minuti: p.minuti,
       totaleCent: totale,
       pedaggioCent: pedaggio,
-      benzinaCent,
+      benzinaCent: parti.carburanteCent,
+      usuraCent: parti.usuraCent,
       /**
        * Diviso per le persone IN MACCHINA, conducente compreso. È la
        * stessa regola delle corse vere, ed è la ragione per cui su GO

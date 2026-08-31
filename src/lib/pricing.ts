@@ -1,3 +1,4 @@
+import { scomponi } from './carburante.ts'
 /**
  * MOTORE DEI PREZZI — il cuore conforme del prodotto.
  *
@@ -169,6 +170,62 @@ export function deviazioniPerPasseggero(
     for (const id of f.membri) perPasseggero.set(id, quota)
   }
   return { perPasseggero, kmTotali }
+}
+
+/**
+ * Quanto rimborsare, su una corsa fra amici.
+ *
+ * Il costo pieno ACI comprende usura, gomme, bollo, assicurazione e
+ * svalutazione. Fra amici stretti quel numero non è antipatico: è
+ * IRREALE — nessuno ha mai chiesto a un amico la svalutazione. Se
+ * l'applicazione pretende quel numero la gente non litiga: si mette
+ * d'accordo in contanti fuori di qui, e il viaggio smette di esistere per
+ * tutti.
+ *
+ * Quattro livelli con un nome, e non un campo in euro libero. Un numero
+ * libero riapre la contrattazione, che è esattamente la cosa che GO toglie
+ * di mezzo; i nomi invece insegnano cosa costa un'auto, che è il punto
+ * silenzioso di tutto il prodotto.
+ *
+ * La parte carburante NON si stima qui: la dà `scomponi`, che esiste da
+ * prima e sa che su un'utilitaria a GPL la benzina è un quinto del totale
+ * e su un SUV quasi un terzo.
+ */
+export type LivelloRimborso = 'tutto' | 'carburante_pedaggi' | 'carburante' | 'niente'
+
+/**
+ * Lo sconto che realizza un livello, in centesimi SULLA QUOTA.
+ *
+ * Non si scrive mai un importo: si dice quanto si vuole rientrare, e lo
+ * sconto è la differenza. Così il motore resta l'unico posto dove i soldi
+ * si calcolano, e «lo sconto può solo abbassare» continua a valere per
+ * costruzione.
+ *
+ * Su una corsa pubblica non si applica nessun livello. Non per proteggere
+ * chi guida: perché in un mercato chi chiede solo il carburante batte chi
+ * chiede la quota onesta, e nel giro di poche settimane il prezzo normale
+ * diventa il carburante. A quel punto i conducenti smettono di pubblicare,
+ * e GO scivola da «dividere una spesa» a «trasporto a poco prezzo» — che è
+ * la riga che questo prodotto non attraversa.
+ */
+export function scontoPerLivello(
+  c: Corsa, livello: LivelloRimborso,
+  alimentazione: string, consumoL100?: number | null,
+): Cents {
+  if (c.modalita === 'pubblica' || livello === 'tutto') return 0
+
+  const piena = quotaPiena({ ...c, scontoConducente: 0 })
+  if (livello === 'niente') return piena
+
+  const { carburanteCent } = scomponi({
+    km: c.kmBase, centesimiPerKm: c.centesimiPerKm, alimentazione, consumoL100,
+  })
+  const voluto = livello === 'carburante_pedaggi'
+    ? carburanteCent + c.pedaggio + c.parcheggio
+    : carburanteCent
+
+  const quotaVoluta = roundCents(voluto / (c.postiOfferti + 1))
+  return Math.max(0, piena - quotaVoluta)
 }
 
 export function costoBase(c: Corsa): Cents {

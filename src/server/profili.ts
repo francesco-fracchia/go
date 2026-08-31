@@ -116,6 +116,8 @@ export interface NuovoVeicolo {
    * diciamo ovunque, «sul modello esatto della tua auto», diventa falsa.
    */
   aciModello?: string
+  /** litri per 100 km, dichiarati. Facoltativo. */
+  consumoL100?: number | null
 }
 
 /**
@@ -146,6 +148,16 @@ export async function creaVeicolo(v: NuovoVeicolo) {
     animali: v.animali ?? false,
     bagagli: v.bagagli ?? 'medi',
     aci_modello: v.aciModello ?? null,
+    /**
+     * Facoltativo, e nullo se non ha senso.
+     *
+     * Serve solo a chi vuole farsi rimborsare il solo carburante su una
+     * corsa fra amici. Senza, si usa il consumo tipico dell'alimentazione
+     * — che è una stima onesta, non un ripiego silenzioso.
+     */
+    consumo_l100: (Number.isFinite(Number(v.consumoL100))
+      && Number(v.consumoL100) > 1 && Number(v.consumoL100) < 40)
+      ? Number(v.consumoL100) : null,
   }).select('*, id').single()
 
   if (error) throw new ErroreProfilo('db', error.message)
