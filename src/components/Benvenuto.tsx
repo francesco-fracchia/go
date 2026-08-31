@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { Incontro, Spese, Tracciato } from './visivi.tsx'
+import { Incontro, Spese } from './visivi.tsx'
+import { Foto } from './Foto.tsx'
 import { SegnoAvanti, SegnoCerca, SegnoGuida } from './segni.tsx'
 import type { Modo } from '../server/modo.ts'
 
@@ -25,21 +26,25 @@ import type { Modo } from '../server/modo.ts'
  * presentazione sarebbe risparmiare due schermate al prezzo di un problema.
  */
 
-type Passo = 'ruolo' | 'come' | 'soldi' | 'pronto'
+type Passo = 'ruolo' | 'foto' | 'come' | 'soldi' | 'pronto'
 
 export interface Cosa { fatta: boolean; titolo: string; testo: string; dove: string; azione: string }
 
-export function Benvenuto({ nome, ritorno, cose }: {
+export function Benvenuto({ nome, ritorno, cose, fotoUrl }: {
   nome?: string
   ritorno: string
   /** Quello che manca a chi vuole guidare: auto, numero, conto */
   cose: Cosa[]
+  fotoUrl?: string | null
 }) {
   const [passo, setPasso] = useState<Passo>('ruolo')
   const [ruolo, setRuolo] = useState<Modo | 'entrambi' | null>(null)
+  const [foto, setFoto] = useState<string | null>(fotoUrl ?? null)
 
   const guida = ruolo === 'conducente' || ruolo === 'entrambi'
-  const passi: Passo[] = guida ? ['ruolo', 'come', 'soldi', 'pronto'] : ['ruolo', 'come', 'soldi']
+  const passi: Passo[] = guida
+    ? ['ruolo', 'foto', 'come', 'soldi', 'pronto']
+    : ['ruolo', 'foto', 'come', 'soldi']
   const i = passi.indexOf(passo)
 
   function scegli(r: Modo | 'entrambi') {
@@ -48,7 +53,9 @@ export function Benvenuto({ nome, ritorno, cose }: {
     // quello che hai appena detto di essere.
     const m: Modo = r === 'passeggero' ? 'passeggero' : 'conducente'
     document.cookie = `modo=${m}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
-    setPasso('come')
+    // Chi ha già una foto — perché è entrato con Google, o perché torna —
+    // non se la vede chiedere di nuovo.
+    setPasso(foto ? 'come' : 'foto')
   }
 
   const avanti = () => setPasso(passi[Math.min(i + 1, passi.length - 1)]!)
@@ -64,7 +71,9 @@ export function Benvenuto({ nome, ritorno, cose }: {
               <li key={p} className={`spina-passo${n < i - 1 ? ' spina-fatto' : ''}${n === i - 1 ? ' spina-qui' : ''}`}>
                 <span className="spina-numero">{n + 1}</span>
                 <span className="spina-nome">
-                  {p === 'come' ? 'Come funziona' : p === 'soldi' ? 'I soldi' : 'Per partire'}
+                  {p === 'foto' ? 'La tua foto'
+                    : p === 'come' ? 'Come funziona'
+                      : p === 'soldi' ? 'I soldi' : 'Per partire'}
                 </span>
               </li>
             ))}
@@ -118,6 +127,32 @@ export function Benvenuto({ nome, ritorno, cose }: {
                 <span className="ruolo-freccia"><SegnoAvanti /></span>
               </button>
             </div>
+          </section>
+        )}
+
+        {passo === 'foto' && (
+          <section className="benvenuto-passo">
+            <h1 className="t-titolo">Facci vedere chi sei</h1>
+            <p className="t-guida" style={{ margin: 'var(--s4) 0 var(--s6)', maxWidth: '42ch' }}>
+              È l&apos;unica cosa che, prima di salire in macchina con qualcuno
+              alle due di notte, dice davvero qualcosa. Un nome si scrive; una
+              faccia no.
+            </p>
+
+            <Foto fotoUrl={foto} nome={nome ?? 'G'} suCaricata={setFoto} />
+
+            <div className="azioni" style={{ marginTop: 'var(--s7)' }}>
+              <button type="button" className="azione azione-piena"
+                aria-disabled={!foto} onClick={avanti}>
+                Avanti <SegnoAvanti />
+              </button>
+            </div>
+            {!foto && (
+              <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
+                La chiediamo a tutti, senza eccezioni: un profilo senza faccia
+                è la ragione più comune per cui una richiesta viene rifiutata.
+              </p>
+            )}
           </section>
         )}
 
@@ -211,7 +246,10 @@ export function Benvenuto({ nome, ritorno, cose }: {
           </section>
         )}
 
-        {passo !== 'ruolo' && passo !== 'pronto' && (
+        {/* Si può saltare la presentazione, non la foto: la prima è una
+            cortesia, la seconda è quello su cui gli altri decidono se
+            fidarsi di te. */}
+        {passo !== 'ruolo' && passo !== 'pronto' && passo !== 'foto' && (
           <button type="button" className="collegamento-piccolo benvenuto-salta" onClick={finisci}>
             Salta la presentazione
           </button>

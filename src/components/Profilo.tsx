@@ -1,5 +1,6 @@
 import { SegnoAvanti } from './segni.tsx'
 import { Invita } from './Invita.tsx'
+import { Foto } from './Foto.tsx'
 
 /**
  * Il profilo.
@@ -46,10 +47,14 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
       <div className="dentro dentro-app profilo-dentro">
 
         <header className="profilo-testa">
-          <span className="faccia profilo-faccia"
-            style={p.fotoUrl ? { backgroundImage: `url(${p.fotoUrl})` } : undefined}>
-            {!p.fotoUrl && p.nome.charAt(0)}
-          </span>
+          {mio ? (
+            <Foto fotoUrl={p.fotoUrl} nome={p.nome} compatta />
+          ) : (
+            <span className="faccia profilo-faccia"
+              style={p.fotoUrl ? { backgroundImage: `url(${p.fotoUrl})` } : undefined}>
+              {!p.fotoUrl && p.nome.charAt(0)}
+            </span>
+          )}
           <div className="cresci">
             {/* Solo il nome: il cognome intero di uno sconosciuto non serve a
                 nessuno e regala un dato che non è necessario condividere. */}
@@ -175,6 +180,10 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
     </div>
   )
 }
+
+/** «kia stoni» è come l'ha battuto chi l'ha registrata: si presenta meglio. */
+const maiuscola = (s: string) =>
+  s.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
 function Verifica({ ok, testo, nota }: { ok: boolean; testo: string; nota?: string }) {
   return (

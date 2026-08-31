@@ -22,7 +22,7 @@ export default async function Pagina({ searchParams }: {
 
   const g = await guscio()
   const [{ data: p }, { data: veicoli }] = await Promise.all([
-    db.from('profili').select('nome, telefono, stripe_pronto, stripe_account_id').eq('id', utente).maybeSingle(),
+    db.from('profili').select('nome, telefono, foto_url, stripe_pronto, stripe_account_id').eq('id', utente).maybeSingle(),
     db.from('veicoli').select('id').eq('proprietario', utente).eq('attivo', true).limit(1),
   ])
 
@@ -51,7 +51,8 @@ export default async function Pagina({ searchParams }: {
 
   return (
     <Telaio {...g}>
-      <Benvenuto nome={p?.nome ?? undefined} ritorno={ritorno} cose={cose} />
+      <Benvenuto nome={p?.nome ?? undefined} ritorno={ritorno} cose={cose}
+        fotoUrl={p?.foto_url ?? null} />
     </Telaio>
   )
 }

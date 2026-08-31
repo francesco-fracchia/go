@@ -33,7 +33,17 @@ const MAPPA: Array<{ filtro: string; categoria: Categoria }> = [
   { filtro: '["shop"="mall"]', categoria: 'centro_commerciale' },
   { filtro: '["place"="square"]', categoria: 'piazza' },
   { filtro: '["railway"="station"]', categoria: 'stazione' },
-  { filtro: '["aeroway"="aerodrome"]', categoria: 'aeroporto' },
+  /**
+   * Solo aeroporti veri.
+   *
+   * `aeroway=aerodrome` comprende anche le aviosuperfici in mezzo ai campi
+   * e le scuole di volo: chi filtra per «aeroporti» sta pensando a
+   * Malpensa e a Orio, e vedersi proporre l'aviosuperficie di Dovera fa
+   * sembrare che l'elenco sia preso a caso. Il codice IATA è il segno che
+   * distingue uno scalo con i voli di linea da un prato con una manica a
+   * vento.
+   */
+  { filtro: '["aeroway"="aerodrome"]["iata"]', categoria: 'aeroporto' },
   { filtro: '["leisure"="stadium"]', categoria: 'stadio' },
   { filtro: '["amenity"="university"]', categoria: 'universita' },
   { filtro: '["amenity"="hospital"]', categoria: 'ospedale' },
@@ -243,7 +253,8 @@ function categoriaDi(tags: Record<string, string> | undefined): Categoria | null
   if (tags.shop === 'mall') return 'centro_commerciale'
   if (tags.place === 'square') return 'piazza'
   if (tags.railway === 'station') return 'stazione'
-  if (tags.aeroway === 'aerodrome') return 'aeroporto'
+  // Senza codice IATA non è uno scalo: è un'aviosuperficie o una scuola di volo.
+  if (tags.aeroway === 'aerodrome' && tags.iata) return 'aeroporto'
   if (tags.leisure === 'stadium') return 'stadio'
   if (tags.amenity === 'university') return 'universita'
   if (tags.amenity === 'hospital') return 'ospedale'

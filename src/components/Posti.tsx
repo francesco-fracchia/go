@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react'
 import type { Categoria, Posto } from '../server/posti.ts'
 import type { Modo } from '../server/modo.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
-import { SegnoAvanti } from './segni.tsx'
+import {
+  SegnoAvanti, SegnoTutti, SegnoDiscoteca, SegnoBar, SegnoRistorante, SegnoCinema,
+  SegnoNegozi, SegnoPiazza, SegnoTreno, SegnoAereo, SegnoStadio, SegnoUniversita,
+  SegnoPalestra,
+} from './segni.tsx'
 
 /**
  * Dove si va.
@@ -29,20 +33,33 @@ import { SegnoAvanti } from './segni.tsx'
  * cerca e nessuno va è l'informazione più utile che possiamo dare.
  */
 
-const CATEGORIE: Array<{ v: Categoria | 'tutte'; t: string }> = [
-  { v: 'tutte', t: 'Tutti' },
-  { v: 'discoteca', t: 'Discoteche' },
-  { v: 'bar', t: 'Bar' },
-  { v: 'ristorante', t: 'Ristoranti' },
-  { v: 'cinema', t: 'Cinema' },
-  { v: 'centro_commerciale', t: 'Centri commerciali' },
-  { v: 'piazza', t: 'Piazze' },
-  { v: 'stazione', t: 'Stazioni' },
-  { v: 'aeroporto', t: 'Aeroporti' },
-  { v: 'stadio', t: 'Stadi' },
-  { v: 'universita', t: 'Università' },
-  { v: 'palestra', t: 'Palestre' },
+/**
+ * Le categorie, con un segno ciascuna.
+ *
+ * Erano dodici pastiglie identiche in fila: per trovare «Stazioni» bisogna
+ * leggerle tutte, ogni volta. Con un simbolo davanti si punta alla forma e
+ * la parola serve solo a confermare — e le parole si accorciano, perché
+ * «Centri commerciali» in una pastiglia occupa lo spazio di tre categorie.
+ */
+const CATEGORIE: Array<{ v: Categoria | 'tutte'; t: string; Segno: () => React.ReactNode }> = [
+  { v: 'tutte', t: 'Tutti', Segno: SegnoTutti },
+  { v: 'discoteca', t: 'Discoteche', Segno: SegnoDiscoteca },
+  { v: 'bar', t: 'Bar', Segno: SegnoBar },
+  { v: 'ristorante', t: 'Ristoranti', Segno: SegnoRistorante },
+  { v: 'cinema', t: 'Cinema', Segno: SegnoCinema },
+  { v: 'centro_commerciale', t: 'Negozi', Segno: SegnoNegozi },
+  { v: 'piazza', t: 'Piazze', Segno: SegnoPiazza },
+  { v: 'stazione', t: 'Stazioni', Segno: SegnoTreno },
+  { v: 'aeroporto', t: 'Aeroporti', Segno: SegnoAereo },
+  { v: 'stadio', t: 'Stadi', Segno: SegnoStadio },
+  { v: 'universita', t: 'Università', Segno: SegnoUniversita },
+  { v: 'palestra', t: 'Palestre', Segno: SegnoPalestra },
 ]
+
+/** Il segno di un posto, per la sua categoria. */
+const SEGNO_DI: Record<string, () => React.ReactNode> = Object.fromEntries(
+  CATEGORIE.filter((c) => c.v !== 'tutte').map((c) => [c.v, c.Segno]),
+)
 
 export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa = false }: {
   iniziali: Posto[]
@@ -226,12 +243,14 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
 
         {/* Le categorie scorrono in orizzontale: su un telefono una griglia
             di dodici voci occupa mezzo schermo prima di mostrare un posto. */}
-        <div className="scelte" role="group" aria-label="Categoria">
-          {CATEGORIE.map((c) => (
-            <button key={c.v} type="button"
-              className={`scelta${categoria === c.v ? ' scelta-attiva' : ''}`}
-              aria-pressed={categoria === c.v}
-              onClick={() => cambia(c.v)}>{c.t}</button>
+        <div className="categorie" role="group" aria-label="Categoria">
+          {CATEGORIE.map(({ v, t, Segno }) => (
+            <button key={v} type="button"
+              className={`categoria${categoria === v ? ' categoria-scelta' : ''}`}
+              aria-pressed={categoria === v}
+              onClick={() => cambia(v)}>
+              <Segno /> {t}
+            </button>
           ))}
         </div>
 
@@ -273,6 +292,7 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
 }
 
 function Carta({ p, modo }: { p: Posto; modo: Modo }) {
+  const Segno = SEGNO_DI[p.categoria]
   const km = p.distanzaM / 1000
   const distanza = km < 1
     ? `${Math.max(50, Math.round(p.distanzaM / 50) * 50)} m`
@@ -292,6 +312,11 @@ function Carta({ p, modo }: { p: Posto; modo: Modo }) {
           riga, su ventiquattro schede, sono quarantotto bersagli che
           chiedono di scegliere prima ancora di aver letto il nome. */}
       <a href={prima.href} className="posto-principale">
+        {/* I loghi delle attività non ci sono: OpenStreetMap non li
+            distribuisce, e andarli a prendere dai siti delle attività
+            sarebbe fragile e indiscreto. Il segno della categoria dice
+            comunque a colpo d'occhio di che posto si tratta. */}
+        <span className="posto-segno" aria-hidden="true">{Segno && <Segno />}</span>
         <span className="cresci">
           <span className="posto-titolo">{p.nome}</span>
           <span className="t-nota">{[p.citta, distanza].filter(Boolean).join(' · ')}</span>

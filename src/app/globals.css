@@ -1818,7 +1818,15 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .leva-accesa .leva-pallino { left: 23px; }
 
 .scelte-tema { display: flex; gap: var(--s2); }
-.scelte-tema .scelta { flex: 1; justify-content: center; min-height: 46px; }
+.scelte-tema { border-radius: 999px; padding: 3px; background: var(--superficie); }
+.scelte-tema .scelta {
+  flex: 1; justify-content: center; min-height: 42px;
+  border-color: transparent; background: transparent;
+}
+.scelte-tema .scelta-attiva {
+  background: var(--carta); color: var(--inchiostro);
+  box-shadow: 0 1px 2px rgba(20,18,60,.1);
+}
 .numero-salvato { font-size: 16px; font-weight: 500; }
 
 .impostazioni-uscita { padding-top: var(--s5); border-top: 1px solid var(--riga); }
@@ -2072,9 +2080,13 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .giorni {
   display: flex; gap: var(--s2); margin-top: var(--s3);
   overflow-x: auto; scrollbar-width: none;
-  padding: 3px 3px 6px; margin-left: -3px; margin-right: -3px;
-  scroll-padding: 3px;
+  /* Il pannello ha i suoi margini: la striscia li sfonda di proposito e si
+     riprende il respiro dentro, così l'ultima scheda non resta tagliata a
+     metà contro il bordo. */
+  padding: 3px var(--s5) 6px; margin: 0 calc(var(--s5) * -1);
+  scroll-padding: var(--s5);
 }
+.giorni::-webkit-scrollbar { display: none; }
 .giorni::-webkit-scrollbar { display: none; }
 .giorno {
   flex: 1 0 auto; min-width: 62px;
@@ -2106,14 +2118,14 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .fasce { margin-top: var(--s3); width: 100%; }
 .fasce .segmento { flex: 1; }
 
-.ore {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+ /* Quattro colonne fisse, non «quante ce ne stanno»: con l'adattamento
+    automatico dieci ore diventavano sette più tre e otto minuti sette più
+    uno, e una riga con un solo bottone in fondo sembra un errore. */
+.ore, .minuti {
+  display: grid; grid-template-columns: repeat(4, 1fr);
   gap: var(--s2); margin-top: var(--s3);
 }
-.minuti {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
-  gap: var(--s2); margin-top: var(--s3);
-}
+@media (min-width: 520px) { .ore, .minuti { grid-template-columns: repeat(5, 1fr); } }
 .quando-piede {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--s4); margin-top: var(--s5);
@@ -2229,3 +2241,63 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   font-family: var(--mono); font-size: 14px; color: var(--inchiostro);
   overflow-wrap: anywhere;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Le categorie dei luoghi.
+
+   Erano dodici pastiglie identiche: per trovarne una bisognava leggerle
+   tutte. Con un segno davanti si punta alla forma, e la parola conferma.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.categorie {
+  display: flex; gap: var(--s2);
+  overflow-x: auto; scrollbar-width: none;
+  padding: 3px 3px 8px; margin: -3px -3px -8px; scroll-padding: 3px;
+}
+.categorie::-webkit-scrollbar { display: none; }
+.categoria {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 44px; padding: 0 15px 0 12px;
+  border-radius: 999px; border: 1px solid var(--riga);
+  background: var(--carta); color: var(--inchiostro-2);
+  font-size: 14.5px; font-weight: 500; white-space: nowrap;
+  transition: border-color .13s ease, background .13s ease, color .13s ease;
+}
+.categoria svg { width: 19px; height: 19px; color: var(--tenue); flex-shrink: 0; }
+.categoria:hover { border-color: var(--inchiostro-2); color: var(--inchiostro); }
+.categoria:hover svg { color: var(--inchiostro-2); }
+.categoria-scelta {
+  background: var(--inchiostro); border-color: transparent; color: var(--carta);
+  font-weight: 600;
+}
+.categoria-scelta svg { color: var(--carta); }
+
+/* Il segno accanto al nome del posto: al posto del logo, che non abbiamo. */
+.posto-segno {
+  flex-shrink: 0; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: var(--r-s);
+  background: var(--superficie); color: var(--tenue);
+}
+.posto-segno svg { width: 19px; height: 19px; }
+
+/* ── La foto del profilo ── */
+.foto { display: flex; align-items: center; gap: var(--s5); }
+.foto-compatta { display: inline-flex; }
+.foto-cerchio {
+  position: relative; flex-shrink: 0;
+  width: 96px; height: 96px; border-radius: 999px;
+  border: 1px dashed var(--riga); background: var(--superficie) center/cover no-repeat;
+  display: grid; place-items: center; overflow: hidden;
+  transition: border-color .14s ease;
+}
+.foto-cerchio:hover { border-color: var(--accento); }
+.foto-cerchio[style*="url"] { border-style: solid; border-color: transparent; }
+.foto-iniziale { font-size: 34px; font-weight: 600; color: var(--tenue); }
+.foto-velo {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 5px 0; font-size: 12px; font-weight: 600;
+  background: rgba(11,11,20,.62); color: #fff;
+}
+.foto-titolo { margin: 0; font-size: 16.5px; font-weight: 600; letter-spacing: -.02em; }
+.foto-testo { margin: var(--s2) 0 0; font-size: 14px; line-height: 1.55; color: var(--inchiostro-2); max-width: 52ch; }

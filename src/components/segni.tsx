@@ -151,3 +151,50 @@ export const SegnoNota = () => (
     <path d="M13 19.8v-4.4a2 2 0 0 1 2-2h5.2ZM7.6 9h8.8M7.6 12.6h5.6" />
   </svg>
 )
+
+/* ── I segni delle categorie di luogo ──────────────────────────────────
+   Su una fila di dodici filtri tutti uguali l'occhio deve leggere ogni
+   parola per trovare quella giusta. Con un segno davanti si punta al
+   simbolo, e la parola serve solo a confermare. */
+
+export const SegnoDiscoteca = () => (
+  <svg {...base}><circle cx="12" cy="12" r="8.4" /><circle cx="12" cy="12" r="2.4" />
+    <path d="M12 3.6v3.6M12 16.8v3.6M3.6 12h3.6M16.8 12h3.6M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18" /></svg>
+)
+export const SegnoBar = () => (
+  <svg {...base}><path d="M5 4h14l-7 8Z" /><path d="M12 12v7M8.4 19h7.2" /></svg>
+)
+export const SegnoRistorante = () => (
+  <svg {...base}><path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10" /><path d="M17 3c-1.6 1-2.4 2.8-2.4 5s.8 3.4 2.4 3.4V21" /></svg>
+)
+export const SegnoCinema = () => (
+  <svg {...base}><rect x="3" y="5.6" width="18" height="12.8" rx="2.4" />
+    <path d="M9 5.6 7 18.4M15 5.6l2 12.8M3 10.4h18M3 13.6h18" /></svg>
+)
+export const SegnoNegozi = () => (
+  <svg {...base}><path d="M4 8.4h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8Z" />
+    <path d="M8.6 8.4V6a3.4 3.4 0 0 1 6.8 0v2.4" /></svg>
+)
+export const SegnoPiazza = () => (
+  <svg {...base}><path d="M3 20.4h18M6 20.4V9.6l6-4.8 6 4.8v10.8" /><path d="M10 20.4v-5h4v5" /></svg>
+)
+export const SegnoTreno = () => (
+  <svg {...base}><rect x="5.4" y="3.6" width="13.2" height="13.2" rx="3" />
+    <path d="M5.4 11.4h13.2M9 20.4l-2 1.8M15 20.4l2 1.8M8.4 16.8h.01M15.6 16.8h.01" /></svg>
+)
+export const SegnoAereo = () => (
+  <svg {...base}><path d="M21 15.6 3.6 9.6l2.4-2.4 5.4 1.2 3.6-3.6a2 2 0 0 1 2.8 2.8l-3.6 3.6 1.2 5.4-2.4 2.4-2.4-6" /></svg>
+)
+export const SegnoStadio = () => (
+  <svg {...base}><ellipse cx="12" cy="12" rx="9" ry="6" /><ellipse cx="12" cy="12" rx="3.6" ry="2.4" /></svg>
+)
+export const SegnoUniversita = () => (
+  <svg {...base}><path d="M12 4 2.4 8.4 12 12.8l9.6-4.4Z" /><path d="M6 10.6v4.8c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8" /></svg>
+)
+export const SegnoPalestra = () => (
+  <svg {...base}><path d="M3.6 9.6v4.8M6.6 7.2v9.6M17.4 7.2v9.6M20.4 9.6v4.8M6.6 12h10.8" /></svg>
+)
+export const SegnoTutti = () => (
+  <svg {...base}><circle cx="7.2" cy="7.2" r="3" /><circle cx="16.8" cy="7.2" r="3" />
+    <circle cx="7.2" cy="16.8" r="3" /><circle cx="16.8" cy="16.8" r="3" /></svg>
+)
