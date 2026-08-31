@@ -40,16 +40,28 @@ export function rispostaErrore(e: unknown): Response {
    * il dettaglio saranno i registri, e questa riga diventa una perdita.
    */
   console.error(e)
-  return json({
-    errore: 'qualcosa è andato storto',
-    dettaglio: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
-  }, 500)
+  /**
+   * Il dettaglio adesso si accende con una variabile, e da spento resta
+   * spento.
+   *
+   * Era acceso sempre, con la nota «da togliere prima di aprire le
+   * iscrizioni» — cioè affidato al fatto che qualcuno si ricordasse di
+   * toglierlo. Le cose affidate alla memoria non succedono. Ora il
+   * comportamento sicuro è quello di difetto, e per rivederlo in fase di
+   * costruzione basta DETTAGLI_ERRORI=1.
+   */
+  const corpo: Record<string, unknown> = { errore: 'qualcosa è andato storto' }
+  if (process.env.DETTAGLI_ERRORI === '1') {
+    corpo.dettaglio = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+  }
+  return json(corpo, 500)
 }
 
 const stato = (codice: string) => ({
   pieno: 409, doppia: 409, tardi: 410, sospeso: 403, limitato: 403,
   sistematicita: 403, dichiarazione: 428, telefono: 428, carta: 402, luogo: 422,
   nome: 422, codice: 404, estraneo: 403, impedimenti: 409, accesso: 500,
+  foto: 428,
 }[codice] ?? 400)
 
 export const json = (corpo: unknown, stato = 200) =>

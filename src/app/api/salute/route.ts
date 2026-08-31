@@ -31,6 +31,9 @@ export async function GET() {
          né la cattura dei pagamenti, né i promemoria, né la cancellazione
          delle posizioni. Vale la pena poterlo controllare da fuori. */
       lavori: c('CRON_SECRET'),
+      // Acceso mostra la causa degli errori a chiunque: utile ora, da
+      // spegnere prima di aprire le iscrizioni.
+      dettagliErrori: process.env.DETTAGLI_ERRORI === '1',
       notifiche: c('VAPID_PRIVATE_KEY'),
       sms: c('TWILIO_SID'),
     },

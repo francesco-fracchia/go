@@ -80,7 +80,7 @@ const MARGINE_MINUTI = 10
 export async function pubblicaCorsa(req: RichiestaPubblicazione) {
   const { data: profilo } = await db
     .from('profili')
-    .select('dichiarazione_privato, sospeso, limitato, telefono, telefono_ok')
+    .select('dichiarazione_privato, sospeso, limitato, telefono, telefono_ok, foto_url')
     .eq('id', req.conducenteId)
     .single()
 
@@ -96,6 +96,21 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
    */
   if (!profilo.telefono) {
     throw new ErroreCorsa('telefono', 'aggiungi il tuo numero: chi sale deve poterti chiamare')
+  }
+  /**
+   * La foto si pretende QUI, non alla registrazione.
+   *
+   * Chiederla per iscriversi fa abbandonare chi sta solo guardando; chiederla
+   * per far salire uno sconosciuto in macchina sua è una richiesta che si
+   * capisce da sola. È lo stesso principio del conto Stripe: si chiede
+   * quando la ragione è evidente, non prima.
+   *
+   * E vale per tutti e due i lati — chi sale non deve riconoscere una
+   * silhouette al buio, e chi guida nemmeno.
+   */
+  if (!profilo.foto_url) {
+    throw new ErroreCorsa('foto',
+      'metti una tua foto prima di pubblicare: chi sale deve riconoscerti al punto di ritrovo')
   }
   if (SMS_DISPONIBILE && !profilo.telefono_ok) {
     throw new ErroreCorsa('telefono', 'verifica il tuo numero prima di pubblicare')

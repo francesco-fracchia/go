@@ -157,9 +157,16 @@ export async function prenota(req: RichiestaPrenotazione) {
 
   const { data: profiloPag } = await db
     .from('profili')
-    .select('stripe_cliente_id, metodo_pagamento')
+    .select('stripe_cliente_id, metodo_pagamento, foto_url')
     .eq('id', req.passeggeroId)
     .single()
+
+  // Vale nei due sensi: chi guida sta facendo salire in macchina sua una
+  // persona che non ha mai visto, e ha diritto di sapere che faccia ha.
+  if (!profiloPag?.foto_url) {
+    throw new ErrorePrenotazione('foto',
+      'metti una tua foto prima di prenotare: chi guida deve sapere chi fa salire')
+  }
   const metodo = profiloPag?.stripe_cliente_id && profiloPag.metodo_pagamento
     ? { cliente: profiloPag.stripe_cliente_id, metodo: profiloPag.metodo_pagamento }
     : null

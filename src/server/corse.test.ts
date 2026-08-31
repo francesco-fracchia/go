@@ -92,3 +92,22 @@ test('chi ha già dichiarato non deve rispuntare ogni volta', async () => {
   const esito = await pubblicaCorsa(richiesta(undefined))
   assert.ok(esito.corsa.id)
 })
+
+/**
+ * La foto è un requisito per pubblicare, non per iscriversi.
+ *
+ * Chiederla alla registrazione fa abbandonare chi sta solo guardando;
+ * chiederla per far salire uno sconosciuto in macchina propria è una
+ * richiesta che si capisce da sola. Il test sta qui perché il confine fra i
+ * due momenti è una decisione di prodotto, e le decisioni di prodotto si
+ * rompono in silenzio quando qualcuno «semplifica» un controllo.
+ */
+test('senza foto non si pubblica', async () => {
+  await azzera()
+  await db.from('profili').update({ foto_url: null }).eq('id', IO)
+  await assert.rejects(
+    () => pubblicaCorsa(richiesta(true)),
+    (e: Error) => /foto/.test(e.message),
+  )
+  await db.from('profili').update({ foto_url: '/dimostrazione/francesco.jpg' }).eq('id', IO)
+})
