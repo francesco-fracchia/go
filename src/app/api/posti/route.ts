@@ -27,7 +27,20 @@ export async function GET(req: Request) {
      * quelli che verranno dopo. Ci mette qualche secondo e succede una
      * volta sola: dopo, il registro dice che è fatta e nessuno riprova.
      */
-    if (posti.length === 0) {
+    /**
+     * L'importazione si tenta solo sulla ricerca SENZA filtro.
+     *
+     * «Nessun aeroporto qui intorno» è una risposta vera, non il sintomo di
+     * una zona mai importata: ma il codice guardava solo il numero di
+     * risultati, e su ogni categoria vuota ripartiva con l'interrogazione a
+     * Overpass — decine di secondi, per riottenere zero. Chi cambiava
+     * filtro vedeva «un attimo…» all'infinito, e cambiando di nuovo ne
+     * lanciava un'altra.
+     *
+     * Senza categoria, invece, zero risultati vuol dire davvero che qui non
+     * c'è niente, ed è l'unico caso in cui vale la pena guardare.
+     */
+    if (posti.length === 0 && !filtri.categoria) {
       const importati = await assicuraZona(posizione.lat, posizione.lng).catch(() => null)
       if (importati !== null && importati > 0) posti = await postiVicini(filtri)
     }

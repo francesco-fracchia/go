@@ -64,6 +64,20 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
   const [mappaAperta, setMappaAperta] = useState(false)
   const [salvaCome, setSalvaCome] = useState(false)
   const [salvato, setSalvato] = useState(false)
+  const [etichettaLibera, setEtichettaLibera] = useState('')
+
+  /** Salvare un posto con il nome che gli dai tu. */
+  async function salva(etichetta: string, tipo: 'casa' | 'lavoro' | 'altro') {
+    if (!valore) return
+    await fetch('/api/preferiti', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        etichetta, indirizzo: valore.etichetta,
+        lat: valore.lat, lng: valore.lng, tipo,
+      }),
+    })
+    setSalvato(true); setSalvaCome(false); setEtichettaLibera('')
+  }
 
   /**
    * A campo vuoto e appena toccato si mostrano i luoghi salvati.
@@ -207,45 +221,53 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
         già salvato — offrirlo su un posto che si conosce già è rumore.
       */}
       {valore && valore.fonte !== 'salvato' && !salvato && (
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center', paddingTop: 6 }}>
+        <div className="salvataggio">
           {salvaCome ? (
             <>
-              <span style={{ fontSize: 13, color: 'var(--tenue)' }}>Salva come</span>
-              {([['casa', 'Casa'], ['lavoro', 'Lavoro']] as const).map(([tipo, nome]) => (
-                <button key={tipo} type="button"
-                  onClick={async () => {
-                    await fetch('/api/preferiti', {
-                      method: 'POST', headers: { 'content-type': 'application/json' },
-                      body: JSON.stringify({
-                        etichetta: nome, indirizzo: valore.etichetta,
-                        lat: valore.lat, lng: valore.lng, tipo,
-                      }),
-                    })
-                    setSalvato(true); setSalvaCome(false)
+              <span className="salvataggio-invito">Salva come</span>
+              <div className="salvataggio-scelte">
+                <button type="button" className="etichetta-pronta"
+                  onClick={() => void salva('Casa', 'casa')}>Casa</button>
+                <button type="button" className="etichetta-pronta"
+                  onClick={() => void salva('Lavoro', 'lavoro')}>Lavoro</button>
+                {/*
+                  Un nome proprio, non solo i due predefiniti.
+                  «Casa» e «lavoro» coprono due posti; tutti gli altri —
+                  la palestra, casa di mia madre, il campo — non hanno un
+                  nome fra quelli, e senza un nome che riconosci un luogo
+                  salvato è un indirizzo in un elenco di indirizzi.
+                */}
+                <input
+                  className="etichetta-nuova"
+                  value={etichettaLibera}
+                  onChange={(e) => setEtichettaLibera(e.target.value.slice(0, 24))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && etichettaLibera.trim()) {
+                      e.preventDefault()
+                      void salva(etichettaLibera.trim(), 'altro')
+                    }
                   }}
-                  style={{
-                    background: 'none', border: 'none', color: 'var(--accento)',
-                    fontSize: 13, fontWeight: 600, padding: '2px 0',
-                  }}>{nome}</button>
-              ))}
-              <button type="button" onClick={() => setSalvaCome(false)}
-                style={{
-                  background: 'none', border: 'none', color: 'var(--tenue)',
-                  fontSize: 13, padding: '2px 0', marginLeft: 'auto',
-                }}>no</button>
+                  placeholder="oppure scrivi un nome"
+                  aria-label="Nome del posto" />
+                {etichettaLibera.trim() && (
+                  <button type="button" className="etichetta-pronta etichetta-conferma"
+                    onClick={() => void salva(etichettaLibera.trim(), 'altro')}>
+                    Salva
+                  </button>
+                )}
+              </div>
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => setSalvaCome(false)}>no</button>
             </>
           ) : (
-            <button type="button" onClick={() => setSalvaCome(true)}
-              style={{
-                background: 'none', border: 'none', color: 'var(--tenue)',
-                fontSize: 13, padding: '2px 0',
-              }}>★ Salva questo posto</button>
+            <button type="button" className="collegamento-piccolo"
+              onClick={() => setSalvaCome(true)}>★ Salva questo posto</button>
           )}
         </div>
       )}
 
       {salvato && (
-        <p style={{ fontSize: 13, color: 'var(--verde)', margin: '6px 0 0', paddingLeft: 2 }}>
+        <p className="salvataggio-fatto">
           Salvato. Lo trovi al primo tocco, la prossima volta.
         </p>
       )}

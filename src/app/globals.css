@@ -2301,3 +2301,36 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .foto-titolo { margin: 0; font-size: 16.5px; font-weight: 600; letter-spacing: -.02em; }
 .foto-testo { margin: var(--s2) 0 0; font-size: 14px; line-height: 1.55; color: var(--inchiostro-2); max-width: 52ch; }
+
+/* ── L'elenco che sta arrivando ──
+   Resta dov'è e si spegne: sostituirlo con una riga di testo fa perdere il
+   riferimento di dove si era, e a ogni cambio di filtro sembra di
+   ricominciare da capo. */
+.elenco-in-arrivo { opacity: .45; pointer-events: none; transition: opacity .14s ease; }
+.posto-finto {
+  height: 108px; border-radius: var(--r-l);
+  background: var(--carta); border: 1px solid var(--riga);
+  animation: respira 1.4s ease-in-out infinite;
+}
+
+/* ── Salvare un posto, con il nome che gli dai tu ── */
+.salvataggio {
+  display: flex; align-items: center; gap: var(--s3);
+  flex-wrap: wrap; padding-top: 7px;
+}
+.salvataggio-invito { font-size: 13px; color: var(--tenue); }
+.salvataggio-scelte { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.etichetta-pronta {
+  border: 1px solid var(--riga); background: var(--carta); color: var(--inchiostro);
+  border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600;
+  transition: border-color .13s ease, background .13s ease;
+}
+.etichetta-pronta:hover { border-color: var(--inchiostro); }
+.etichetta-conferma { background: var(--inchiostro); border-color: transparent; color: var(--carta); }
+.etichetta-nuova {
+  width: 158px; padding: 6px 12px; border-radius: 999px;
+  border: 1px dashed var(--riga); background: transparent;
+  font-family: var(--testo); font-size: 13px; color: var(--inchiostro); outline: none;
+}
+.etichetta-nuova:focus { border-style: solid; border-color: var(--accento); }
+.salvataggio-fatto { margin: 7px 0 0; font-size: 13px; color: var(--verde); }

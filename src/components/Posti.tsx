@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Categoria, Posto } from '../server/posti.ts'
 import type { Modo } from '../server/modo.ts'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
@@ -71,6 +71,16 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
   const [categoria, setCategoria] = useState<Categoria | 'tutte'>(categoriaIniziale ?? 'tutte')
   const [posti, setPosti] = useState(iniziali)
   const [caricando, setCaricando] = useState(false)
+  /**
+   * L'ultima richiesta vince, e le precedenti si annullano.
+   *
+   * Cambiando filtro in fretta partivano più chiamate insieme: quella che
+   * tornava per ultima riscriveva l'elenco, che poteva essere di un filtro
+   * che nel frattempo era già stato cambiato — e la spia «un attimo…» si
+   * spegneva sulla risposta di una richiesta vecchia mentre un'altra era
+   * ancora in volo.
+   */
+  const richiesta = useRef<AbortController | null>(null)
   const [vicino, setVicino] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const [importando, setImportando] = useState(false)
@@ -107,15 +117,28 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
   const [posizione, setPosizione] = useState<{ lat: number; lng: number } | null>(null)
 
   async function carica(c: Categoria | 'tutte', p = posizione) {
-    setCaricando(true)
+    richiesta.current?.abort()
+    const mia = new AbortController()
+    richiesta.current = mia
+
+    setCaricando(true); setProblema(null)
     try {
       const q = new URLSearchParams()
       if (c !== 'tutte') q.set('categoria', c)
       if (p) { q.set('lat', String(p.lat)); q.set('lng', String(p.lng)) }
-      const r = await fetch(`/api/posti?${q}`)
+      const r = await fetch(`/api/posti?${q}`, { signal: mia.signal })
       const d = await r.json()
+      if (richiesta.current !== mia) return
       setPosti(d.posti ?? [])
-    } finally { setCaricando(false) }
+    } catch (e) {
+      // Una richiesta annullata non è un guasto: è stata sostituita.
+      if ((e as Error).name === 'AbortError') return
+      setProblema('Non riusciamo a leggere i posti adesso. Riprova fra un momento.')
+    } finally {
+      // Solo l'ultima spegne la spia: se lo facesse anche una vecchia,
+      // l'elenco sembrerebbe pronto mentre sta ancora arrivando.
+      if (richiesta.current === mia) setCaricando(false)
+    }
   }
 
   async function cambia(c: Categoria | 'tutte') {
@@ -174,12 +197,25 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
     }
 
     setCaricando(true)
+    /**
+     * Il browser può non richiamare mai: se il permesso resta lì senza
+     * risposta, o se la richiesta viene ingoiata dal contesto, né il
+     * successo né l'errore arrivano — e la spia resta accesa per sempre.
+     * È il «un attimo…» che non finiva più.
+     */
+    const scaduto = setTimeout(() => {
+      setCaricando(false)
+      setProblema('Non abbiamo avuto risposta. Cerca il posto qui sopra.')
+    }, 12_000)
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        clearTimeout(scaduto)
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setPosizione(p); setVicino(true); setAltrove(null); carica(categoria, p)
       },
       (e) => {
+        clearTimeout(scaduto)
         setCaricando(false)
         if (e.code === e.PERMISSION_DENIED) {
           // Se prima del tentativo il permesso NON era negato e adesso lo è,
@@ -254,7 +290,7 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
           ))}
         </div>
 
-        {caricando && <p className="t-nota">Un attimo…</p>}
+
 
         {/* Mentre si guarda si dice cosa si sta facendo, non «caricamento»:
             la prima apertura di una zona nuova ci mette qualche secondo, e
@@ -268,16 +304,32 @@ export function Posti({ iniziali, categoriaIniziale, modo = 'passeggero', mappa 
 
         {!caricando && !importando && posti.length === 0 && (
           <div className="vuoto">
-            <h2 className="t-sezione">Qui intorno non abbiamo trovato niente</h2>
+            <h2 className="t-sezione">
+              {categoria === 'tutte'
+                ? 'Qui intorno non abbiamo trovato niente'
+                : `Nessun posto di questo tipo qui intorno`}
+            </h2>
             <p className="vuoto-testo" style={{ marginTop: 'var(--s3)' }}>
-              Prova a spostarti con «usa la mia posizione», oppure cerca
-              direttamente per indirizzo.
+              {categoria === 'tutte'
+                ? 'Prova a spostarti con «usa la mia posizione», oppure cerca il posto qui sopra.'
+                : 'Prova un’altra categoria, oppure guarda intorno a un posto diverso.'}
             </p>
+            {categoria !== 'tutte' && (
+              <button type="button" className="azione azione-vuota azione-piccola"
+                style={{ marginTop: 'var(--s5)' }}
+                onClick={() => cambia('tutte')}>Mostra tutti</button>
+            )}
           </div>
         )}
 
-        <div className="griglia-elenco">
-          {posti.map((p) => <Carta key={p.id} p={p} modo={modo} />)}
+        {/* Mentre arriva la risposta l'elenco resta dov'è, spento.
+            Sostituirlo con una riga di testo fa perdere il riferimento di
+            dove si era, e a ogni cambio di filtro sembra di ricominciare. */}
+        <div className={caricando ? 'griglia-elenco elenco-in-arrivo' : 'griglia-elenco'}
+          aria-busy={caricando}>
+          {posti.length > 0
+            ? posti.map((p) => <Carta key={p.id} p={p} modo={modo} />)
+            : caricando && [0, 1, 2, 3, 4, 5].map((n) => <div key={n} className="posto-finto" />)}
         </div>
 
         {posti.length > 0 && (
