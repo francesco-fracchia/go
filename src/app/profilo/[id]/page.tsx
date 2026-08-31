@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { db } from '../../../server/db.ts'
 import { utenteCorrente } from '../../../server/auth.ts'
 import { distintivi } from '../../../server/profili.ts'
-import { recensioniDi } from '../../../server/recensioni.ts'
+import { recensioniDi, riassunto, abitudini } from '../../../server/recensioni.ts'
 import { codiceDi, quantiInvitati } from '../../../server/inviti.ts'
 import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
 
@@ -42,11 +42,21 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     documentoOk: p.stripe_pronto === true,
     veicoli: (p.veicoli ?? []) as unknown as DatiProfilo['veicoli'],
     invito: codice ? { codice, portati } : undefined,
+    /**
+     * Chi ha scritto non si nomina.
+     *
+     * «Bea» e «un passeggero» dicono la stessa cosa utile — da che parte
+     * stava chi parla — ma solo il primo dice anche chi si può andare a
+     * cercare. Anonima verso il pubblico, nota a noi.
+     */
     recensioni: recensioni.map((r) => ({
-      id: r.id, positiva: r.positiva, tag: r.tag ?? [], testo: r.testo,
-      autore: (r.autore as unknown as { nome: string } | null)?.nome ?? '',
+      id: r.id, positiva: r.positiva, tag: r.tag ?? [],
+      descrittori: r.descrittori ?? [], testo: r.testo,
+      autore: r.ruolo_autore === 'conducente' ? 'Chi guidava' : 'Un passeggero',
       quando: new Date(r.creata_il).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' }),
     })),
+    sintesi: riassunto(recensioni as Array<{ positiva: boolean; tag: string[] }>),
+    abitudini: abitudini(recensioni as Array<{ descrittori?: string[] | null }>),
   }
 
   return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>

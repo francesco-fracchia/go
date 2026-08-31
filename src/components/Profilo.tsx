@@ -36,9 +36,13 @@ export interface DatiProfilo {
   documentoOk: boolean
   veicoli: Array<{ marca: string; modello: string; colore: string | null }>
   recensioni: Array<{
-    id: string; positiva: boolean; tag: string[]; testo: string | null
-    autore: string; quando: string
+    id: string; positiva: boolean; tag: string[]; descrittori: string[]
+    testo: string | null; autore: string; quando: string
   }>
+  /** Il rapporto, solo quando ha abbastanza sotto per significare qualcosa. */
+  sintesi?: { mostra: boolean; totale: number; rifarebbero?: number; motivi?: string[] }
+  /** Cosa ricorre: non voti, aspettative. */
+  abitudini?: string[]
 }
 
 export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
@@ -84,6 +88,35 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                 <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>
                   Cosa dice chi ha viaggiato
                 </p>
+
+                {/* Il rapporto, e mai un negativo nudo.
+                    «1 non lo rifarebbe» senza altro fa immaginare la cosa
+                    peggiore, perché non c'è niente a cui attaccare quel
+                    numero. Il motivo accanto lo rende noioso, che è
+                    esattamente quello che serve. */}
+                {p.sintesi?.mostra && (
+                  <div className="sintesi">
+                    <p className="sintesi-forte">
+                      {p.sintesi.rifarebbero} su {p.sintesi.totale} ci rifarebbero un viaggio
+                    </p>
+                    {(p.sintesi.motivi?.length ?? 0) > 0 && (
+                      <p className="sintesi-nota">
+                        {p.sintesi.totale - (p.sintesi.rifarebbero ?? 0) === 1 ? 'L’unico no' : 'I no'}
+                        : {p.sintesi.motivi!.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {(p.abitudini?.length ?? 0) > 0 && (
+                  <div className="abitudini">
+                    <span className="abitudini-nome">Di solito</span>
+                    {p.abitudini!.map((a) => (
+                      <span key={a} className="abitudine">{a}</span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="pila-s">
                   {p.recensioni.map((r) => (
                     <div key={r.id} className="riquadro recensione">
@@ -95,6 +128,9 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                         <div className={r.positiva ? 'recensione-tag' : 'recensione-tag recensione-tag-no'}>
                           {r.tag.join(' · ')}
                         </div>
+                      )}
+                      {r.descrittori.length > 0 && (
+                        <div className="recensione-descrittori">{r.descrittori.join(' · ')}</div>
                       )}
                       {r.testo && <p className="recensione-testo">{r.testo}</p>}
                     </div>

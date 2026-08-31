@@ -17,29 +17,76 @@ import { Bottone, Etichetta } from './base.tsx'
  */
 
 /**
- * Le etichette gravi non sono qui, e non è una dimenticanza.
+ * Fatti, non virtù.
  *
- * «Aveva bevuto» e «guida spericolata» erano in questa lista, accanto a
- * «simpatico». Il problema non era la gravità: era che qui dentro
- * quell'informazione NON FA NIENTE. Un'etichetta è una decorazione su un
- * profilo — se uno ha davvero guidato ubriaco l'esito giusto non è una
- * parola accanto alla sua faccia, è che smetta di guidare.
+ * «Simpatico» giudicava una persona, non un viaggio: infalsificabile, chi
+ * lo riceve non può farci niente, e porta dentro tutti i pregiudizi
+ * possibili — è un aggettivo che si assegna in modo diverso a seconda del
+ * genere, dell'accento, dell'età. Era anche la cosa che metteva a disagio
+ * a compilarla, che è il motivo per cui quasi nessuno lascia recensioni.
  *
- * Le recensioni non hanno un'istruttoria, un esito né una sospensione. Le
- * segnalazioni sì, e in più non sono pubblicate, hanno un accusato che può
- * rispondere, e lasciano una traccia su chi le fa. Quelle tre cose sono
- * l'unica difesa contro l'accusa falsa, e un tag non ne ha nessuna.
- *
- * `non si è presentato` è uscito per un'altra ragione: non è né una
- * recensione né una segnalazione, è un fatto con conseguenze economiche
- * che GO registra da sé in `disdette.ts`.
+ * L'asse è cambiato: non «che persona è», ma «cosa deve aspettarsi il
+ * prossimo». Ogni voce qui è una cosa che chi c'era può confermare.
  */
-const TAG_BENE = ['puntuale', 'guida tranquilla', 'simpatico', 'auto pulita', 'flessibile']
-const TAG_MALE = ['in ritardo', 'scortese', 'l\u2019auto non era come descritta']
+const FATTI: Record<'conducente' | 'passeggero', { bene: string[]; male: string[] }> = {
+  // Cosa dico di CHI GUIDAVA, se sono salito.
+  conducente: {
+    bene: [
+      'è partito all\u2019ora che aveva detto',
+      'il punto di ritiro era quello concordato',
+      'l\u2019auto era come descritta',
+      'mi sono sentito a mio agio come guidava',
+    ],
+    male: [
+      'è partito in ritardo',
+      'ha cambiato il punto di ritiro',
+      'l\u2019auto non era come descritta',
+      'non mi sono sentito a mio agio come guidava',
+    ],
+  },
+  // Cosa dico di CHI È SALITO, se guidavo io.
+  passeggero: {
+    bene: [
+      'era al punto d\u2019incontro all\u2019ora',
+      'ha scritto quando è servito',
+      'il bagaglio era quello annunciato',
+      'ha lasciato l\u2019auto come l\u2019ha trovata',
+    ],
+    male: [
+      'ha fatto aspettare',
+      'non ha risposto ai messaggi',
+      'aveva più bagaglio di quanto detto',
+    ],
+  },
+}
 
-export function Recensione({ prenotazione, nome }: { prenotazione: string; nome: string }) {
+/**
+ * Descrizioni, non voti.
+ *
+ * Alcune cose non sono né buone né cattive: sono compatibilità. Trasformare
+ * «si è viaggiato in silenzio» in un voto renderebbe un introverso
+ * peggiore di un altro. Lasciarlo come fatto costruisce una cosa più utile
+ * di una reputazione — un'aspettativa: chi vuole dormire alle quattro di
+ * notte sa che è la macchina giusta.
+ *
+ * Perciò stanno in una colonna loro, non concorrono al positivo o
+ * negativo, e si mostrano solo quando RICORRONO.
+ */
+const DESCRITTORI: Array<{ nome: string; voci: string[] }> = [
+  { nome: 'In macchina', voci: ['si è chiacchierato', 'si è viaggiato in silenzio'] },
+  { nome: 'Musica', voci: ['musica alta', 'musica bassa', 'niente musica'] },
+  { nome: 'Il viaggio', voci: ['una sosta', 'filati dritti'] },
+]
+
+export function Recensione({ prenotazione, nome, ruolo }: {
+  prenotazione: string
+  nome: string
+  /** Chi sto recensendo: chi guidava, o chi è salito. Le domande cambiano. */
+  ruolo: 'conducente' | 'passeggero'
+}) {
   const [positiva, setPositiva] = useState<boolean | null>(null)
   const [tag, setTag] = useState<string[]>([])
+  const [descrittori, setDescrittori] = useState<string[]>([])
   const [testo, setTesto] = useState('')
   const [inviata, setInviata] = useState(false)
 
@@ -56,17 +103,27 @@ export function Recensione({ prenotazione, nome }: { prenotazione: string; nome:
     )
   }
 
-  const disponibili = positiva === null ? [] : positiva ? TAG_BENE : TAG_MALE
+  const disponibili = positiva === null ? []
+    : positiva ? FATTI[ruolo].bene : FATTI[ruolo].male
 
   return (
     <main className="schermo-stretto">
-      <h1 style={{ fontSize: 26, marginBottom: 22 }}>Com&apos;è andata con {nome}?</h1>
+      {/* La domanda che si fa a un amico, non a un modulo. E una sola
+          domanda di sintesi: niente stelle. Una media a cinque stelle su
+          una piattaforma di passaggi converge a 4,8 e smette di dire
+          qualsiasi cosa. */}
+      <h1 style={{ fontSize: 26, marginBottom: 8 }}>Com&apos;è andato il viaggio?</h1>
+      <p className="t-guida" style={{ marginBottom: 22 }}>
+        Con {nome}. Nessuno vede la tua finché non ha scritto anche
+        {ruolo === 'conducente' ? ' chi guidava' : ' chi è salito'}.
+      </p>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+      <Etichetta>rifaresti un viaggio con {nome}</Etichetta>
+      <div style={{ display: 'flex', gap: 10, margin: '10px 0 22px' }}>
         <Scelta attiva={positiva === true} onClick={() => { setPositiva(true); setTag([]) }}
-          testo="Bene" tono="verde" />
+          testo="Sì" tono="verde" />
         <Scelta attiva={positiva === false} onClick={() => { setPositiva(false); setTag([]) }}
-          testo="Male" tono="rosso" />
+          testo="No" tono="rosso" />
       </div>
 
       {positiva !== null && (
@@ -86,6 +143,36 @@ export function Recensione({ prenotazione, nome }: { prenotazione: string; nome:
                   }}>{t}</button>
               )
             })}
+          </div>
+
+          {/* Né bene né male: come è andata. */}
+          <Etichetta>com&apos;era il viaggio</Etichetta>
+          <div style={{ margin: '10px 0 22px', display: 'grid', gap: 12 }}>
+            {DESCRITTORI.map((gruppo) => (
+              <div key={gruppo.nome}>
+                <div style={{ fontSize: 12.5, color: 'var(--tenue)', marginBottom: 6 }}>
+                  {gruppo.nome}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {gruppo.voci.map((v) => {
+                    const preso = descrittori.includes(v)
+                    return (
+                      <button key={v} type="button"
+                        onClick={() => setDescrittori((d) => preso
+                          // Uno per gruppo: sono alternative, non un elenco.
+                          ? d.filter((x) => x !== v)
+                          : [...d.filter((x) => !gruppo.voci.includes(x)), v])}
+                        style={{
+                          fontSize: 14, padding: '9px 14px', borderRadius: 999,
+                          border: `1px solid ${preso ? 'var(--inchiostro)' : 'var(--riga)'}`,
+                          background: preso ? 'var(--superficie-2)' : 'var(--superficie)',
+                          color: 'var(--inchiostro)',
+                        }}>{v}</button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           <Etichetta>vuoi aggiungere qualcosa</Etichetta>
@@ -122,7 +209,7 @@ export function Recensione({ prenotazione, nome }: { prenotazione: string; nome:
           <Bottone onClick={async () => {
             await fetch('/api/recensioni', {
               method: 'POST', headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ prenotazione, positiva, tag, testo }),
+              body: JSON.stringify({ prenotazione, positiva, tag, descrittori, testo }),
             })
             setInviata(true)
           }}>Invia</Bottone>

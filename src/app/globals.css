@@ -2762,3 +2762,29 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   font-size: 13px; color: var(--tenue); text-decoration: none;
 }
 .disdetta-sicura:hover { color: var(--inchiostro-2); text-decoration: underline; }
+
+
+/* ── Il rapporto, e le abitudini ───────────────────────────────────── */
+.sintesi {
+  margin-bottom: var(--s4); padding: var(--s4) var(--s5);
+  border-radius: var(--r-m);
+  background: var(--superficie-2); border: 1px solid var(--riga);
+}
+.sintesi-forte { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+.sintesi-nota { margin: var(--s2) 0 0; font-size: 13.5px; color: var(--inchiostro-2); }
+
+/* Non sono voti: sono aspettative. Perciò non hanno un colore che dice
+   bene o male — hanno il grigio delle cose vere e basta. */
+.abitudini {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.abitudini-nome { font-size: 13px; color: var(--tenue); margin-right: 2px; }
+.abitudine {
+  font-size: 13px; padding: 4px 10px; border-radius: 999px;
+  background: var(--superficie-2); border: 1px solid var(--riga);
+  color: var(--inchiostro-2);
+}
+.recensione-descrittori {
+  margin-top: var(--s2); font-size: 13px; color: var(--tenue);
+}

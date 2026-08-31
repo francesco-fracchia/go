@@ -14,10 +14,10 @@ const MESSAGGI: Record<string, string> = {
 export async function POST(req: Request) {
   try {
     const utente = await richiediUtente()
-    const { prenotazione, positiva, tag, testo } = await req.json()
+    const { prenotazione, positiva, tag, descrittori, testo } = await req.json()
     const r = await lasciaRecensione({
       prenotazioneId: prenotazione, autoreId: utente,
-      positiva: !!positiva, tag, testo,
+      positiva: !!positiva, tag, descrittori, testo,
     })
     return json(
       r.esito === 'ok'

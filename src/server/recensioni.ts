@@ -24,6 +24,8 @@ export async function lasciaRecensione(opts: {
   autoreId: string
   positiva: boolean
   tag?: string[]
+  /** Come è andata, senza giudizio. Non concorre al positivo o negativo. */
+  descrittori?: string[]
   testo?: string
 }) {
   const { data: p } = await db
@@ -52,6 +54,7 @@ export async function lasciaRecensione(opts: {
     destinatario,
     positiva: opts.positiva,
     tag: opts.tag ?? [],
+    descrittori: opts.descrittori ?? [],
     testo,
     // Senza testo non c'è niente da moderare: il giudizio secco pubblica
     // subito. Con testo, si aspetta.
@@ -100,15 +103,81 @@ export async function modera(recensioneId: string, approvata: boolean) {
 }
 
 /** Le recensioni pubbliche di una persona. */
+/**
+ * Le recensioni che si possono mostrare.
+ *
+ * Si legge dalla vista, non dalla tabella: è lì che vive la regola del
+ * doppio cieco — niente si vede finché non hanno scritto tutti e due o
+ * finché non scade la finestra. Leggere dalla tabella significherebbe
+ * riscrivere quella regola in un secondo posto, e due copie di una regola
+ * divergono sempre.
+ *
+ * E non si chiede il nome di chi ha scritto. Anonima verso il pubblico,
+ * nota a noi: chi la riceve legge «un passeggero, agosto», noi sappiamo
+ * esattamente chi. Il sollievo di non sentirsi giudicati in faccia, senza
+ * creare un'arma senza impronte.
+ */
 export async function recensioniDi(utenteId: string, limite = 20) {
   const { data } = await db
-    .from('recensioni')
-    .select('id, positiva, tag, testo, creata_il, autore:profili!recensioni_autore_fkey(nome, foto_url)')
+    .from('recensioni_visibili')
+    .select('id, positiva, tag, descrittori, testo, creata_il, ruolo_autore')
     .eq('destinatario', utenteId)
-    .eq('moderazione', 'pubblicata')
     .order('creata_il', { ascending: false })
     .limit(limite)
   return data ?? []
+}
+
+/** Quante ne mancano prima che un rapporto voglia dire qualcosa. */
+export const MINIMO_PER_RAPPORTO = 5
+
+/**
+ * Il riassunto, e quando NON darlo.
+ *
+ * Con tre viaggi una recensione negativa vale il trentatré per cento e non
+ * significa niente. E un numero che il lettore non può interpretare è
+ * peggio di nessun numero: «13 su 14» senza altro fa immaginare la cosa
+ * peggiore, perché non c'è niente a cui attaccare quel «1».
+ *
+ * Perciò due regole. Sotto la soglia non si dà nessun rapporto. Sopra, il
+ * negativo non compare mai nudo: siccome la recensione è strutturata, chi
+ * dice «non lo rifarei» ha spuntato almeno un fatto, e quel fatto si
+ * mostra accanto. Un no spiegato spaventa molto meno di un no muto.
+ */
+export function riassunto(recensioni: Array<{ positiva: boolean; tag: string[] }>) {
+  const totale = recensioni.length
+  if (totale < MINIMO_PER_RAPPORTO) return { mostra: false as const, totale }
+
+  const negative = recensioni.filter((r) => !r.positiva)
+  const motivi = [...new Set(negative.flatMap((r) => r.tag))]
+  return {
+    mostra: true as const,
+    totale,
+    rifarebbero: totale - negative.length,
+    motivi,
+  }
+}
+
+/**
+ * Cosa aspettarsi da un viaggio con questa persona.
+ *
+ * I descrittori non sono voti, quindi non si sommano né si mediano: si
+ * guarda cosa RICORRE. Una cosa detta una volta è un caso, detta dalla
+ * metà delle persone è un'aspettativa — ed è quella l'informazione utile
+ * a chi deve decidere se salire.
+ */
+export function abitudini(
+  recensioni: Array<{ descrittori?: string[] | null }>, minimo = 2,
+): string[] {
+  const conta = new Map<string, number>()
+  for (const r of recensioni) {
+    for (const d of r.descrittori ?? []) conta.set(d, (conta.get(d) ?? 0) + 1)
+  }
+  const soglia = Math.max(minimo, Math.ceil(recensioni.length / 2))
+  return [...conta.entries()]
+    .filter(([, n]) => n >= soglia)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([d]) => d)
 }
 
 /**

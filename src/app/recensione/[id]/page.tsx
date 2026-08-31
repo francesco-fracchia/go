@@ -15,9 +15,13 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   if (!p) notFound()
 
   const c = p.corse as unknown as { conducente: string; profili: { nome: string } | null }
-  const altro = p.passeggero === utente
+  const sonoPasseggero = p.passeggero === utente
+  const altro = sonoPasseggero
     ? c.profili?.nome
     : (await db.from('profili').select('nome').eq('id', p.passeggero).single()).data?.nome
 
-  return <Recensione prenotazione={id} nome={altro ?? 'chi hai viaggiato'} />
+  // Le domande sono diverse nei due sensi: a chi guidava si chiede
+  // dell'orario e della guida, a chi sale del bagaglio e dell'attesa.
+  return <Recensione prenotazione={id} nome={altro ?? 'chi hai viaggiato'}
+    ruolo={sonoPasseggero ? 'conducente' : 'passeggero'} />
 }
