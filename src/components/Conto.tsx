@@ -41,7 +41,19 @@ export function Conto({ c }: { c: DatiConto }) {
       const r = await fetch('/api/conto', { method: 'POST' })
       const d = await r.json()
       if (!r.ok || !d.url) {
-        setErrore(d.errore ?? 'Non riusciamo ad aprire l’iscrizione adesso.')
+        /**
+         * Il dettaglio conta più del messaggio.
+         *
+         * Quando Stripe rifiuta, spiega PERCHÉ — e la sua spiegazione è
+         * spesso un'istruzione precisa («abilita il supporto Accounts v1
+         * nel pannello»). Mostrare solo «qualcosa è andato storto» butta
+         * via quell'istruzione e lascia a cercare nel posto sbagliato: è
+         * costato mezza giornata a credere che il difetto fosse nelle
+         * chiavi. Va via prima di aprire le iscrizioni, come il gemello
+         * in _risposta.ts.
+         */
+        setErrore([d.errore, d.dettaglio].filter(Boolean).join(' — ')
+          || 'Non riusciamo ad aprire l’iscrizione adesso.')
         setAttesa(false); return
       }
       window.location.href = d.url

@@ -29,6 +29,8 @@ export interface CorsaMia {
   rientroCent: number | null
   stato: string
   daFare?: string
+  /** Se l'ora di partenza è passata. Cambia le parole, non solo l'ordine. */
+  partita?: boolean
 }
 
 export interface ChiCerca {
@@ -58,6 +60,8 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
   cose?: Cosa[]
 }) {
   const daFare = corse.filter((c) => c.daFare)
+  const inProgramma = corse.filter((c) => !c.partita)
+  const partite = corse.filter((c) => c.partita)
 
   return (
     <>
@@ -130,15 +134,35 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
           </section>
         )}
 
-        {/* ── Le corse pubblicate ── */}
-        {corse.length > 0 && (
+        {/* ── Le corse pubblicate ──
+            Divise, perché sono due domande diverse. Su una corsa che deve
+            ancora partire ci si chiede «si riempirà?»; su una già partita
+            «chi è salito?». Tenerle nella stessa fila costringeva a
+            leggere l'ora di ogni carta per sapere quale delle due stavi
+            guardando — e faceva dire «ancora nessuno» a un viaggio finito,
+            dove non c'è più nessun «ancora». */}
+        {inProgramma.length > 0 && (
           <section className="casa-sezione">
             <div className="fila-fra" style={{ marginBottom: 'var(--s4)' }}>
-              <p className="occhiello">Le tue corse</p>
+              <p className="occhiello">In programma</p>
               <a href="/viaggi" className="casa-tutti">Tutte <SegnoAvanti dimensione={15} /></a>
             </div>
             <div className="griglia-elenco">
-              {corse.slice(0, 6).map((c) => <CartaCorsa key={c.id} c={c} />)}
+              {inProgramma.slice(0, 6).map((c) => <CartaCorsa key={c.id} c={c} />)}
+            </div>
+          </section>
+        )}
+
+        {partite.length > 0 && (
+          <section className="casa-sezione">
+            <div className="fila-fra" style={{ marginBottom: 'var(--s4)' }}>
+              <p className="occhiello">Già partite</p>
+              {inProgramma.length === 0 && (
+                <a href="/viaggi" className="casa-tutti">Tutte <SegnoAvanti dimensione={15} /></a>
+              )}
+            </div>
+            <div className="griglia-elenco">
+              {partite.slice(0, 4).map((c) => <CartaCorsa key={c.id} c={c} />)}
             </div>
           </section>
         )}
@@ -205,22 +229,32 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }
 function CartaCorsa({ c }: { c: CorsaMia }) {
   const liberi = c.postiOfferti - c.postiPresi
   return (
-    <a href={`/corsa/${c.id}`} className="corsa-carta carta-tocco">
+    <a href={`/corsa/${c.id}`}
+      className={`corsa-carta carta-tocco${c.partita ? ' corsa-partita' : ''}`}>
       <div className="fila-fra">
         <span className="corsa-quando">{c.quando}</span>
+        {/* Su una corsa partita i posti liberi non sono più un'offerta:
+            annunciare «3 posti» su un viaggio già cominciato invita a una
+            cosa che non si può più fare. */}
         {c.richieste > 0
           ? <span className="pastiglia pastiglia-viola">{c.richieste} da guardare</span>
-          : liberi === 0
-            ? <span className="pastiglia pastiglia-verde">piena</span>
-            : <span className="pastiglia">{liberi} {liberi === 1 ? 'posto' : 'posti'}</span>}
+          : c.partita
+            ? <span className="pastiglia pastiglia-quieta">partita</span>
+            : liberi === 0
+              ? <span className="pastiglia pastiglia-verde">piena</span>
+              : <span className="pastiglia">{liberi} {liberi === 1 ? 'posto' : 'posti'}</span>}
       </div>
       <div className="corsa-dove">{c.destinazione}</div>
       <div className="corsa-da">da {c.origine}</div>
       <div className="corsa-piede">
         <span className="corsa-persone">
+          {/* «Ancora» è una parola che guarda avanti: su un viaggio finito
+              non descrive niente. Lì il vuoto è un esito, non un'attesa. */}
           {c.postiPresi === 0
-            ? 'ancora nessuno'
-            : `${c.postiPresi} ${c.postiPresi === 1 ? 'persona' : 'persone'} a bordo`}
+            ? c.partita ? 'non è salito nessuno' : 'ancora nessuno'
+            : c.partita
+              ? `${c.postiPresi === 1 ? 'è salita una persona' : `sono salite ${c.postiPresi} persone`}`
+              : `${c.postiPresi} ${c.postiPresi === 1 ? 'persona' : 'persone'} a bordo`}
         </span>
         {c.rientroCent !== null && (
           <span className="corsa-rientro">

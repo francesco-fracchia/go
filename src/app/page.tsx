@@ -146,6 +146,13 @@ async function guidatore(utente: string) {
       richieste,
       rientroCent: rientro(c, aBordo.length),
       stato: c.stato,
+      /**
+       * L'elenco tiene le corse fino a tre ore DOPO la partenza — serve,
+       * perché è la finestra in cui si conferma chi è salito. Ma da quel
+       * momento la corsa non è più una promessa: è un fatto, e va detta
+       * con altre parole e in un'altra fila.
+       */
+      partita: minuti <= 0,
       daFare: richieste > 0
         ? `${richieste} ${richieste === 1 ? 'richiesta' : 'richieste'} da guardare`
         : c.stato === 'pubblicata' && minuti <= 180 && minuti > 0 && aBordo.length > 0

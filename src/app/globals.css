@@ -439,14 +439,14 @@ img, svg { max-width: 100%; }
               background .16s ease, border-color .16s ease;
 }
 .azione-piena { background: var(--accento); color: var(--su-accento); }
-.azione-piena:hover { background: var(--accento-vivo); transform: translateY(-1px); box-shadow: 0 8px 22px var(--marchio-alone); }
+.azione-piena:hover { background: var(--accento-vivo); box-shadow: 0 6px 18px var(--marchio-alone); }
 .azione-piena:active { transform: translateY(0); box-shadow: none; }
 .azione-vuota { background: var(--carta); color: var(--inchiostro); border-color: var(--riga); }
-.azione-vuota:hover { border-color: var(--inchiostro-2); transform: translateY(-1px); }
+.azione-vuota:hover { border-color: var(--inchiostro-2); background: var(--superficie-2); }
 .azione-scura { background: var(--inchiostro); color: var(--carta); }
-.azione-scura:hover { transform: translateY(-1px); }
+.azione-scura:hover { background: var(--inchiostro-2); }
 .azione-chiara { background: #FFFFFF; color: #0A0A12; }
-.azione-chiara:hover { transform: translateY(-1px); }
+.azione-chiara:hover { background: var(--superficie-2); }
 .azione-piccola { min-height: 42px; padding: 0 18px; font-size: 14.5px; }
 .azione:focus-visible { outline: 2px solid var(--accento); outline-offset: 3px; }
 
@@ -540,7 +540,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   padding: var(--s5);
 }
 .carta-tocco { transition: border-color .14s ease, transform .14s ease, box-shadow .18s ease; }
-.carta-tocco:hover { border-color: var(--accento-riga); transform: translateY(-2px); box-shadow: var(--ombra); }
+.carta-tocco:hover { border-color: var(--accento-riga); box-shadow: var(--ombra); }
 
 .pastiglia {
   display: inline-flex; align-items: center; gap: 5px;
@@ -928,7 +928,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   text-decoration: none; color: var(--inchiostro);
   transition: transform .16s cubic-bezier(.22,.7,.25,1), box-shadow .2s ease, border-color .16s ease;
 }
-.strada:hover { transform: translateY(-3px); box-shadow: var(--ombra-alta); border-color: var(--accento-riga); }
+.strada:hover { box-shadow: var(--ombra); border-color: var(--accento-riga); }
 @media (min-width: 860px) { .strada { padding: var(--s7); min-height: 260px; } }
 
 .strada-situazione {
@@ -1083,7 +1083,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   text-decoration: none; color: var(--inchiostro);
   transition: transform .14s ease;
 }
-.prossimo:hover { transform: translateY(-2px); }
+.prossimo:hover { border-color: var(--accento-riga); }
 .prossimo-dove { font-size: 21px; font-weight: 600; letter-spacing: -.03em; margin-top: 6px; }
 .prossimo-quando { font-size: 14.5px; color: var(--inchiostro-2); margin-top: 2px; }
 .prossimo-dafare {
@@ -1112,7 +1112,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   text-decoration: none; color: var(--inchiostro);
   transition: border-color .14s ease, transform .14s ease;
 }
-.posto-gettone:hover { border-color: var(--accento); transform: translateY(-2px); }
+.posto-gettone:hover { border-color: var(--accento); background: var(--accento-velo); }
 .posto-nome { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; }
 .posto-sotto { font-size: 13px; color: var(--tenue); }
 
@@ -1125,7 +1125,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   text-decoration: none; color: var(--inchiostro);
   transition: border-color .14s ease, transform .14s ease;
 }
-.invito:hover { border-color: var(--accento-riga); transform: translateY(-2px); }
+.invito:hover { border-color: var(--accento-riga); background: var(--carta); }
 .invito-forte { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.025em; }
 .invito-debole {
   display: block; margin-top: 5px; font-size: 14px;
@@ -1331,7 +1331,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   text-decoration: none; color: var(--inchiostro);
   transition: transform .14s ease;
 }
-.decisione-uscita:hover { transform: translateY(-2px); }
+.decisione-uscita:hover { border-color: var(--accento-riga); }
 
 .foglio-ricerca { max-width: 640px; }
 @media (min-width: 900px) { .foglio-ricerca { width: min(680px, calc(100vw - 80px)); } }
@@ -1761,7 +1761,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   background: var(--carta); border: 1px solid var(--riga); color: var(--inchiostro);
   transition: border-color .14s ease, transform .14s ease, box-shadow .18s ease;
 }
-.ruolo:hover { border-color: var(--accento); transform: translateY(-2px); box-shadow: var(--ombra); }
+.ruolo:hover { border-color: var(--accento); box-shadow: var(--ombra); }
 .ruolo-segno {
   flex-shrink: 0; display: grid; place-items: center;
   width: 48px; height: 48px; border-radius: var(--r-m);
@@ -2072,9 +2072,14 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
    principale della schermata, e sedersi sul confine lo dice senza doverlo
    scrivere. Su telefono no — lì lo spazio è poco e la sovrapposizione
    diventa solo un margine negativo che stringe. */
+/* Il pannello NON sta a cavallo del bordo.
+   Ci stava, sporgendo di otto pixel sopra la riga della testata: una
+   sporgenza così corta non si legge come «questo galleggia sopra», si
+   legge come «questo è disallineato». O l'accavallamento è netto, o non
+   c'è. Qui non c'è: il pannello comincia dopo la testata, con aria
+   sufficiente a dire che è un'altra cosa. */
 .ricerca-sospesa { margin-top: 0; }
 @media (min-width: 860px) {
-  .ricerca-sospesa { margin-top: calc(var(--s7) * -1 - var(--s2)); }
   .testata + .fascia > .dentro { padding-top: var(--s7); }
 }
 
@@ -2413,7 +2418,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   background: var(--carta); color: var(--inchiostro); text-decoration: none;
   transition: transform .14s ease, box-shadow .18s ease, border-color .14s ease;
 }
-.scelta-grande:hover { transform: translateY(-2px); box-shadow: var(--ombra); border-color: var(--inchiostro-2); }
+.scelta-grande:hover { box-shadow: var(--ombra); border-color: var(--inchiostro-2); }
 .scelta-grande-titolo {
   display: flex; align-items: center; gap: 9px;
   font-size: 16px; font-weight: 600; letter-spacing: -.02em;
@@ -2450,12 +2455,12 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
               background .18s ease, border-color .18s ease;
 }
 .azione svg { transition: transform .24s var(--molla); }
-.azione-piena:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--marchio-alone); }
+.azione-piena:hover { box-shadow: 0 6px 18px var(--marchio-alone); }
 .azione-piena:hover svg { transform: translateX(3px); }
 .azione-piena:active { transform: translateY(0) scale(.985); box-shadow: none; }
-.azione-vuota:hover { transform: translateY(-2px); border-color: var(--inchiostro); box-shadow: var(--ombra); }
+.azione-vuota:hover { border-color: var(--inchiostro); }
 .azione-vuota:active { transform: translateY(0) scale(.985); }
-.azione-scura:hover, .azione-chiara:hover { transform: translateY(-2px); box-shadow: var(--ombra-alta); }
+.azione-scura:hover, .azione-chiara:hover { box-shadow: var(--ombra); }
 
 /* ── Le carte ── */
 .carta-tocco, .strada, .posto-gettone, .ruolo, .prossimo, .invito,
@@ -2467,7 +2472,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .prossimo:hover, .invito:hover, .decisione-uscita:hover {
   transform: translateY(-3px); box-shadow: var(--ombra-alta);
 }
-.strada:hover { transform: translateY(-4px); box-shadow: var(--ombra-alta); }
+.strada:hover { box-shadow: var(--ombra); }
 
 /* ── Le righe di elenco: la freccia va dove porta la riga ── */
 .riga, .posto-principale, .sospeso, .voce-elenco, .cerca-riga {
@@ -2493,7 +2498,7 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 /* ── Le pastiglie: il segno si anima, non la pastiglia ── */
 .categoria { transition: border-color .16s ease, background .16s ease, color .16s ease, transform .18s var(--molla); }
 .categoria svg { transition: transform .24s var(--molla); }
-.categoria:hover { transform: translateY(-1px); }
+.categoria:hover { background: var(--accento-velo); }
 .categoria:hover svg { transform: scale(1.12) rotate(-4deg); }
 
 .scelta, .ora, .giorno, .posto-numero, .opzione, .etichetta-pronta {
@@ -2501,7 +2506,16 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
               border-color .16s ease, color .16s ease;
 }
 .scelta:hover, .ora:not(.ora-passata):hover, .giorno:hover,
-.posto-numero:hover, .etichetta-pronta:hover { transform: translateY(-2px); }
+.posto-numero:hover, .etichetta-pronta:hover { border-color: var(--accento); }
+
+/* ─── Una corsa che è già partita ──────────────────────────────────────
+   Resta in elenco per tre ore, il tempo di confermare chi è salito, ma non
+   è più un annuncio: non deve competere per l'attenzione con le corse che
+   devono ancora partire. Si ritira di un passo — non si nasconde. */
+.corsa-partita { background: var(--superficie-2); border-color: transparent; }
+.corsa-partita .corsa-dove { color: var(--inchiostro-2); }
+.corsa-partita:hover { border-color: var(--riga); box-shadow: none; }
+.pastiglia-quieta { background: transparent; border: 1px solid var(--riga); color: var(--tenue); }
 .opzione:hover { transform: translateX(2px); }
 
 /* ── I collegamenti: il tratto cresce da sinistra ── */
