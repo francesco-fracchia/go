@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Marchio } from './Marchio.tsx'
+import { Marchio, MarchioEsteso } from './Marchio.tsx'
 import { Bottone } from './base.tsx'
 
 /**
@@ -111,10 +111,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
   return (
     <main className="ingresso">
       <div className="ingresso-parola solo-scrivania">
-        <Marchio variante="nudo" dimensione={38} />
-        <p className="t-titolo ingresso-promessa">
-          Se vai comunque,<br /><em className="viola">vai insieme.</em>
-        </p>
+        <MarchioEsteso dimensione={44} id="ingresso" />
         <p className="t-guida" style={{ maxWidth: '30ch' }}>
           Qualcuno sta già facendo la tua strada. Dividete le spese del
           viaggio, e basta.

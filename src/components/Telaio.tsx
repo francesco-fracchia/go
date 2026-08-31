@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Marchio } from './Marchio.tsx'
+import { Marchio, MarchioEsteso } from './Marchio.tsx'
 import { Interruttore } from './Modo.tsx'
 import { SegnoCerca, SegnoGuida, SegnoPosti, SegnoViaggi, SegnoTu, SegnoPiu } from './segni.tsx'
 import type { Modo } from '../server/modo.ts'
@@ -135,10 +135,7 @@ function Piede() {
   return (
     <footer className="piede">
       <div className="dentro piede-dentro">
-        <div className="piede-marca">
-          <Marchio dimensione={26} />
-        </div>
-        <p className="piede-claim">Se vai comunque, vai insieme.</p>
+        <MarchioEsteso dimensione={30} id="piede" />
         <nav className="piede-voci" aria-label="Informazioni">
           <a href="/come-funziona">Come funziona</a>
           <a href="/aiuto">Domande</a>

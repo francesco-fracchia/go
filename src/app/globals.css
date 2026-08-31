@@ -46,6 +46,11 @@
   --accento-riga: #D8D0FF;
   --su-accento:   #FFFFFF;
   --marchio-alone: rgba(79,53,245,.28);
+  /* La sfumatura del marchio: violetto a sinistra, indaco a destra. Il
+     capo destro è l'accento dell'interfaccia, così il segno e i comandi
+     non sembrano di due marche diverse. */
+  --marchio-a:    #8148F2;
+  --marchio-b:    #4F35F5;
 
   --verde:      #0C7A50;
   --verde-velo: #E7F5EF;
@@ -121,6 +126,8 @@
     --accento-riga: #332C59;
     --su-accento:   #0A0A0F;
     --marchio-alone: rgba(138,120,255,.32);
+    --marchio-a:    #A98CFF;
+    --marchio-b:    #8A78FF;
     --verde:      #4ED69C; --verde-velo: #10261C;
     --rosso:      #FF7365; --rosso-velo: #2A1614;
     --ambra:      #E8B44A; --ambra-velo: #2A2213;
@@ -148,6 +155,8 @@
   --accento-riga: #332C59;
   --su-accento:   #0A0A0F;
   --marchio-alone: rgba(138,120,255,.32);
+  --marchio-a:    #A98CFF;
+  --marchio-b:    #8A78FF;
   --verde:      #4ED69C; --verde-velo: #10261C;
   --rosso:      #FF7365; --rosso-velo: #2A1614;
   --ambra:      #E8B44A; --ambra-velo: #2A2213;
@@ -1066,12 +1075,11 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 
 /* ── Il piede della vetrina ── */
 .piede { border-top: 1px solid var(--riga); padding: var(--s7) 0 var(--s8); }
-.piede-dentro { display: grid; gap: var(--s4); }
+.piede-dentro { display: grid; gap: var(--s5); }
 @media (min-width: 760px) {
-  .piede-dentro { grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s6); }
+  .piede-dentro { grid-template-columns: auto 1fr; align-items: center; gap: var(--s7); }
+  .piede-voci { justify-self: end; }
 }
-.piede-marca { display: flex; align-items: center; }
-.piede-claim { margin: 0; font-size: 14.5px; color: var(--tenue); }
 .piede-voci { display: flex; flex-wrap: wrap; gap: var(--s4); }
 .piede-voci a { font-size: 14px; color: var(--inchiostro-2); text-decoration: none; }
 .piede-voci a:hover { color: var(--accento); }
@@ -1601,3 +1609,14 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   padding: var(--s6); border-radius: var(--r-xl);
   background: var(--accento-velo); border: 1px solid var(--accento-riga);
 }
+
+/* ── Il marchio con il claim ──
+   Il blocco che si usa quando GO si presenta come marca. Il punto finale è
+   dell'accento: è mezzo carattere, ed è quello che distingue una firma da
+   una didascalia. */
+.lockup { display: grid; gap: var(--s4); justify-items: start; }
+.lockup-claim {
+  margin: 0; font-size: clamp(1rem, 1.4vw, 1.15rem); font-weight: 500;
+  letter-spacing: -.022em; color: var(--inchiostro);
+}
+.lockup-punto { font-style: normal; color: var(--accento); }

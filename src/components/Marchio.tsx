@@ -15,19 +15,36 @@
  * questo segno. Per questo non esiste una versione a solo testo.
  */
 
-export function Marchio({ dimensione = 34, variante = 'quadrato' }: {
+export function Marchio({ dimensione = 34, variante = 'quadrato', id = 'go' }: {
   dimensione?: number
   /**
    * `quadrato` — il segno dentro il riquadro, per barre e icone.
    * `nudo` — le sole lettere, per quando c'è già una superficie sotto.
    */
   variante?: 'quadrato' | 'nudo'
+  /**
+   * Serve solo se due marchi nudi finiscono nella stessa pagina: la
+   * sfumatura è un elemento con un identificativo, e due identici si
+   * pestano i piedi.
+   */
+  id?: string
 }) {
   if (variante === 'nudo') {
+    const sfumatura = `${id}-sfumatura`
     return (
       <svg width={dimensione * 1.82} height={dimensione} viewBox="0 0 219 120"
         role="img" aria-label="GO" style={{ display: 'block' }}>
-        <Lettere colore="var(--accento)" />
+        <defs>
+          {/* Violetto a sinistra, indaco a destra: la stessa direzione in
+              cui si legge, e la stessa in cui si va. Vive solo qui, sul
+              segno grande — a trenta pixel una sfumatura non si vede e
+              costa un blocco di definizioni per niente. */}
+          <linearGradient id={sfumatura} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="var(--marchio-a)" />
+            <stop offset="1" stopColor="var(--marchio-b)" />
+          </linearGradient>
+        </defs>
+        <Lettere colore={`url(#${sfumatura})`} />
       </svg>
     )
   }
@@ -44,6 +61,28 @@ export function Marchio({ dimensione = 34, variante = 'quadrato' }: {
 }
 
 /**
+ * Il marchio con il claim sotto: il blocco che si usa quando GO si presenta
+ * come marca — l'ingresso, il piede — e non come etichetta di chi ospita la
+ * pagina.
+ *
+ * Il punto finale è dell'accento e il resto è inchiostro. È un dettaglio da
+ * mezzo carattere, ed è quello che distingue una firma da una didascalia:
+ * la frase finisce, e il colore dice di chi è.
+ */
+export function MarchioEsteso({ dimensione = 40, id = 'go' }: {
+  dimensione?: number; id?: string
+}) {
+  return (
+    <div className="lockup">
+      <Marchio variante="nudo" dimensione={dimensione} id={id} />
+      <p className="lockup-claim">
+        Se vai comunque, vai insieme<em className="lockup-punto">.</em>
+      </p>
+    </div>
+  )
+}
+
+/**
  * Le due lettere, su una griglia 210×120.
  *
  * Sono disegnate come tratti spessi e non come forme piene: così lo
@@ -54,14 +93,24 @@ function Lettere({ colore }: { colore: string }) {
   const s = 21   // spessore del tratto
   return (
     <g fill="none" stroke={colore} strokeWidth={s}>
-      {/* G: anello aperto in diagonale sulla destra */}
-      <path d="M 90.6 70.4 A 40 40 0 1 1 81.7 33.2" strokeLinecap="butt" />
-      {/* la barra della G: parte dal centro e arriva al bordo esterno.
-          È lei a chiudere il taglio, e la sua lunghezza è quello che
-          distingue una G da una C con un trattino accanto. */}
-      <path d="M 58 60 H 92" strokeLinecap="butt" />
-      {/* O: anello chiuso */}
-      <circle cx="158" cy="60" r="40" />
+      {/* G: anello aperto in diagonale sulla destra.
+          L'anello riprende a 12°, non a quindici: il taglio è radiale, e
+          perché sparisca sotto la barra il suo punto più esterno deve
+          cadere esattamente sul bordo inferiore della barra. Tre gradi più
+          in là lasciavano una scheggia bianca fra le due forme — invisibile
+          in barra, evidente su un volantino. */}
+      <path d="M 91.1 68.3 A 40 40 0 1 1 81.7 33.2" strokeLinecap="butt" />
+      {/* la barra della G: parte dal centro e arriva A FILO del bordo
+          esterno — 102.5 è il raggio esterno, non 92. È lei a chiudere il
+          taglio, e la sua lunghezza è quello che distingue una G da una C
+          con un trattino accanto: ferma dentro l'anello si legge come un
+          nodo, portata fuori diventa la barra della G. */}
+      <path d="M 58 60 H 102.5" strokeLinecap="butt" />
+      {/* O: anello chiuso.
+          Il vuoto fra le due lettere è il 13% della loro larghezza. Prima
+          era il 4: si toccavano quasi, e a dimensione piccola la G e la O
+          si leggevano come un segno solo invece che come due lettere. */}
+      <circle cx="166" cy="60" r="40" />
     </g>
   )
 }

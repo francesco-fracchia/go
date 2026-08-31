@@ -42,17 +42,18 @@ def dentro_squadro(x, y, lato, raggio):
 
 def dentro_segno(mx, my):
     """Vero se il punto, in coordinate del marchio, sta dentro le lettere."""
-    # G: anello aperto fra -42° e 15°
+    # G: anello aperto fra -42° e 12.0° — l'estremo basso è dove la barra
+    # copre esattamente il taglio radiale, non un grado più in là.
     d = math.hypot(mx - 52, my - 60)
     if 29.5 <= d <= 50.5:
         ang = math.degrees(math.atan2(my - 60, mx - 52))
-        if not (-42 <= ang <= 15):
+        if not (-42 <= ang <= 12.0):
             return True
     # la barra della G
-    if 58 <= mx <= 92 and abs(my - 60) <= 10.5:
+    if 58 <= mx <= 102.5 and abs(my - 60) <= 10.5:
         return True
     # O: anello chiuso
-    return 29.5 <= math.hypot(mx - 158, my - 60) <= 50.5
+    return 29.5 <= math.hypot(mx - 166, my - 60) <= 50.5
 
 def genera(percorso, n, fondo, segno, mascherabile=False):
     N = n * SUPER
@@ -99,3 +100,48 @@ genera('public/apple-touch-icon.png', 180, VIOLA, BIANCO)
 # Il distintivo delle notifiche viene mostrato monocromo: si disegna scuro
 # su trasparente, che è come Android lo vuole.
 genera('public/badge.png', 96, NERO, BIANCO)
+
+
+def png_rettangolare(percorso, larghezza, altezza, pixel):
+    """Come png(), ma non quadrato: il marchio disteso è largo il doppio."""
+    grezzo = b''.join(
+        b'\x00' + bytes(v for x in range(larghezza) for v in pixel[y * larghezza + x])
+        for y in range(altezza)
+    )
+    def blocco(tipo, dati):
+        c = tipo + dati
+        return struct.pack('>I', len(dati)) + c + struct.pack('>I', zlib.crc32(c))
+    with open(percorso, 'wb') as f:
+        f.write(b'\x89PNG\r\n\x1a\n')
+        f.write(blocco(b'IHDR', struct.pack('>IIBBBBB', larghezza, altezza, 8, 6, 0, 0, 0)))
+        f.write(blocco(b'IDAT', zlib.compress(grezzo, 9)))
+        f.write(blocco(b'IEND', b''))
+
+
+def orizzontale(percorso, altezza, segno):
+    """Il marchio disteso, senza riquadro: per la firma di una mail, un
+    volantino, la carta intestata di una convenzione. Fondo trasparente,
+    così si appoggia dove serve."""
+    larghezza = round(altezza * 219 / 120)
+    pixel = []
+    for y in range(altezza):
+        for x in range(larghezza):
+            copertura = 0
+            for sy in range(SUPER):
+                for sx in range(SUPER):
+                    mx = (x + (sx + 0.5) / SUPER) / larghezza * 219
+                    my = (y + (sy + 0.5) / SUPER) / altezza * 120
+                    if dentro_segno(mx, my):
+                        copertura += 1
+            a = round(255 * copertura / (SUPER * SUPER))
+            pixel.append((segno[0], segno[1], segno[2], a))
+    png_rettangolare(percorso, larghezza, altezza, pixel)
+    print(f'  {percorso}  {larghezza}×{altezza}')
+
+
+import os
+os.makedirs('public/marchio', exist_ok=True)
+print('marchio disteso:')
+orizzontale('public/marchio/go-viola.png', 120, VIOLA)
+orizzontale('public/marchio/go-viola-grande.png', 320, VIOLA)
+orizzontale('public/marchio/go-bianco.png', 120, BIANCO)
