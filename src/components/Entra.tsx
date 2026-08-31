@@ -25,6 +25,45 @@ import { SegnoAvanti } from './segni.tsx'
 
 type Schermata = 'entra' | 'registra' | 'codice' | 'codiceEntra' | 'dimenticata' | 'mandata'
 
+/**
+ * Tradurre l'errore, invece di coprirlo.
+ *
+ * «Non siamo riusciti a registrarti. Controlla l'indirizzo.» è stato
+ * scritto pensando che l'unica cosa che può andare storta sia un indirizzo
+ * sbagliato. Non è così: la registrazione fallisce anche quando la posta
+ * non parte, e in quel caso il messaggio manda a controllare una cosa che
+ * è giusta mentre il problema è da un'altra parte. Chi legge riscrive
+ * l'indirizzo tre volte e poi se ne va.
+ *
+ * Ogni causa che sappiamo riconoscere ha la sua frase, e dice cosa fare.
+ * Quelle che non sappiamo riconoscere le mostriamo così come sono: finché
+ * GO non è aperto al pubblico, chi legge questa schermata è chi lo sta
+ * costruendo.
+ */
+function spiega(messaggio: string): string {
+  const m = messaggio.toLowerCase()
+
+  if (m.includes('already') || m.includes('registered')) {
+    return 'Questo indirizzo è già registrato. Prova a entrare.'
+  }
+  if (m.includes('confirmation email') || m.includes('sending')) {
+    return 'Non riusciamo a mandare la mail di conferma: è un problema nostro, non del tuo indirizzo. Riprova fra qualche minuto.'
+  }
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'Abbiamo mandato troppe mail in poco tempo. Aspetta qualche minuto e riprova.'
+  }
+  if (m.includes('password') && (m.includes('weak') || m.includes('short') || m.includes('least'))) {
+    return 'Questa password è troppo debole: mettine una più lunga.'
+  }
+  if (m.includes('invalid') && m.includes('email')) {
+    return 'Questo indirizzo non sembra valido.'
+  }
+  if (m.includes('signups') || m.includes('disabled')) {
+    return 'Le registrazioni sono chiuse in questo momento.'
+  }
+  return `Non è andata: ${messaggio}`
+}
+
 const GOOGLE = process.env.NEXT_PUBLIC_OAUTH_GOOGLE === '1'
 const APPLE = process.env.NEXT_PUBLIC_OAUTH_APPLE === '1'
 
@@ -76,7 +115,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     setAttesa(false)
     if (error) {
       setErrore(error.message.toLowerCase().includes('email not confirmed')
-        ? 'Devi ancora confermare l’indirizzo. Ti rimandiamo un codice?'
+        ? 'Devi ancora confermare l’indirizzo. Fatti mandare un codice qui sotto.'
         : 'Email o password non corrispondono.')
       return
     }
@@ -93,12 +132,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       options: { data: { nome: nome.trim(), cognome: cognome.trim() } },
     })
     setAttesa(false)
-    if (error) {
-      setErrore(error.message.toLowerCase().includes('already')
-        ? 'Questo indirizzo è già registrato. Prova a entrare.'
-        : 'Non siamo riusciti a registrarti. Controlla l’indirizzo.')
-      return
-    }
+    if (error) { setErrore(spiega(error.message)); return }
     // Se il progetto non pretende la conferma, la sessione c'è già e si va
     // avanti. Altrimenti si passa dal codice — una volta sola, adesso.
     if (data.session) { await creaProfilo(); return }
@@ -149,7 +183,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       email: email(), options: { shouldCreateUser: false },
     })
     setAttesa(false)
-    if (error) { setErrore('Non siamo riusciti a mandare il codice. Controlla l’indirizzo.'); return }
+    if (error) { setErrore(spiega(error.message)); return }
     setSchermata('codiceEntra')
   }
 
@@ -179,7 +213,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       redirectTo: `${window.location.origin}/reimposta`,
     })
     setAttesa(false)
-    if (error) { setErrore('Non siamo riusciti a mandare la mail.'); return }
+    if (error) { setErrore(spiega(error.message)); return }
     setSchermata('mandata')
   }
 
