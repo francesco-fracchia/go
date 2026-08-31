@@ -652,9 +652,19 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 
 .conversazione { display: flex; flex-direction: column; min-height: 100dvh; }
 .conversazione-testa {
-  padding: var(--s3) var(--s5); border-bottom: 1px solid var(--riga);
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-bottom: 1px solid var(--riga);
   background: var(--superficie); position: sticky; top: 0; z-index: 2;
 }
+/* Il bersaglio è largo quarantaquattro pixel anche se la freccia ne occupa
+   venti: è il primo gesto che si fa con una mano sola, spesso al buio. */
+.conversazione-indietro {
+  flex-shrink: 0; display: grid; place-items: center;
+  width: 44px; height: 44px; margin-left: calc(var(--s3) * -1);
+  border-radius: 50%; color: var(--inchiostro);
+  transition: background .16s ease;
+}
+.conversazione-indietro:hover { background: var(--superficie-2); }
 .conversazione-piede {
   position: sticky; bottom: 0; background: var(--superficie);
   border-top: 1px solid var(--riga);
@@ -1436,17 +1446,29 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
     position: sticky; bottom: calc(62px + env(safe-area-inset-bottom));
     z-index: 20;
   }
-  .scatola-prezzo {
+  /* La pillola vale solo dove è nata: la corsa vista da chi PRENOTA, dove
+     la scatola contiene tre cose corte e un pulsante. La stessa classe
+     sulla corsa vista da chi GUIDA contiene un paragrafo, un divisorio, il
+     conteggio dei posti e un'azione: schiacciati in un contenitore con
+     raggio 999px diventano un blob ovale con il testo a capo ogni due
+     parole, sovrapposto all'elenco dei passeggeri.
+
+     `.scatola-distesa` è la stessa scatola che resta una carta normale. */
+  .scatola-prezzo:not(.scatola-distesa) {
     display: flex; align-items: center; gap: var(--s4);
     padding: var(--s3) var(--s4);
     box-shadow: var(--ombra-alta); border-radius: 999px;
   }
-  .scatola-prezzo > .fila-fra { display: block; flex-shrink: 0; }
-  .scatola-prezzo .occhiello { display: none; }
-  .prezzo-grande { font-size: 26px; margin-top: 0; }
+  .scatola-prezzo:not(.scatola-distesa) > .fila-fra { display: block; flex-shrink: 0; }
+  .scatola-prezzo:not(.scatola-distesa) .occhiello { display: none; }
+  .scatola-prezzo:not(.scatola-distesa) .prezzo-grande { font-size: 26px; margin-top: 0; }
   .prezzo-posti, .prezzo-confronto { display: none; }
-  .scatola-prezzo > div:nth-child(3) { flex-grow: 1; margin-top: 0 !important; }
-  .scomposizione { display: none; }
+  .scatola-prezzo:not(.scatola-distesa) > div:nth-child(3) { flex-grow: 1; margin-top: 0 !important; }
+  .scatola-prezzo:not(.scatola-distesa) .scomposizione { display: none; }
+
+  /* Chi guida non ha un'azione da tenere sotto il pollice: la sua scatola
+     è un resoconto, e un resoconto si legge nel flusso della pagina. */
+  .colonna-azione:has(.scatola-distesa) { position: static; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

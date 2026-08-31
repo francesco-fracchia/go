@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { SegnoIndietro } from './segni.tsx'
 
 /**
  * La chat di una corsa.
@@ -24,11 +25,14 @@ export interface Messaggio {
 
 const PRONTE = ['Sono arrivato, dove sei?', 'Arrivo fra 5 minuti', 'Sto uscendo ora']
 
-export function Chat({ corsaId, mio, iniziali, titolo }: {
+export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
   corsaId: string
   mio: string
   iniziali: Messaggio[]
   titolo: string
+  /** Dove si torna chiudendo. Una chat a tutto schermo senza uscita è una
+      trappola: qui non c'è il telaio, quindi non c'è nessun'altra strada. */
+  ritorno: string
 }) {
   const [messaggi, setMessaggi] = useState(iniziali)
   const [testo, setTesto] = useState('')
@@ -72,10 +76,19 @@ export function Chat({ corsaId, mio, iniziali, titolo }: {
 
   return (
     <div className="conversazione">
+      {/* La chat prende tutto lo schermo apposta — una conversazione con
+          una barra sopra e le linguette sotto è una conversazione in una
+          feritoia. Ma senza telaio non c'è nessuna via d'uscita, e finora
+          non ce n'era nessuna: si restava dentro. */}
       <header className="conversazione-testa">
-        <div style={{ fontWeight: 600, fontSize: 16, fontFamily: 'var(--titoli)' }}>{titolo}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--tenue)' }}>
-          Vedono tutti quelli che salgono
+        <a href={ritorno} className="conversazione-indietro" aria-label="Torna alla corsa">
+          <SegnoIndietro />
+        </a>
+        <div className="cresci" style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 16, fontFamily: 'var(--titoli)' }}>{titolo}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--tenue)' }}>
+            Vedono tutti quelli che salgono
+          </div>
         </div>
       </header>
 

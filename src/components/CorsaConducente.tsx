@@ -228,7 +228,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           È la domanda che chi guida si fa ogni volta che apre la corsa:
           quanto mi resta addosso di quello che spendo. */}
       <aside className="colonna-azione">
-        <div className="scatola-prezzo">
+        <div className="scatola-prezzo scatola-distesa">
           <p className="occhiello">Ti resta a carico</p>
           <div className="numero prezzo-grande">{euro(restaACarico)}</div>
           <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>

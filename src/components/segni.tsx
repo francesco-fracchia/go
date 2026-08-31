@@ -52,6 +52,13 @@ export const SegnoViaggi = () => (
   </svg>
 )
 
+/** La freccia che torna indietro. */
+export const SegnoIndietro = () => (
+  <svg {...base}>
+    <path d="M15 5 8 12l7 7" />
+  </svg>
+)
+
 /** Una porta con la freccia che esce. */
 export const SegnoEsci = () => (
   <svg {...base}>

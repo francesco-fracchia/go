@@ -25,5 +25,5 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
 
   return <Chat corsaId={id} mio={utente} iniziali={iniziali}
-    titolo={`${corsa.destinazione_label} · ${ora}`} />
+    titolo={`${corsa.destinazione_label} · ${ora}`} ritorno={`/corsa/${id}`} />
 }
