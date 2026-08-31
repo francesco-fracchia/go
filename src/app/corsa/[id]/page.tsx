@@ -37,7 +37,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       posti_offerti, sconto_cent, politica, note, prenota_immediata, corsa_ritorno,
       accetta_deviazioni, deviazioni_ritiro, deviazioni_deposito, token_link,
       profili:conducente ( nome, foto_url, data_nascita ),
-      veicoli ( marca, modello, colore, fumo, animali, bagagli_grandi, centesimi_per_km ),
+      veicoli ( marca, modello, colore, fumo, animali, bagagli, centesimi_per_km ),
       fermate ( id, ordine, tipo, etichetta, ora_stimata, km_incrementali, geo )
     `)
     .eq('id', id)
@@ -187,7 +187,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     },
     veicolo: {
       marca: v.marca, modello: v.modello, colore: v.colore,
-      fumo: v.fumo, animali: v.animali, bagagliGrandi: v.bagagli_grandi,
+      fumo: v.fumo, animali: v.animali, bagagli: v.bagagli,
     },
   }
   // Se la carta è già salvata il pannello di prenotazione la mostra invece
@@ -211,7 +211,7 @@ const eta = (nascita: string) => {
 
 interface RigaVeicolo {
   marca: string; modello: string; colore: string | null
-  fumo: boolean; animali: boolean; bagagli_grandi: boolean
+  fumo: boolean; animali: boolean; bagagli: 'nessuno' | 'piccoli' | 'medi' | 'grandi'
   centesimi_per_km: number
 }
 interface RigaProfilo { nome: string; foto_url: string | null; data_nascita: string | null }

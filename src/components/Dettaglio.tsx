@@ -43,7 +43,18 @@ export interface DatiCorsa {
   }
   veicolo: {
     marca: string; modello: string; colore: string | null
-    fumo: boolean; animali: boolean; bagagliGrandi: boolean
+    fumo: boolean; animali: boolean
+    /**
+     * Quanto bagaglio ci sta, nelle parole in cui l'ha scelto chi guida.
+     *
+     * Era un sì/no, e la pagina chiedeva al database una colonna che una
+     * migrazione aveva sostituito da mesi: l'interrogazione veniva
+     * rifiutata, e il dettaglio di QUALUNQUE corsa rispondeva «pagina non
+     * trovata». Quattro gradi dicono anche una cosa in più — «solo borse
+     * piccole» e «il bagagliaio è pieno» non sono lo stesso viaggio per
+     * chi parte con un trolley.
+     */
+    bagagli: 'nessuno' | 'piccoli' | 'medi' | 'grandi'
   }
 }
 
@@ -136,7 +147,9 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
               <div className="preferenze">
                 <Preferenza attiva={c.veicolo.fumo} si="si fuma" no="non si fuma" />
                 <Preferenza attiva={c.veicolo.animali} si="animali ok" no="niente animali" />
-                <Preferenza attiva={c.veicolo.bagagliGrandi} si="bagagli grandi" no="solo borse piccole" />
+                <span className={c.veicolo.bagagli === 'nessuno' ? 'preferenza preferenza-no' : 'preferenza'}>
+                  {BAGAGLI[c.veicolo.bagagli]}
+                </span>
               </div>
             </section>
 
@@ -240,6 +253,13 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
       </div>
     </div>
   )
+}
+
+const BAGAGLI: Record<DatiCorsa['veicolo']['bagagli'], string> = {
+  nessuno: 'niente bagagli',
+  piccoli: 'solo borse piccole',
+  medi: 'una valigia a testa',
+  grandi: 'bagagli grandi',
 }
 
 function Preferenza({ attiva, si, no }: { attiva: boolean; si: string; no: string }) {
