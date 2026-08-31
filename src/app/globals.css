@@ -2710,3 +2710,55 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .voce-uscita { border-top: 1px solid var(--riga); margin-top: var(--s2); }
 .voce-uscita:hover { color: var(--rosso, #B4232A); }
 .voce-uscita:hover .voce-segno { color: var(--rosso, #B4232A); }
+
+
+/* ═══ Segnalare ════════════════════════════════════════════════════════ */
+
+.elenco-motivi { display: grid; gap: var(--s3); }
+.motivo {
+  display: block; text-align: left; width: 100%;
+  padding: var(--s4) var(--s5); border-radius: var(--r-m);
+  background: var(--carta); border: 1px solid var(--riga);
+  color: var(--inchiostro); cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+.motivo:hover { border-color: var(--accento-riga); }
+.motivo-scelto { border-color: var(--inchiostro); background: var(--superficie-2); }
+.motivo-titolo { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+.motivo-nota {
+  display: block; margin-top: 4px; font-size: 13.5px;
+  line-height: 1.5; color: var(--inchiostro-2);
+}
+
+/* La via d'uscita sta PRIMA della domanda, ed è la cosa più visibile
+   della schermata: chi arriva qui alle due di notte deve trovare per
+   prima la cosa che lo mette al sicuro, non un modulo da compilare. */
+.uscita-sicura {
+  margin-top: var(--s6); padding: var(--s5);
+  border-radius: var(--r-l);
+  background: var(--accento-velo); border: 1px solid var(--accento-riga);
+}
+
+/* Dalla recensione alla segnalazione: visibile, ma dichiaratamente un
+   altro posto — non un'etichetta in più. */
+.verso-segnalazione {
+  display: flex; align-items: center; gap: var(--s4);
+  margin: var(--s5) 0; padding: var(--s4) var(--s5);
+  border-radius: var(--r-m); border: 1px dashed var(--riga);
+  color: var(--inchiostro); text-decoration: none;
+  transition: border-color .16s ease, background .16s ease;
+}
+.verso-segnalazione:hover { border-color: var(--inchiostro-2); background: var(--superficie-2); }
+.verso-forte { display: block; font-size: 15px; font-weight: 600; }
+.verso-debole {
+  display: block; margin-top: 3px; font-size: 13px;
+  line-height: 1.5; color: var(--tenue);
+}
+
+/* La via d'uscita gratuita, sotto quella a pagamento. Deliberatamente
+   sobria: se gridasse, la userebbe chi vuole solo evitare la penale. */
+.disdetta-sicura {
+  display: block; margin-top: var(--s4); text-align: center;
+  font-size: 13px; color: var(--tenue); text-decoration: none;
+}
+.disdetta-sicura:hover { color: var(--inchiostro-2); text-decoration: underline; }

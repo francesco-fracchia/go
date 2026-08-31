@@ -29,6 +29,22 @@ export interface EsitoDisdetta {
 
 export async function disdiciPasseggero(
   prenotazioneId: string, passeggeroId: string,
+  opts: {
+    /**
+     * Scendere senza pagare niente.
+     *
+     * Vale solo quando la disdetta nasce da una segnalazione grave — chi
+     * guida ha bevuto, guida in modo pericoloso, si è comportato male. Una
+     * penale in quel momento è un pedaggio per mettersi in salvo, e chi
+     * ci pensa due volte prima di scendere per non perdere tre euro è
+     * esattamente la persona che non vogliamo far salire.
+     *
+     * Non lo decide il client: lo passa `segnalazioni.ts` dopo aver
+     * verificato che la segnalazione esista e che chi disdice sia chi ha
+     * segnalato.
+     */
+    senzaPenale?: boolean
+  } = {},
 ): Promise<EsitoDisdetta> {
   const { data: p } = await db
     .from('prenotazioni')
@@ -53,7 +69,9 @@ export async function disdiciPasseggero(
     fee: p.fee_cent,
     totale: p.totale_cent,
   })
-  const { alConducente, daCatturare } = penale
+  const { alConducente, daCatturare } = opts.senzaPenale
+    ? { alConducente: 0, daCatturare: 0 }
+    : penale
 
   if (p.stripe_payment_intent) {
     // Si cattura solo la penale e si lascia cadere il resto: l'autorizzazione
@@ -92,7 +110,7 @@ export async function disdiciPasseggero(
 
   return {
     ok: true,
-    rimborsatoCent: penale.rimborso,
+    rimborsatoCent: opts.senzaPenale ? p.totale_cent : penale.rimborso,
     trattenutoCent: daCatturare,
     messaggio: daCatturare === 0
       ? 'Disdetta senza costi.'

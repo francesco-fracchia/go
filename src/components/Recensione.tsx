@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { SegnoAvanti } from './segni.tsx'
 import { Bottone, Etichetta } from './base.tsx'
 
 /**
@@ -15,8 +16,26 @@ import { Bottone, Etichetta } from './base.tsx'
  * anche solo per due ore è un danno che non si ripara.
  */
 
+/**
+ * Le etichette gravi non sono qui, e non è una dimenticanza.
+ *
+ * «Aveva bevuto» e «guida spericolata» erano in questa lista, accanto a
+ * «simpatico». Il problema non era la gravità: era che qui dentro
+ * quell'informazione NON FA NIENTE. Un'etichetta è una decorazione su un
+ * profilo — se uno ha davvero guidato ubriaco l'esito giusto non è una
+ * parola accanto alla sua faccia, è che smetta di guidare.
+ *
+ * Le recensioni non hanno un'istruttoria, un esito né una sospensione. Le
+ * segnalazioni sì, e in più non sono pubblicate, hanno un accusato che può
+ * rispondere, e lasciano una traccia su chi le fa. Quelle tre cose sono
+ * l'unica difesa contro l'accusa falsa, e un tag non ne ha nessuna.
+ *
+ * `non si è presentato` è uscito per un'altra ragione: non è né una
+ * recensione né una segnalazione, è un fatto con conseguenze economiche
+ * che GO registra da sé in `disdette.ts`.
+ */
 const TAG_BENE = ['puntuale', 'guida tranquilla', 'simpatico', 'auto pulita', 'flessibile']
-const TAG_MALE = ['in ritardo', 'guida spericolata', 'non si è presentato', 'scortese', 'aveva bevuto']
+const TAG_MALE = ['in ritardo', 'scortese', 'l\u2019auto non era come descritta']
 
 export function Recensione({ prenotazione, nome }: { prenotazione: string; nome: string }) {
   const [positiva, setPositiva] = useState<boolean | null>(null)
@@ -85,6 +104,20 @@ export function Recensione({ prenotazione, nome }: { prenotazione: string; nome:
             Il commento lo leggiamo prima di pubblicarlo. Il giudizio, invece,
             vale subito.
           </p>
+
+          {/* La strada per le cose gravi è visibile ma separata, e lo dice
+              anche nel modo in cui è scritta: non è un'etichetta in più, è
+              un altro posto dove si va. */}
+          <a href={`/segnala/${prenotazione}`} className="verso-segnalazione">
+            <span className="cresci">
+              <span className="verso-forte">È successo qualcosa di grave?</span>
+              <span className="verso-debole">
+                Ha bevuto, guidava in modo pericoloso, si è comportato male.
+                Non è una recensione: la leggiamo noi, e può sospendere un account.
+              </span>
+            </span>
+            <SegnoAvanti dimensione={16} />
+          </a>
 
           <Bottone onClick={async () => {
             await fetch('/api/recensioni', {

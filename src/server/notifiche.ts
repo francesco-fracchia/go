@@ -19,6 +19,10 @@ export type Tipo =
   | 'rimatch_proposto' | 'in_arrivo' | 'proposta_ricevuta'
   | 'proposta_accettata' | 'proposta_rifiutata' | 'corsa_annullata'
   | 'pagamento_catturato' | 'recensione_invito' | 'liquidazione'
+  /* Una sospensione cautelare: chi la riceve deve saperlo subito, e deve
+     sapere che può rispondere. Un account che smette di funzionare senza
+     spiegazione è una porta chiusa senza campanello. */
+  | 'account_sospeso'
 
 /** I tipi che giustificano un SMS quando il push non basta. */
 const CRITICI: ReadonlySet<Tipo> = new Set<Tipo>([

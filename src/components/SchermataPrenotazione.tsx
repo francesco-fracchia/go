@@ -276,6 +276,14 @@ function Disdetta({ politica, minuti, prenotazione }: {
         {testo}
       </p>
       <Disdici prenotazione={prenotazione} gratuita={senzaCosti} />
+
+      {/* Sotto la disdetta normale, la strada per quando non è normale.
+          Sta qui perché è qui che uno guarda quando sta per non salire, e
+          la differenza fra le due è tutta nel prezzo: quella sopra costa
+          una penale, questa no. Chi ha paura non deve pagare per scendere. */}
+      <a href={`/segnala/${prenotazione}`} className="disdetta-sicura">
+        Ha bevuto, o qualcosa non va? Esci senza pagare
+      </a>
     </div>
   )
 }
