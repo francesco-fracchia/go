@@ -1,7 +1,7 @@
 import { Telaio } from '../components/Telaio.tsx'
 import { Racconto } from '../components/Racconto.tsx'
 import { CasaPasseggero, type ProssimoViaggio, type PostoVicino } from '../components/CasaPasseggero.tsx'
-import { CasaConducente, type CorsaMia, type ChiCerca } from '../components/CasaConducente.tsx'
+import { CasaConducente, type CorsaMia, type ChiCerca, type Cosa } from '../components/CasaConducente.tsx'
 import { guscio } from '../server/guscio.ts'
 import { db } from '../server/db.ts'
 import { statoMappa } from '../server/mappe.ts'
@@ -106,8 +106,8 @@ async function prossimaPrenotazione(utente: string): Promise<ProssimoViaggio | n
 /* ── Chi offre un posto ─────────────────────────────────────────────── */
 
 async function guidatore(utente: string) {
-  const [nome, { data: veicoli }, { data: mie }, { data: cercano }] = await Promise.all([
-    nomeDi(utente),
+  const [profilo, { data: veicoli }, { data: mie }, { data: cercano }] = await Promise.all([
+    profiloDi(utente),
     db.from('veicoli').select('id').eq('proprietario', utente).eq('attivo', true).limit(1),
     db.from('corse')
       .select(`id, stato, ora_partenza, origine_label, destinazione_label, km_base,
@@ -163,9 +163,32 @@ async function guidatore(utente: string) {
     flessibilitaMin: r.flessibilita_min,
   }))
 
+  const cose: Cosa[] = [
+    {
+      fatta: (veicoli ?? []).length > 0,
+      titolo: 'La tua auto',
+      testo: 'Serve per calcolare quanto costa un chilometro, e quindi la quota di chi sale.',
+      dove: '/veicoli/nuovo', azione: 'Aggiungi',
+    },
+    {
+      fatta: !!profilo?.telefono,
+      titolo: 'Un numero di telefono',
+      testo: 'Chi sale deve poterti chiamare. Il tuo numero non lo vede nessuno: la telefonata passa da un numero di appoggio.',
+      dove: '/impostazioni', azione: 'Aggiungi',
+    },
+    {
+      fatta: profilo?.stripe_pronto === true,
+      titolo: 'Un conto dove ricevere',
+      testo: profilo?.stripe_account_id
+        ? 'Hai cominciato e non hai finito: finché Stripe non verifica l’identità, gli accrediti restano fermi.'
+        : 'Puoi pubblicare anche senza, ma quello che incassi resta fermo finché non lo colleghi.',
+      dove: '/conto', azione: 'Collega',
+    },
+  ]
+
   return (
-    <CasaConducente nome={nome} corse={corse} chiCercano={chiCercano}
-      haVeicolo={(veicoli ?? []).length > 0} />
+    <CasaConducente nome={profilo?.nome ?? undefined} corse={corse} chiCercano={chiCercano}
+      haVeicolo={(veicoli ?? []).length > 0} cose={cose} />
   )
 }
 
@@ -197,6 +220,21 @@ async function nomeDi(utente: string): Promise<string | undefined> {
     const { data } = await db.from('profili').select('nome').eq('id', utente).maybeSingle()
     return data?.nome || undefined
   } catch { return undefined }
+}
+
+interface RigaProfilo {
+  nome: string | null; telefono: string | null
+  stripe_pronto: boolean | null; stripe_account_id: string | null
+}
+
+/** Il profilo di chi guida: nome, e le tre cose che servono per incassare. */
+async function profiloDi(utente: string): Promise<RigaProfilo | null> {
+  try {
+    const { data } = await db
+      .from('profili').select('nome, telefono, stripe_pronto, stripe_account_id')
+      .eq('id', utente).maybeSingle()
+    return (data as RigaProfilo | null) ?? null
+  } catch { return null }
 }
 
 interface RigaCorsa {

@@ -1,39 +1,40 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Marchio, MarchioEsteso } from './Marchio.tsx'
-import { Bottone } from './base.tsx'
+import { MarchioEsteso, Marchio } from './Marchio.tsx'
+import { SegnoAvanti } from './segni.tsx'
 
 /**
- * Entrare.
+ * Entrare, e registrarsi.
  *
- * Solo numero di telefono e un codice via SMS. Niente password: una password
- * in più è una password dimenticata in più, e su un'applicazione che si apre
- * quattro volte l'anno la dimenticheranno tutti.
+ * Prima si entrava SOLO con un codice via email: ogni volta aprire la posta,
+ * copiare sei cifre, tornare. Per un'applicazione che si apre alle due di
+ * notte con una mano sola è un pedaggio che si paga a ogni accesso, e i
+ * pedaggi ripetuti non si sopportano — si smette di usare la cosa.
  *
- * Il documento non lo chiediamo mai. Lo verifica Stripe, gratis, su chi
- * incassa — che è l'unico posto dove serve davvero.
+ * Adesso il codice si usa UNA volta, alla registrazione, per dimostrare che
+ * l'indirizzo è tuo. Dopo si entra con la password. Chi la dimentica ha due
+ * strade — reimpostarla, o farsi mandare di nuovo un codice — perché una
+ * password dimenticata alle due di notte non deve chiudere fuori nessuno.
+ *
+ * Google e Apple compaiono solo se sono configurati davvero. Un pulsante
+ * «continua con Google» che porta a una pagina d'errore è peggio di un
+ * pulsante che non c'è: la prima volta che uno lo tocca decide che
+ * l'applicazione è rotta.
  */
+
+type Schermata = 'entra' | 'registra' | 'codice' | 'dimenticata' | 'mandata'
+
+const GOOGLE = process.env.NEXT_PUBLIC_OAUTH_GOOGLE === '1'
+const APPLE = process.env.NEXT_PUBLIC_OAUTH_APPLE === '1'
+
 export function Entra({ ritorno = '/' }: { ritorno?: string }) {
-  /**
-   * Due strade per entrare, e la seconda non è un ripiego temporaneo.
-   *
-   * Il numero di telefono resta la strada giusta — è quello che serve alle
-   * chiamate mascherate, e chi viaggia con sconosciuti si fida di più di
-   * chi ha un numero verificato. Ma l'SMS costa e richiede un fornitore
-   * configurato, e finché non c'è nessuno può entrare affatto.
-   *
-   * L'email è l'altra strada: costa zero, funziona subito, e il numero lo
-   * si chiede comunque prima di pubblicare o prenotare — cioè nel momento
-   * in cui serve davvero, non all'ingresso.
-   */
-  const [via, setVia] = useState<'telefono' | 'email'>('email')
-  const [fase, setFase] = useState<'numero' | 'codice' | 'nome'>('numero')
-  const [telefono, setTelefono] = useState('')
+  const [schermata, setSchermata] = useState<Schermata>('entra')
   const [indirizzo, setIndirizzo] = useState('')
-  const [codice, setCodice] = useState('')
+  const [password, setPassword] = useState('')
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
+  const [codice, setCodice] = useState('')
   const [errore, setErrore] = useState<string | null>(null)
   const [attesa, setAttesa] = useState(false)
 
@@ -41,77 +42,109 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
    * Il client si costruisce al primo uso, non durante il disegno.
    *
    * Costruito nel corpo del componente esplode ovunque manchino le chiavi —
-   * in anteprima, nei test, in una build di prova — e porta giù l'intera
-   * pagina invece del solo modulo di accesso. Un componente non deve
-   * pretendere una connessione per essere disegnato.
+   * nei test, in una build di prova — e porta giù l'intera pagina invece
+   * del solo modulo di accesso.
    */
   const client = () => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
   )
 
-  const numeroPulito = () => {
-    const n = telefono.replace(/[\s.-]/g, '')
-    return n.startsWith('+') ? n : `+39${n}`
-  }
+  const email = () => indirizzo.trim().toLowerCase()
 
-  async function mandaCodice() {
-    setAttesa(true); setErrore(null)
-    const { error } = via === 'telefono'
-      ? await client().auth.signInWithOtp({ phone: numeroPulito() })
-      : await client().auth.signInWithOtp({
-          email: indirizzo.trim(),
-          options: { shouldCreateUser: true },
-        })
-    setAttesa(false)
-    if (error) {
-      setErrore(via === 'telefono'
-        ? 'Non siamo riusciti a mandare il codice. Controlla il numero.'
-        : 'Non siamo riusciti a mandare il codice. Controlla l’indirizzo.')
-      return
-    }
-    setFase('codice')
-  }
-
-  async function verifica() {
-    setAttesa(true); setErrore(null)
-    const { data, error } = via === 'telefono'
-      ? await client().auth.verifyOtp({ phone: numeroPulito(), token: codice, type: 'sms' })
-      : await client().auth.verifyOtp({ email: indirizzo.trim(), token: codice, type: 'email' })
-    setAttesa(false)
-    if (error || !data.user) { setErrore('Codice sbagliato o scaduto.'); return }
-
+  /** Dopo l'accesso: chi ha già un profilo va dove voleva andare. */
+  async function prosegui() {
     const r = await fetch('/api/profilo')
-    if (r.ok && (await r.json()).esiste) { window.location.href = ritorno; return }
-    setFase('nome')
+    const esiste = r.ok && (await r.json()).esiste
+    window.location.href = esiste ? ritorno : `/benvenuto?ritorno=${encodeURIComponent(ritorno)}`
   }
 
-  async function completa() {
+  async function conProvider(provider: 'google' | 'apple') {
+    setErrore(null)
+    const { error } = await client().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback?ritorno=${encodeURIComponent(ritorno)}` },
+    })
+    if (error) setErrore('Non siamo riusciti ad aprire l’accesso. Riprova.')
+  }
+
+  async function accedi() {
     setAttesa(true); setErrore(null)
-    const r = await fetch('/api/profilo', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nome, cognome,
-        // Entrando con l'email il numero non c'è, e non se ne inventa uno:
-        // lo si chiede prima di pubblicare o prenotare, dove serve davvero.
-        telefono: via === 'telefono' ? numeroPulito() : undefined,
-        email: via === 'email' ? indirizzo.trim() : undefined,
-      }),
+    const { error } = await client().auth.signInWithPassword({
+      email: email(), password,
     })
     setAttesa(false)
-    if (!r.ok) { setErrore((await r.json()).errore ?? 'Non è andata'); return }
-    window.location.href = ritorno
+    if (error) {
+      setErrore(error.message.toLowerCase().includes('email not confirmed')
+        ? 'Devi ancora confermare l’indirizzo. Ti rimandiamo un codice?'
+        : 'Email o password non corrispondono.')
+      return
+    }
+    await prosegui()
   }
 
-  /**
-   * Su uno schermo grande l'accesso non è un modulo sospeso nel bianco: da
-   * una parte c'è il marchio e la promessa — cioè il motivo per cui uno sta
-   * mettendo la propria email — dall'altra le due righe da compilare.
-   */
+  async function registra() {
+    if (password.length < 8) {
+      setErrore('La password deve essere di almeno otto caratteri.'); return
+    }
+    setAttesa(true); setErrore(null)
+    const { data, error } = await client().auth.signUp({
+      email: email(), password,
+      options: { data: { nome: nome.trim(), cognome: cognome.trim() } },
+    })
+    setAttesa(false)
+    if (error) {
+      setErrore(error.message.toLowerCase().includes('already')
+        ? 'Questo indirizzo è già registrato. Prova a entrare.'
+        : 'Non siamo riusciti a registrarti. Controlla l’indirizzo.')
+      return
+    }
+    // Se il progetto non pretende la conferma, la sessione c'è già e si va
+    // avanti. Altrimenti si passa dal codice — una volta sola, adesso.
+    if (data.session) { await creaProfilo(); return }
+    setSchermata('codice')
+  }
+
+  async function verificaCodice() {
+    setAttesa(true); setErrore(null)
+    const { data, error } = await client().auth.verifyOtp({
+      email: email(), token: codice.trim(), type: 'email',
+    })
+    setAttesa(false)
+    if (error || !data.user) { setErrore('Codice sbagliato o scaduto.'); return }
+    await creaProfilo()
+  }
+
+  async function creaProfilo() {
+    setAttesa(true)
+    const r = await fetch('/api/profilo', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ nome: nome.trim(), cognome: cognome.trim(), email: email() }),
+    })
+    setAttesa(false)
+    // Un profilo che esiste già non è un errore: vuol dire che si stava
+    // rientrando, non registrandosi.
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}))
+      if (d.codice !== 'esiste') { setErrore(d.errore ?? 'Non è andata'); return }
+    }
+    window.location.href = `/benvenuto?ritorno=${encodeURIComponent(ritorno)}`
+  }
+
+  async function reimposta() {
+    setAttesa(true); setErrore(null)
+    const { error } = await client().auth.resetPasswordForEmail(email(), {
+      redirectTo: `${window.location.origin}/auth/callback?vai=%2Freimposta`,
+    })
+    setAttesa(false)
+    if (error) { setErrore('Non siamo riusciti a mandare la mail.'); return }
+    setSchermata('mandata')
+  }
+
   return (
     <main className="ingresso">
       <div className="ingresso-parola solo-scrivania">
-        <MarchioEsteso dimensione={44} id="ingresso" />
+        <MarchioEsteso dimensione={52} id="ingresso" />
         <p className="t-guida" style={{ maxWidth: '30ch' }}>
           Qualcuno sta già facendo la tua strada. Dividete le spese del
           viaggio, e basta.
@@ -119,129 +152,201 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
       </div>
 
       <div className="ingresso-modulo">
-      <div className="solo-telefono" style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--s6)' }}>
-        <Marchio dimensione={48} />
+        <div className="solo-telefono ingresso-segno"><Marchio dimensione={48} /></div>
+
+        {schermata === 'entra' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Bentornato</h1>
+            <p className="ingresso-sotto">Entra con la tua email e la password.</p>
+
+            <Provider su={conProvider} />
+
+            <Campo etichetta="Email" tipo="email" valore={indirizzo} onChange={setIndirizzo}
+              segnaposto="nome@esempio.it" completa="email" />
+            <Campo etichetta="Password" tipo="password" valore={password} onChange={setPassword}
+              segnaposto="••••••••" completa="current-password" invio={accedi} />
+
+            {errore && <p className="errore">{errore}</p>}
+
+            <button type="button" className="azione azione-piena ingresso-invia"
+              aria-disabled={attesa || !indirizzo || !password} onClick={accedi}>
+              {attesa ? 'Un attimo…' : 'Entra'}
+            </button>
+
+            <div className="ingresso-sotto-azioni">
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => { setErrore(null); setSchermata('dimenticata') }}>
+                Non ricordo la password
+              </button>
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => { setErrore(null); setSchermata('registra') }}>
+                Non ho un account
+              </button>
+            </div>
+          </>
+        )}
+
+        {schermata === 'registra' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Crea il tuo account</h1>
+            <p className="ingresso-sotto">
+              Ci vuole meno di un minuto. Il codice te lo chiediamo una volta
+              sola, adesso.
+            </p>
+
+            <Provider su={conProvider} />
+
+            <div className="ingresso-coppia">
+              <Campo etichetta="Nome" valore={nome} onChange={setNome} segnaposto="Francesco" completa="given-name" />
+              <Campo etichetta="Cognome" valore={cognome} onChange={setCognome} segnaposto="Fracchia" completa="family-name" />
+            </div>
+            <Campo etichetta="Email" tipo="email" valore={indirizzo} onChange={setIndirizzo}
+              segnaposto="nome@esempio.it" completa="email" />
+            <Campo etichetta="Password" tipo="password" valore={password} onChange={setPassword}
+              segnaposto="almeno 8 caratteri" completa="new-password" invio={registra} />
+
+            {errore && <p className="errore">{errore}</p>}
+
+            <button type="button" className="azione azione-piena ingresso-invia"
+              aria-disabled={attesa || !nome || !cognome || !indirizzo || password.length < 8}
+              onClick={registra}>
+              {attesa ? 'Un attimo…' : 'Continua'}
+            </button>
+
+            <p className="ingresso-legale">
+              Registrandoti accetti le <a href="/legale/termini">condizioni d&apos;uso</a> e
+              hai letto <a href="/legale/privacy">come trattiamo i tuoi dati</a>.
+            </p>
+
+            <div className="ingresso-sotto-azioni">
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => { setErrore(null); setSchermata('entra') }}>
+                Ho già un account
+              </button>
+            </div>
+          </>
+        )}
+
+        {schermata === 'codice' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Controlla la posta</h1>
+            <p className="ingresso-sotto">
+              Abbiamo mandato un codice a <strong>{email()}</strong>. Serve solo
+              a dimostrare che l&apos;indirizzo è tuo: dopo entrerai con la
+              password.
+            </p>
+            <Campo etichetta="Codice" valore={codice} onChange={setCodice}
+              segnaposto="123456" completa="one-time-code" mono invio={verificaCodice} />
+
+            {errore && <p className="errore">{errore}</p>}
+
+            <button type="button" className="azione azione-piena ingresso-invia"
+              aria-disabled={attesa || codice.trim().length < 6} onClick={verificaCodice}>
+              {attesa ? 'Un attimo…' : 'Conferma'}
+            </button>
+          </>
+        )}
+
+        {schermata === 'dimenticata' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Reimposta la password</h1>
+            <p className="ingresso-sotto">
+              Dicci il tuo indirizzo: ti mandiamo un collegamento per
+              sceglierne una nuova.
+            </p>
+            <Campo etichetta="Email" tipo="email" valore={indirizzo} onChange={setIndirizzo}
+              segnaposto="nome@esempio.it" completa="email" invio={reimposta} />
+
+            {errore && <p className="errore">{errore}</p>}
+
+            <button type="button" className="azione azione-piena ingresso-invia"
+              aria-disabled={attesa || !indirizzo} onClick={reimposta}>
+              {attesa ? 'Un attimo…' : 'Mandami il collegamento'}
+            </button>
+
+            <div className="ingresso-sotto-azioni">
+              <button type="button" className="collegamento-piccolo"
+                onClick={() => setSchermata('entra')}>Torna indietro</button>
+            </div>
+          </>
+        )}
+
+        {schermata === 'mandata' && (
+          <>
+            <h1 className="t-sezione ingresso-titolo">Guarda la posta</h1>
+            <p className="ingresso-sotto">
+              Se <strong>{email()}</strong> è registrato, fra poco arriva un
+              collegamento per scegliere una password nuova. Vale un&apos;ora.
+            </p>
+            <button type="button" className="azione azione-vuota ingresso-invia"
+              onClick={() => setSchermata('entra')}>Torna all&apos;accesso</button>
+          </>
+        )}
       </div>
-
-      {fase === 'numero' && (
-        <>
-          <h1 style={{ fontSize: 26, textAlign: 'center', marginBottom: 8 }}>
-            {via === 'telefono' ? 'Il tuo numero' : 'La tua email'}
-          </h1>
-          <p style={{
-            textAlign: 'center', color: 'var(--inchiostro-2)', fontSize: 15,
-            margin: '0 0 22px', lineHeight: 1.55,
-          }}>
-            Ti mandiamo un codice. Nessuna password da ricordare.
-          </p>
-
-          {via === 'telefono'
-            ? <Campo valore={telefono} onChange={setTelefono} segnaposto="333 1234567" tipo="tel" />
-            : <Campo valore={indirizzo} onChange={setIndirizzo} segnaposto="nome@esempio.it" tipo="email" />}
-
-          {errore && <Errore testo={errore} />}
-
-          <Bottone
-            disabled={attesa || (via === 'telefono'
-              ? telefono.replace(/\D/g, '').length < 9
-              : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(indirizzo.trim()))}
-            onClick={mandaCodice}>
-            {attesa ? 'Un attimo…' : 'Mandami il codice'}
-          </Bottone>
-
-          <button
-            onClick={() => { setVia(via === 'telefono' ? 'email' : 'telefono'); setErrore(null) }}
-            style={{
-              width: '100%', background: 'none', border: 'none',
-              color: 'var(--tenue)', fontSize: 14, padding: 16,
-            }}>
-            {via === 'telefono' ? 'Usa l’email' : 'Usa il numero di telefono'}
-          </button>
-        </>
-      )}
-
-      {fase === 'codice' && (
-        <>
-          <h1 style={{ fontSize: 26, textAlign: 'center', marginBottom: 8 }}>
-            Il codice
-          </h1>
-          <p style={{
-            textAlign: 'center', color: 'var(--inchiostro-2)', fontSize: 15,
-            margin: '0 0 26px',
-          }}>
-            L&apos;abbiamo mandato {via === 'telefono' ? `al ${telefono}` : `a ${indirizzo}`}.
-          </p>
-          <Campo valore={codice} onChange={setCodice} segnaposto="000000"
-            tipo="text" centrato mono />
-          {errore && <Errore testo={errore} />}
-          <Bottone disabled={codice.length < 4 || attesa} onClick={verifica}>
-            {attesa ? 'Verifico…' : 'Entra'}
-          </Bottone>
-          <button onClick={() => setFase('numero')} style={{
-            width: '100%', background: 'none', border: 'none', color: 'var(--tenue)',
-            fontSize: 14, padding: 14,
-          }}>{via === 'telefono' ? 'Ho sbagliato numero' : 'Ho sbagliato indirizzo'}</button>
-        </>
-      )}
-
-      {fase === 'nome' && (
-        <>
-          <h1 style={{ fontSize: 26, textAlign: 'center', marginBottom: 8 }}>
-            Come ti chiami?
-          </h1>
-          <p style={{
-            textAlign: 'center', color: 'var(--inchiostro-2)', fontSize: 15,
-            margin: '0 0 26px', lineHeight: 1.55,
-          }}>
-            Lo vedono le persone con cui viaggi. È il minimo per salire in
-            macchina con qualcuno.
-          </p>
-          <Campo valore={nome} onChange={setNome} segnaposto="Nome" />
-          <Campo valore={cognome} onChange={setCognome} segnaposto="Cognome" />
-          {errore && <Errore testo={errore} />}
-          <Bottone disabled={nome.length < 2 || cognome.length < 2 || attesa}
-            onClick={completa}>
-            {attesa ? 'Un attimo…' : 'Iniziamo'}
-          </Bottone>
-          <p style={{
-            fontSize: 12.5, color: 'var(--tenue)', textAlign: 'center',
-            margin: '16px 0 0', lineHeight: 1.6,
-          }}>
-            Continuando accetti le{' '}
-            <a href="/legale/termini">condizioni d&apos;uso</a> e la{' '}
-            <a href="/legale/privacy">informativa privacy</a>. Serve avere
-            18 anni.
-          </p>
-        </>
-      )}
-    </div>
     </main>
   )
 }
 
-function Campo({ valore, onChange, segnaposto, tipo = 'text', centrato, mono }: {
-  valore: string; onChange: (v: string) => void; segnaposto: string
-  tipo?: string; centrato?: boolean; mono?: boolean
-}) {
+/**
+ * Google e Apple, se ci sono.
+ *
+ * Il pulsante compare solo quando il fornitore è configurato davvero: uno
+ * che porta a una pagina d'errore insegna che l'applicazione è rotta, e
+ * quella è la prima cosa che uno vede di GO.
+ */
+function Provider({ su }: { su: (p: 'google' | 'apple') => void }) {
+  if (!GOOGLE && !APPLE) return null
   return (
-    <input
-      type={tipo} value={valore} onChange={(e) => onChange(e.target.value)}
-      placeholder={segnaposto} inputMode={tipo === 'tel' ? 'tel' : undefined}
-      style={{
-        width: '100%', marginBottom: 12, padding: '15px 18px',
-        fontSize: centrato ? 26 : 17,
-        fontFamily: mono ? 'var(--mono)' : 'var(--testo)',
-        letterSpacing: mono ? '.3em' : undefined,
-        textAlign: centrato ? 'center' : 'left',
-        borderRadius: 'var(--raggio-s)', border: '1px solid var(--riga)',
-        background: 'var(--superficie)', color: 'var(--inchiostro)', outline: 'none',
-      }}
-    />
+    <>
+      <div className="provider">
+        {GOOGLE && (
+          <button type="button" className="azione azione-vuota provider-voce"
+            onClick={() => su('google')}>
+            <SegnoGoogle /> Continua con Google
+          </button>
+        )}
+        {APPLE && (
+          <button type="button" className="azione azione-vuota provider-voce"
+            onClick={() => su('apple')}>
+            <SegnoApple /> Continua con Apple
+          </button>
+        )}
+      </div>
+      <p className="oppure"><span>oppure</span></p>
+    </>
   )
 }
 
-const Errore = ({ testo }: { testo: string }) => (
-  <p style={{ color: 'var(--rosso)', fontSize: 14, margin: '0 0 14px', textAlign: 'center' }}>
-    {testo}
-  </p>
+const SegnoGoogle = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.2-.16-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5Z" />
+    <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18Z" />
+    <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3Z" />
+    <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6Z" />
+  </svg>
 )
+
+const SegnoApple = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M16.4 12.7c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.7 3-.4 7.4 1.3 9.8.8 1.2 1.8 2.5 3.1 2.5 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.4-1-2.4-3.9ZM14 5.4c.7-.8 1.1-2 1-3.2-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3.1 1.1.1 2.2-.6 2.9-1.4Z" />
+  </svg>
+)
+
+function Campo({ etichetta, valore, onChange, segnaposto, tipo = 'text', completa, mono, invio }: {
+  etichetta: string; valore: string; onChange: (v: string) => void
+  segnaposto: string; tipo?: string; completa?: string; mono?: boolean
+  invio?: () => void
+}) {
+  return (
+    <label className="campo ingresso-campo">
+      <span className="campo-nome">{etichetta}</span>
+      <input
+        type={tipo} value={valore} onChange={(e) => onChange(e.target.value)}
+        placeholder={segnaposto} autoComplete={completa}
+        inputMode={mono ? 'numeric' : undefined}
+        onKeyDown={(e) => { if (e.key === 'Enter' && invio) invio() }}
+        style={mono ? { fontFamily: 'var(--mono)', letterSpacing: '.3em', fontSize: 20 } : undefined}
+      />
+    </label>
+  )
+}

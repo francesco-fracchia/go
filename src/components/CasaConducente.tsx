@@ -41,11 +41,22 @@ export interface ChiCerca {
   flessibilitaMin: number
 }
 
-export function CasaConducente({ nome, corse, chiCercano, haVeicolo }: {
+export interface Cosa { fatta: boolean; titolo: string; testo: string; dove: string; azione: string }
+
+export function CasaConducente({ nome, corse, chiCercano, haVeicolo, cose = [] }: {
   nome?: string
   corse: CorsaMia[]
   chiCercano: ChiCerca[]
   haVeicolo: boolean
+  /**
+   * Quello che manca per incassare davvero.
+   *
+   * Sta qui e non solo nella presentazione perché la presentazione si vede
+   * una volta: chi rimanda il collegamento del conto — e lo rimandano
+   * quasi tutti, giustamente, finché non serve — se lo deve ritrovare
+   * davanti quando torna, non ricordare.
+   */
+  cose?: Cosa[]
 }) {
   const daFare = corse.filter((c) => c.daFare)
 
@@ -78,6 +89,29 @@ export function CasaConducente({ nome, corse, chiCercano, haVeicolo }: {
           </div>
           <div className="guida-disegno" aria-hidden="true"><Tracciato altezza={150} /></div>
         </section>
+
+        {/* ── Quello che manca per incassare ── */}
+        {cose.some((c) => !c.fatta) && (
+          <section className="casa-sezione">
+            <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>
+              Prima di incassare
+            </p>
+            <ol className="lista-cose">
+              {cose.filter((c) => !c.fatta).map((c) => (
+                <li key={c.titolo} className="cosa">
+                  <span className="cosa-segno" aria-hidden="true" />
+                  <span className="cresci">
+                    <span className="cosa-titolo">{c.titolo}</span>
+                    <span className="cosa-testo">{c.testo}</span>
+                  </span>
+                  <a href={c.dove} className="azione azione-vuota azione-piccola cosa-azione">
+                    {c.azione}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         {/* ── Le cose in sospeso ── */}
         {daFare.length > 0 && (
