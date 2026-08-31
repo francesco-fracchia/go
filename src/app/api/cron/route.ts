@@ -3,6 +3,7 @@ import {
   chiudiContestazioni, liquidaSettimanaScorsa, fondiNonRitirati,
 } from '../../../server/liquidazioni.ts'
 import { dimenticaPosizioni } from '../../../server/posizione.ts'
+import { db } from '../../../server/db.ts'
 import { json } from '../_risposta.ts'
 
 /**
@@ -62,9 +63,43 @@ export async function POST(req: Request) {
   const inizio = Date.now()
   try {
     const esito = await lavoro()
+    await segnaEsecuzione(nome, Date.now() - inizio, esito, null)
     return json({ lavoro: nome, esito, ms: Date.now() - inizio })
   } catch (e) {
     console.error(`lavoro ${nome} fallito:`, e)
+    await segnaEsecuzione(nome, Date.now() - inizio, null, String(e))
     return json({ lavoro: nome, errore: String(e), ms: Date.now() - inizio }, 500)
+  }
+}
+
+/**
+ * Una riga per lavoro, sovrascritta: quando è girato l'ultima volta e com'è
+ * andata.
+ *
+ * Nessuno teneva il conto delle esecuzioni, ed è il motivo per cui un `405`
+ * su tutti e dieci i lavori è passato inosservato per settimane: il codice
+ * funzionava, i cron partivano dalla parte di Vercel, e non c'era un posto
+ * dove guardare per accorgersi che le due cose non si incontravano.
+ *
+ * Si SOVRASCRIVE invece di accumulare. Dodici lavori ogni cinque minuti
+ * farebbero tremila righe al giorno di rumore, e la domanda a cui questa
+ * tabella deve rispondere è una sola: «gira?». Per quella basta l'ultima.
+ */
+async function segnaEsecuzione(
+  nome: string, ms: number, esito: unknown, errore: string | null,
+) {
+  try {
+    await db.from('lavori').upsert({
+      chiave: `ultimo:${nome}`,
+      nome,
+      durata_ms: ms,
+      esito: esito === undefined ? null : JSON.stringify(esito).slice(0, 500),
+      errore,
+      eseguito_il: new Date().toISOString(),
+    }, { onConflict: 'chiave' })
+  } catch (e) {
+    // Un registro che non si scrive non deve far fallire il lavoro che ha
+    // appena funzionato.
+    console.error('registro dei lavori non scritto:', e)
   }
 }
