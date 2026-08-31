@@ -2,6 +2,7 @@ import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
 import { ContoAllaRovescia } from './ContoAllaRovescia.tsx'
 import { EsitoViaggio } from './EsitoViaggio.tsx'
 import { Disdici } from './Disdici.tsx'
+import { Scorta } from './Scorta.tsx'
 import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuantoManca } from './InViaggio.tsx'
 import { gratuita, testoDisdetta } from '../lib/disdette.ts'
@@ -214,7 +215,8 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
 
       {(p.stato === 'autorizzata' || p.stato === 'richiesta') && (
         <div style={{ marginTop: 26 }}>
-          <Disdetta politica={c.politica} minuti={minutiAllaPartenza} prenotazione={p.id} />
+          <Disdetta politica={c.politica} minuti={minutiAllaPartenza} prenotazione={p.id}
+            destinazione={c.destinazioneLabel} />
         </div>
       )}
     </main>
@@ -262,8 +264,9 @@ function Voce({ nome, valore }: { nome: string; valore: number }) {
  * Un pulsante "annulla" che scopre la penale solo nella schermata di
  * conferma è il modo più veloce di far sentire qualcuno raggirato.
  */
-function Disdetta({ politica, minuti, prenotazione }: {
+function Disdetta({ politica, minuti, prenotazione, destinazione }: {
   politica: 'flessibile' | 'rigida'; minuti: number; prenotazione: string
+  destinazione: string
 }) {
   // Le regole stanno in un posto solo: qui si leggono, non si riscrivono.
   const ore = minuti / 60
@@ -272,7 +275,11 @@ function Disdetta({ politica, minuti, prenotazione }: {
 
   return (
     <div>
-      <p style={{ fontSize: 13, color: 'var(--tenue)', margin: '0 0 10px', textAlign: 'center' }}>
+      {/* Sopra la disdetta, perché il momento in cui serve è quello in cui
+          si sta per uscire — non quello in cui si sta per rinunciare. */}
+      <Scorta prenotazione={prenotazione} destinazione={destinazione} />
+
+      <p style={{ fontSize: 13, color: 'var(--tenue)', margin: 'var(--s5) 0 10px', textAlign: 'center' }}>
         {testo}
       </p>
       <Disdici prenotazione={prenotazione} gratuita={senzaCosti} />
