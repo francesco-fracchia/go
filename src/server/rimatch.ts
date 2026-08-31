@@ -1,4 +1,5 @@
 import { db } from './db.ts'
+import { leggiPunto } from './geo.ts'
 import { notifica } from './notifiche.ts'
 import { annulla } from './stripe.ts'
 import { cerca } from './ricerca.ts'
@@ -123,10 +124,4 @@ const testoMotivo = (m: 'non_conferma' | 'annullata') =>
     ? 'Il conducente non ha confermato.'
     : 'Il conducente ha annullato.'
 
-function puntoDa(v: unknown): { lat: number; lng: number } | null {
-  if (typeof v === 'object' && v !== null && 'coordinates' in v) {
-    const c = (v as { coordinates: [number, number] }).coordinates
-    return { lng: c[0], lat: c[1] }
-  }
-  return null
-}
+const puntoDa = leggiPunto

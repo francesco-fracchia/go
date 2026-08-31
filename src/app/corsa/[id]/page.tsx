@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { db } from '../../../server/db.ts'
+import { leggiPunto } from '../../../server/geo.ts'
 import { utenteCorrente } from '../../../server/auth.ts'
 import { distintivi } from '../../../server/profili.ts'
 import { metodoAttuale } from '../../../server/pagamento.ts'
@@ -95,9 +96,9 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         .slice()
         .sort((a, b) => a.ordine - b.ordine)
         .map((f) => {
-          const g = (f as unknown as { geo?: { coordinates?: [number, number] } }).geo
-          return g?.coordinates
-            ? { lat: g.coordinates[1], lng: g.coordinates[0], etichetta: f.etichetta }
+          const g = leggiPunto((f as unknown as { geo?: unknown }).geo)
+          return g
+            ? { lat: g.lat, lng: g.lng, etichetta: f.etichetta }
             : null
         })
         .filter((x): x is { lat: number; lng: number; etichetta: string } => x !== null),

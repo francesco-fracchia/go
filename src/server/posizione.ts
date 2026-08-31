@@ -1,4 +1,5 @@
 import { db } from './db.ts'
+import { leggiPunto } from './geo.ts'
 import { percorso } from './percorsi.ts'
 
 /**
@@ -68,11 +69,13 @@ export async function posizioneDi(corsaId: string): Promise<Posizione | null> {
     Date.now() - new Date(data.aggiornata_il).getTime() > SCADE_DOPO_MINUTI * 60_000
   if (vecchia) return null
 
-  const c = (data.geo as unknown as { coordinates?: [number, number] })?.coordinates
-  if (!c) return null
+  // La posizione arriva come WKB esadecimale, non come GeoJSON: si legge
+  // con lo stesso lettore di tutto il resto.
+  const p = leggiPunto(data.geo)
+  if (!p) return null
 
   return {
-    lng: c[0], lat: c[1],
+    lng: p.lng, lat: p.lat,
     minuti: data.minuti_stimati ?? null,
     aggiornataIl: data.aggiornata_il,
   }

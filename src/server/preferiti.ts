@@ -1,4 +1,5 @@
 import { db } from './db.ts'
+import { leggiPunto } from './geo.ts'
 
 /**
  * I posti di ciascuno: casa, lavoro, e gli altri.
@@ -32,17 +33,23 @@ export async function luoghiSalvati(utenteId: string): Promise<LuogoSalvato[]> {
 
   return (data ?? [])
     .map((r) => {
-      const c = (r.geo as unknown as { coordinates?: [number, number] })?.coordinates
+      // Un luogo di cui non sappiamo leggere la posizione non si mostra.
+      // Prima diventava «zero, zero» — il Golfo di Guinea — e il modulo lo
+      // accettava come una partenza qualunque, fino al servizio di
+      // navigazione che rispondeva «nessuna strada entro trecento metri».
+      const p = leggiPunto(r.geo)
+      if (!p) return null
       return {
         id: r.id,
         etichetta: r.etichetta,
         indirizzo: r.indirizzo,
         tipo: r.tipo as TipoLuogo,
-        lat: c?.[1] ?? 0,
-        lng: c?.[0] ?? 0,
+        lat: p.lat,
+        lng: p.lng,
         usate: r.usato_volte ?? 0,
       }
     })
+    .filter((l) => l !== null)
     .sort((a, b) => peso(a.tipo) - peso(b.tipo) || b.usate - a.usate)
     .map(({ usate: _, ...l }) => l)
 }

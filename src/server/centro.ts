@@ -1,4 +1,5 @@
 import { db } from './db.ts'
+import { leggiPunto } from './geo.ts'
 
 /**
  * Attorno a quale punto cercare gli indirizzi.
@@ -49,7 +50,4 @@ export async function centroPer(utenteId?: string | null) {
   return CENTRO_PREDEFINITO
 }
 
-function punto(geo: unknown): { lat: number; lng: number } | null {
-  const c = (geo as { coordinates?: [number, number] } | null)?.coordinates
-  return c ? { lat: c[1], lng: c[0] } : null
-}
+const punto = leggiPunto

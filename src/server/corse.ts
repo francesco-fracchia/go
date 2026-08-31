@@ -263,15 +263,30 @@ export async function pubblicaCorsa(req: RichiestaPubblicazione) {
   }
 }
 
+/**
+ * Le coordinate di un capo del viaggio, comunque arrivino.
+ *
+ * `Number.isFinite(0)` è vero, e per questo uno zero passava per una
+ * coordinata legittima fino al servizio di navigazione, che rispondeva
+ * «nessuna strada entro trecentocinquanta metri da 0.0000000 0.0000000» —
+ * un messaggio che non nomina né il campo né il luogo. Qui uno zero
+ * doppio si tratta per quello che è: una coordinata che non c'è, da
+ * risolvere dall'indirizzo come se non fosse mai stata mandata.
+ */
 async function conCoordinate(
   x: { label: string; lat?: number; lng?: number },
 ): Promise<(Punto & { label: string }) | null> {
-  if (Number.isFinite(x.lat) && Number.isFinite(x.lng)) {
-    return { label: x.label, lat: x.lat!, lng: x.lng! }
-  }
+  if (usabile(x.lat, x.lng)) return { label: x.label, lat: x.lat!, lng: x.lng! }
   const l = await risolvi(x.label)
-  return l ? { label: l.etichetta, lat: l.lat, lng: l.lng } : null
+  return l && usabile(l.lat, l.lng)
+    ? { label: l.etichetta, lat: l.lat, lng: l.lng }
+    : null
 }
+
+const usabile = (lat?: number, lng?: number) =>
+  Number.isFinite(lat) && Number.isFinite(lng)
+  && Math.abs(lat!) <= 90 && Math.abs(lng!) <= 180
+  && !(lat === 0 && lng === 0)
 
 const geo = (p: Punto) => `SRID=4326;POINT(${p.lng} ${p.lat})`
 const linestring = (c: [number, number][]) =>
