@@ -2788,3 +2788,25 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .recensione-descrittori {
   margin-top: var(--s2); font-size: 13px; color: var(--tenue);
 }
+
+
+/* ── I fatti, contati ──────────────────────────────────────────────────
+   Una riga per fatto, non una carta per recensione. Il numero sta a
+   destra e in monospaziato perché le cifre si incolonnino: si legge la
+   colonna, non le righe una per una. */
+.fatti { list-style: none; margin: 0 0 var(--s4); padding: 0; display: grid; }
+.fatti li {
+  display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  align-items: baseline; gap: var(--s3);
+  padding: var(--s3) 0; border-bottom: 1px solid var(--riga);
+}
+.fatti li:last-child { border-bottom: none; }
+.fatto-segno { font-size: 15px; line-height: 1; }
+.fatto-nome { font-size: 14.5px; color: var(--inchiostro-2); }
+.fatto-conto {
+  font-family: var(--mono); font-size: 13.5px; color: var(--tenue);
+}
+/* Pieno vuol dire: nessuno si è mai lamentato di questo. È il caso più
+   comune, e va detto senza fanfara — un verde acceso su cinque righe su
+   cinque diventa una decorazione. */
+.fatto-pieno { color: var(--verde); font-weight: 600; }

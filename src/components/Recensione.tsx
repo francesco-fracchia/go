@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { SegnoAvanti } from './segni.tsx'
+import { FATTI, DESCRITTORI, type Ruolo } from '../lib/recensione.ts'
 import { Bottone, Etichetta } from './base.tsx'
 
 /**
@@ -16,73 +17,11 @@ import { Bottone, Etichetta } from './base.tsx'
  * anche solo per due ore è un danno che non si ripara.
  */
 
-/**
- * Fatti, non virtù.
- *
- * «Simpatico» giudicava una persona, non un viaggio: infalsificabile, chi
- * lo riceve non può farci niente, e porta dentro tutti i pregiudizi
- * possibili — è un aggettivo che si assegna in modo diverso a seconda del
- * genere, dell'accento, dell'età. Era anche la cosa che metteva a disagio
- * a compilarla, che è il motivo per cui quasi nessuno lascia recensioni.
- *
- * L'asse è cambiato: non «che persona è», ma «cosa deve aspettarsi il
- * prossimo». Ogni voce qui è una cosa che chi c'era può confermare.
- */
-const FATTI: Record<'conducente' | 'passeggero', { bene: string[]; male: string[] }> = {
-  // Cosa dico di CHI GUIDAVA, se sono salito.
-  conducente: {
-    bene: [
-      'è partito all\u2019ora che aveva detto',
-      'il punto di ritiro era quello concordato',
-      'l\u2019auto era come descritta',
-      'mi sono sentito a mio agio come guidava',
-    ],
-    male: [
-      'è partito in ritardo',
-      'ha cambiato il punto di ritiro',
-      'l\u2019auto non era come descritta',
-      'non mi sono sentito a mio agio come guidava',
-    ],
-  },
-  // Cosa dico di CHI È SALITO, se guidavo io.
-  passeggero: {
-    bene: [
-      'era al punto d\u2019incontro all\u2019ora',
-      'ha scritto quando è servito',
-      'il bagaglio era quello annunciato',
-      'ha lasciato l\u2019auto come l\u2019ha trovata',
-    ],
-    male: [
-      'ha fatto aspettare',
-      'non ha risposto ai messaggi',
-      'aveva più bagaglio di quanto detto',
-    ],
-  },
-}
-
-/**
- * Descrizioni, non voti.
- *
- * Alcune cose non sono né buone né cattive: sono compatibilità. Trasformare
- * «si è viaggiato in silenzio» in un voto renderebbe un introverso
- * peggiore di un altro. Lasciarlo come fatto costruisce una cosa più utile
- * di una reputazione — un'aspettativa: chi vuole dormire alle quattro di
- * notte sa che è la macchina giusta.
- *
- * Perciò stanno in una colonna loro, non concorrono al positivo o
- * negativo, e si mostrano solo quando RICORRONO.
- */
-const DESCRITTORI: Array<{ nome: string; voci: string[] }> = [
-  { nome: 'In macchina', voci: ['si è chiacchierato', 'si è viaggiato in silenzio'] },
-  { nome: 'Musica', voci: ['musica alta', 'musica bassa', 'niente musica'] },
-  { nome: 'Il viaggio', voci: ['una sosta', 'filati dritti'] },
-]
-
 export function Recensione({ prenotazione, nome, ruolo }: {
   prenotazione: string
   nome: string
   /** Chi sto recensendo: chi guidava, o chi è salito. Le domande cambiano. */
-  ruolo: 'conducente' | 'passeggero'
+  ruolo: Ruolo
 }) {
   const [positiva, setPositiva] = useState<boolean | null>(null)
   const [tag, setTag] = useState<string[]>([])
@@ -94,17 +33,22 @@ export function Recensione({ prenotazione, nome, ruolo }: {
     return (
       <main style={{ maxWidth: 'var(--colonna)', margin: '0 auto', padding: '60px 20px', textAlign: 'center' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>Grazie</h1>
-        <p style={{ color: 'var(--inchiostro-2)', fontSize: 15 }}>
-          {testo.trim()
-            ? 'Il giudizio è già visibile. Il commento lo leggiamo prima di pubblicarlo.'
-            : 'Aiuta chi prenoterà dopo di te.'}
+        {/* La conferma diceva «il giudizio è già visibile», e con il doppio
+            cieco non è più vero: non si vede finché non scrive anche
+            l'altro. Una conferma che descrive un comportamento che non c'è
+            più è peggio di nessuna conferma. */}
+        <p style={{ color: 'var(--inchiostro-2)', fontSize: 15, lineHeight: 1.55 }}>
+          Non si vede ancora: comparirà quando avrà scritto anche l&apos;altra
+          persona, o fra due settimane. Nessuno dei due può rispondere a quello
+          che ha letto.
+          {testo.trim() && ' Il commento lo leggiamo prima di pubblicarlo.'}
         </p>
       </main>
     )
   }
 
   const disponibili = positiva === null ? []
-    : positiva ? FATTI[ruolo].bene : FATTI[ruolo].male
+    : FATTI[ruolo].map((f) => positiva ? f.si : f.no)
 
   return (
     <main className="schermo-stretto">
@@ -154,20 +98,21 @@ export function Recensione({ prenotazione, nome, ruolo }: {
                   {gruppo.nome}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {gruppo.voci.map((v) => {
+                  {gruppo.voci.map(({ v, segno }) => {
                     const preso = descrittori.includes(v)
+                    const altre = gruppo.voci.map((x) => x.v)
                     return (
                       <button key={v} type="button"
                         onClick={() => setDescrittori((d) => preso
                           // Uno per gruppo: sono alternative, non un elenco.
                           ? d.filter((x) => x !== v)
-                          : [...d.filter((x) => !gruppo.voci.includes(x)), v])}
+                          : [...d.filter((x) => !altre.includes(x)), v])}
                         style={{
                           fontSize: 14, padding: '9px 14px', borderRadius: 999,
                           border: `1px solid ${preso ? 'var(--inchiostro)' : 'var(--riga)'}`,
                           background: preso ? 'var(--superficie-2)' : 'var(--superficie)',
                           color: 'var(--inchiostro)',
-                        }}>{v}</button>
+                        }}>{segno} {v}</button>
                     )
                   })}
                 </div>

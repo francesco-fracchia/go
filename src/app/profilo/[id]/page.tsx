@@ -5,6 +5,7 @@ import { distintivi } from '../../../server/profili.ts'
 import { recensioniDi, numeriDi, riassunto, abitudini } from '../../../server/recensioni.ts'
 import { codiceDi, quantiInvitati } from '../../../server/inviti.ts'
 import { Profilo, type DatiProfilo } from '../../../components/Profilo.tsx'
+import { contaFatti } from '../../../lib/recensione.ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     })),
     sintesi: riassunto(tutte),
     abitudini: abitudini(tutte),
+    fatti: contaFatti(tutte),
   }
 
   return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>

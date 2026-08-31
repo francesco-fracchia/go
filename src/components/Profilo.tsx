@@ -1,6 +1,7 @@
 import { SegnoAvanti, SegnoEsci } from './segni.tsx'
 import { Invita } from './Invita.tsx'
 import { Foto } from './Foto.tsx'
+import { segnoDescrittore } from '../lib/recensione.ts'
 
 /**
  * Il profilo.
@@ -43,6 +44,8 @@ export interface DatiProfilo {
   sintesi?: { mostra: boolean; totale: number; rifarebbero?: number; motivi?: string[] }
   /** Cosa ricorre: non voti, aspettative. */
   abitudini?: string[]
+  /** I fatti contati una volta sola, invece che ripetuti su ogni carta. */
+  fatti?: Array<{ segno: string; etichetta: string; si: number; su: number }>
 }
 
 export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
@@ -112,27 +115,46 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                   <div className="abitudini">
                     <span className="abitudini-nome">Di solito</span>
                     {p.abitudini!.map((a) => (
-                      <span key={a} className="abitudine">{a}</span>
+                      <span key={a} className="abitudine">
+                        <span aria-hidden="true">{segnoDescrittore(a)}</span> {a}
+                      </span>
                     ))}
                   </div>
                 )}
 
+                {/* I fatti si contano, non si elencano.
+                    Dieci carte che ripetono «è partito all'ora che aveva
+                    detto» sono dieci volte la stessa informazione e un muro
+                    di testo. Contati danno la stessa cosa in una riga, e in
+                    più danno il denominatore — che è l'unica parte davvero
+                    informativa: «18 su 20» dice quanto ci si può contare,
+                    «è partito in orario» no. */}
+                {(p.fatti?.length ?? 0) > 0 && (
+                  <ul className="fatti">
+                    {p.fatti!.map((f) => (
+                      <li key={f.etichetta}>
+                        <span className="fatto-segno" aria-hidden="true">{f.segno}</span>
+                        <span className="fatto-nome">{f.etichetta}</span>
+                        <span className={`fatto-conto${f.si === f.su ? ' fatto-pieno' : ''}`}>
+                          {f.si}/{f.su}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Le carte restano solo dove c'è qualcosa che le altre non
+                    dicono già: un commento scritto. Una carta con dentro
+                    soltanto fatti è una riga della lista qui sopra, ripetuta
+                    più in grande. */}
                 <div className="pila-s">
-                  {p.recensioni.map((r) => (
+                  {p.recensioni.filter((r) => r.testo).map((r) => (
                     <div key={r.id} className="riquadro recensione">
-                      <div className="fila-fra">
-                        <span className="recensione-autore">{r.autore}</span>
+                      <p className="recensione-testo">{r.testo}</p>
+                      <div className="fila-fra" style={{ marginTop: 'var(--s3)' }}>
+                        <span className="t-nota">{r.autore}</span>
                         <span className="t-nota">{r.quando}</span>
                       </div>
-                      {r.tag.length > 0 && (
-                        <div className={r.positiva ? 'recensione-tag' : 'recensione-tag recensione-tag-no'}>
-                          {r.tag.join(' · ')}
-                        </div>
-                      )}
-                      {r.descrittori.length > 0 && (
-                        <div className="recensione-descrittori">{r.descrittori.join(' · ')}</div>
-                      )}
-                      {r.testo && <p className="recensione-testo">{r.testo}</p>}
                     </div>
                   ))}
                 </div>
