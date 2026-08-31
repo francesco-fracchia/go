@@ -2,6 +2,7 @@ import { Riquadro, Bottone, Etichetta, euro } from './base.tsx'
 import { ContoAllaRovescia } from './ContoAllaRovescia.tsx'
 import { EsitoViaggio } from './EsitoViaggio.tsx'
 import { Disdici } from './Disdici.tsx'
+import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuantoManca } from './InViaggio.tsx'
 import { gratuita, testoDisdetta } from '../lib/disdette.ts'
 
@@ -71,6 +72,16 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
             conducente={conducente?.nome ?? 'chi ti ha portato'}
             sbloccoIl="Fra un giorno"
           />
+        </div>
+      )}
+
+      {/* Il permesso alle notifiche si chiede QUI: c'è appena stata una
+          prenotazione, quindi c'è qualcosa di concreto da comunicare, e lo
+          si può dire. Chiesto al primo avvio verrebbe negato, e una volta
+          negato il browser non lo richiede più. */}
+      {!saltata && !arrivata && (
+        <div style={{ margin: 'var(--s5) 0' }}>
+          <AbilitaPush momento="dopo-prenotazione" />
         </div>
       )}
 

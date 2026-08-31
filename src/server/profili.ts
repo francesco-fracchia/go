@@ -106,6 +106,16 @@ export interface NuovoVeicolo {
   fumo?: boolean
   animali?: boolean
   bagagli?: 'nessuno' | 'piccoli' | 'medi' | 'grandi'
+  /**
+   * Il modello sulle tabelle ACI, se chi registra l'auto l'ha trovato.
+   *
+   * È quello che decide il costo al chilometro, e quindi la quota di ogni
+   * passeggero. Senza, il calcolo ripiega sul MINIMO della tabella per
+   * quell'alimentazione — l'auto più economica d'Italia — che sottostima
+   * sempre: chi guida rientra di meno di quanto gli spetta, e la frase che
+   * diciamo ovunque, «sul modello esatto della tua auto», diventa falsa.
+   */
+  aciModello?: string
 }
 
 /**
@@ -135,6 +145,7 @@ export async function creaVeicolo(v: NuovoVeicolo) {
     fumo: v.fumo ?? false,
     animali: v.animali ?? false,
     bagagli: v.bagagli ?? 'medi',
+    aci_modello: v.aciModello ?? null,
   }).select('*, id').single()
 
   if (error) throw new ErroreProfilo('db', error.message)

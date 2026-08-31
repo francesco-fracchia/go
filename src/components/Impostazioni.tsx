@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Etichetta } from './base.tsx'
 import { Carta, MetodoSalvato } from './Carta.tsx'
 import { LuoghiSalvati, type Salvato } from './LuoghiSalvati.tsx'
+import { AbilitaPush } from './AbilitaPush.tsx'
+import { AggiungiTelefono } from './AggiungiTelefono.tsx'
 
 /**
  * Impostazioni.
@@ -11,11 +12,18 @@ import { LuoghiSalvati, type Salvato } from './LuoghiSalvati.tsx'
  * non dice a nessuno cosa perde spegnendole; «non ti avvisiamo se il
  * conducente non conferma» sì, ed è l'unica informazione su cui si può
  * decidere davvero.
+ *
+ * L'iscrizione alle notifiche sta sopra ai due interruttori, non sotto:
+ * quelli decidono COSA mandare, questa decide SE possiamo mandare qualcosa.
+ * Finché il browser non ha dato il permesso, i due interruttori accendono e
+ * spengono un canale che non esiste — ed è quello che succedeva, perché
+ * l'iscrizione non era raggiungibile da nessuna schermata.
  */
 
 export interface DatiImpostazioni {
   push: boolean
   sms: boolean
+  telefono: string | null
   metodo: { marchio: string; ultime4: string | null } | null
   luoghi: Salvato[]
   mappa: boolean
@@ -25,7 +33,9 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   const [push, setPush] = useState(iniziali.push)
   const [sms, setSms] = useState(iniziali.sms)
   const [metodo, setMetodo] = useState(iniziali.metodo)
+  const [telefono, setTelefono] = useState(iniziali.telefono)
   const [cambiaCarta, setCambiaCarta] = useState(false)
+  const [cambiaNumero, setCambiaNumero] = useState(false)
   const [tema, setTema] = useState('')
 
   useEffect(() => { setTema(localStorage.getItem('tema') ?? '') }, [])
@@ -44,63 +54,98 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
   }
 
   return (
-    <main className="schermo-stretto">
-      <h1 style={{ fontSize: 26, marginBottom: 24 }}>Impostazioni</h1>
+    <div className="fascia">
+      <div className="dentro dentro-app impostazioni">
+        <h1 className="t-titolo">Impostazioni</h1>
 
-      <div style={{ marginBottom: 28 }}>
-        <LuoghiSalvati iniziali={iniziali.luoghi} mappa={iniziali.mappa} />
-      </div>
+        <Gruppo titolo="I tuoi posti"
+          nota="Casa e lavoro compaiono al primo tocco, prima ancora di scrivere.">
+          <LuoghiSalvati iniziali={iniziali.luoghi} mappa={iniziali.mappa} />
+        </Gruppo>
 
-      <Etichetta>come ti raggiungiamo</Etichetta>
-      <div style={{ margin: '10px 0 24px' }}>
-        <Interruttore
-          titolo="Notifiche sull'applicazione"
-          nota="Se le spegni non ti avvisiamo quando il conducente non conferma, e non possiamo cercarti un'alternativa in tempo."
-          attivo={push}
-          onCambia={(v) => { setPush(v); salva('push', v) }}
-        />
-        <Interruttore
-          titolo="SMS nei momenti importanti"
-          nota="Solo quando serve davvero: conducente che non conferma, corsa annullata, «sono qui». Mai per altro."
-          attivo={sms}
-          onCambia={(v) => { setSms(v); salva('sms', v) }}
-        />
-      </div>
+        <Gruppo titolo="Il tuo numero"
+          nota="Serve a chi viaggia con te per chiamarti. La telefonata passa da un numero di appoggio: il tuo non lo vede nessuno.">
+          {telefono && !cambiaNumero ? (
+            <div className="riquadro">
+              <div className="fila-fra">
+                <span className="numero-salvato">{telefono}</span>
+                <button type="button" className="collegamento-piccolo"
+                  onClick={() => setCambiaNumero(true)}>Cambia</button>
+              </div>
+            </div>
+          ) : (
+            <AggiungiTelefono suSalvato={(n) => { setTelefono(n ?? telefono); setCambiaNumero(false) }} />
+          )}
+        </Gruppo>
 
-      <Etichetta>pagamento</Etichetta>
-      <div style={{ margin: '10px 0 24px' }}>
-        {metodo && !cambiaCarta ? (
-          <MetodoSalvato marchio={metodo.marchio} ultime4={metodo.ultime4}
-            suCambia={() => setCambiaCarta(true)} />
-        ) : (
-          <Carta suSalvata={(m) => { setMetodo(m); setCambiaCarta(false) }} />
-        )}
-      </div>
+        <Gruppo titolo="Come ti raggiungiamo"
+          nota="Non ti scriviamo per farci ricordare: solo quando qualcosa cambia sul tuo viaggio.">
+          <AbilitaPush momento="impostazioni" sempre />
+          <div style={{ marginTop: 'var(--s3)' }}>
+            <Interruttore
+              titolo="Notifiche sull'applicazione"
+              nota="Se le spegni non ti avvisiamo quando il conducente non conferma, e non possiamo cercarti un'alternativa in tempo."
+              attivo={push}
+              onCambia={(v) => { setPush(v); salva('push', v) }}
+            />
+            <Interruttore
+              titolo="SMS nei momenti importanti"
+              nota="Solo quando serve davvero: conducente che non conferma, corsa annullata, «sono qui». Mai per altro."
+              attivo={sms}
+              onCambia={(v) => { setSms(v); salva('sms', v) }}
+            />
+          </div>
+        </Gruppo>
 
-      <Etichetta>aspetto</Etichetta>
-      <div style={{ display: 'flex', gap: 8, margin: '10px 0 24px' }}>
-        {[
-          { v: '', t: 'Come il telefono' },
-          { v: 'chiaro', t: 'Chiaro' },
-          { v: 'scuro', t: 'Scuro' },
-        ].map((o) => (
-          <button key={o.v} onClick={() => applicaTema(o.v)} className="tocco" style={{
-            flex: 1, padding: '13px 6px', borderRadius: 'var(--raggio-s)',
-            border: `1px solid ${tema === o.v ? 'transparent' : 'var(--riga)'}`,
-            background: tema === o.v ? 'var(--accento)' : 'var(--superficie)',
-            color: tema === o.v ? 'var(--su-accento)' : 'var(--inchiostro)',
-            fontSize: 14, fontWeight: 600,
-          }}>{o.t}</button>
-        ))}
-      </div>
+        <Gruppo titolo="Come paghi"
+          nota="La carta viene bloccata alla prenotazione e addebitata quando il viaggio parte davvero.">
+          {metodo && !cambiaCarta ? (
+            <MetodoSalvato marchio={metodo.marchio} ultime4={metodo.ultime4}
+              suCambia={() => setCambiaCarta(true)} />
+          ) : (
+            <Carta suSalvata={(m) => { setMetodo(m); setCambiaCarta(false) }} />
+          )}
+        </Gruppo>
 
-      <div style={{ marginTop: 30, paddingTop: 20, borderTop: '1px solid var(--riga-2)' }}>
-        <a href="/api/esci" style={{
-          display: 'block', padding: '14px 0', color: 'var(--rosso)',
-          fontSize: 15.5, fontWeight: 600, textDecoration: 'none',
-        }}>Esci</a>
+        <Gruppo titolo="Aspetto"
+          nota="Il buio non è una preferenza estetica: questa applicazione si usa di notte, in macchina.">
+          <div className="scelte-tema">
+            {[
+              { v: '', t: 'Come il telefono' },
+              { v: 'chiaro', t: 'Chiaro' },
+              { v: 'scuro', t: 'Scuro' },
+            ].map((o) => (
+              <button key={o.v} type="button"
+                className={`scelta${tema === o.v ? ' scelta-attiva' : ''}`}
+                aria-pressed={tema === o.v}
+                onClick={() => applicaTema(o.v)}>{o.t}</button>
+            ))}
+          </div>
+        </Gruppo>
+
+        <div className="impostazioni-uscita">
+          <a href="/api/esci" className="esci">Esci da questo dispositivo</a>
+          <p className="t-nota" style={{ marginTop: 'var(--s2)' }}>
+            Le tue prenotazioni e le tue corse restano dove sono: esci solo da
+            qui.
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
+  )
+}
+
+function Gruppo({ titolo, nota, children }: {
+  titolo: string; nota: string; children: React.ReactNode
+}) {
+  return (
+    <section className="gruppo">
+      <div className="gruppo-testa">
+        <h2 className="gruppo-titolo">{titolo}</h2>
+        <p className="gruppo-nota">{nota}</p>
+      </div>
+      <div className="gruppo-corpo">{children}</div>
+    </section>
   )
 }
 
@@ -108,30 +153,15 @@ function Interruttore({ titolo, nota, attivo, onCambia }: {
   titolo: string; nota: string; attivo: boolean; onCambia: (v: boolean) => void
 }) {
   return (
-    <div style={{
-      display: 'flex', gap: 14, alignItems: 'flex-start',
-      padding: '15px 0', borderBottom: '1px solid var(--riga-2)',
-    }}>
-      <div style={{ flexGrow: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15.5, fontWeight: 600 }}>{titolo}</div>
-        <div style={{ fontSize: 13, color: 'var(--tenue)', marginTop: 3, lineHeight: 1.5 }}>
-          {nota}
-        </div>
+    <div className="opzione-riga">
+      <div className="cresci">
+        <div className="opzione-titolo">{titolo}</div>
+        <div className="opzione-nota">{nota}</div>
       </div>
-      <button
-        onClick={() => onCambia(!attivo)}
+      <button type="button" onClick={() => onCambia(!attivo)}
         role="switch" aria-checked={attivo} aria-label={titolo}
-        style={{
-          flexShrink: 0, width: 50, height: 30, borderRadius: 15, border: 'none',
-          background: attivo ? 'var(--accento)' : 'var(--riga)',
-          position: 'relative', transition: 'background .15s', marginTop: 2,
-        }}
-      >
-        <span style={{
-          position: 'absolute', top: 3, left: attivo ? 23 : 3,
-          width: 24, height: 24, borderRadius: 12, background: '#fff',
-          transition: 'left .15s', boxShadow: '0 1px 3px rgba(0,0,0,.2)',
-        }} />
+        className={attivo ? 'leva leva-accesa' : 'leva'}>
+        <span className="leva-pallino" />
       </button>
     </div>
   )

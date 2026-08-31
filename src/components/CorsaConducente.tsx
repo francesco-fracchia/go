@@ -3,6 +3,7 @@ import { giorno, orario } from '../lib/tempo.ts'
 import { AzioniConducente, RispondiProposta } from './AzioniConducente.tsx'
 import { Condividi } from './Condividi.tsx'
 import { InViaggio } from './InViaggio.tsx'
+import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuotePersonalizzate } from './QuotePersonalizzate.tsx'
 
 /**
@@ -104,6 +105,11 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           <AzioniConducente corsa={c.id} passeggeri={c.passeggeri.length} />
         </Riquadro>
       )}
+
+      {/* Chi guida ha poche ore per rispondere a una richiesta, e se non
+          risponde la corsa salta: è il caso in cui una notifica serve
+          davvero, e si chiede appena la corsa esiste. */}
+      {c.stato === 'pubblicata' && <AbilitaPush momento="dopo-pubblicazione" />}
 
       {/* ── Le proposte: scadono, quindi vengono prima del resto ── */}
       {c.proposte.length > 0 && (
