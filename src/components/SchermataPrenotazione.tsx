@@ -3,6 +3,7 @@ import { ContoAllaRovescia } from './ContoAllaRovescia.tsx'
 import { EsitoViaggio } from './EsitoViaggio.tsx'
 import { Disdici } from './Disdici.tsx'
 import { Scorta } from './Scorta.tsx'
+import { Chiama } from './Chiama.tsx'
 import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuantoManca } from './InViaggio.tsx'
 import { gratuita, testoDisdetta } from '../lib/disdette.ts'
@@ -216,7 +217,8 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
       {(p.stato === 'autorizzata' || p.stato === 'richiesta') && (
         <div style={{ marginTop: 26 }}>
           <Disdetta politica={c.politica} minuti={minutiAllaPartenza} prenotazione={p.id}
-            destinazione={c.destinazioneLabel} />
+            destinazione={c.destinazioneLabel} corsa={c.id}
+            conducente={conducente?.nome ?? 'chi guida'} />
         </div>
       )}
     </main>
@@ -264,9 +266,9 @@ function Voce({ nome, valore }: { nome: string; valore: number }) {
  * Un pulsante "annulla" che scopre la penale solo nella schermata di
  * conferma è il modo più veloce di far sentire qualcuno raggirato.
  */
-function Disdetta({ politica, minuti, prenotazione, destinazione }: {
+function Disdetta({ politica, minuti, prenotazione, destinazione, corsa, conducente }: {
   politica: 'flessibile' | 'rigida'; minuti: number; prenotazione: string
-  destinazione: string
+  destinazione: string; corsa: string; conducente: string
 }) {
   // Le regole stanno in un posto solo: qui si leggono, non si riscrivono.
   const ore = minuti / 60
@@ -277,6 +279,10 @@ function Disdetta({ politica, minuti, prenotazione, destinazione }: {
     <div>
       {/* Sopra la disdetta, perché il momento in cui serve è quello in cui
           si sta per uscire — non quello in cui si sta per rinunciare. */}
+      {/* Il pulsante compare da solo quando la finestra si apre, e sparisce
+          quando si chiude: non c'è niente da spiegare a chi aspetta al buio. */}
+      <Chiama corsa={corsa} chi={conducente} />
+
       <Scorta prenotazione={prenotazione} destinazione={destinazione} />
 
       <p style={{ fontSize: 13, color: 'var(--tenue)', margin: 'var(--s5) 0 10px', textAlign: 'center' }}>

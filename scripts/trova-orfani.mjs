@@ -43,10 +43,8 @@ const file = []
 const testi = new Map(file.map((f) => [f, readFileSync(f, 'utf8')]))
 
 const orfani = []
+const soloTest = []
 for (const [f, testo] of testi) {
-  // I test esistono per chiamare cose: se un export lo usa solo un test,
-  // in produzione è comunque orfano — quindi i test non contano come
-  // chiamanti, ma non si analizzano nemmeno come sorgenti.
   if (f.includes('.test.')) continue
 
   const nomi = [...testo.matchAll(
@@ -62,24 +60,44 @@ for (const [f, testo] of testi) {
      * — e in un elenco pieno di falsi positivi le tre righe vere non le
      * legge nessuno. Un controllo che grida sempre è un controllo spento.
      */
-    const altrove = [...testi].some(([g, t]) =>
-      g !== f && !g.includes('.test.') && new RegExp(`\\b${nome}\\b`).test(t))
+    const re = new RegExp(`\\b${nome}\\b`)
+    const inProduzione = [...testi].some(([g, t]) =>
+      g !== f && !g.includes('.test.') && re.test(t))
     const quiDentro = [...testo.matchAll(new RegExp(`\\b${nome}\\b`, 'g'))].length > 1
-    if (!altrove && !quiDentro) orfani.push({ file: relative('.', f), nome })
+    if (inProduzione || quiDentro) continue
+
+    /**
+     * «Usato solo dai test» è un avviso, non un allarme.
+     *
+     * Può essere legittimo — `aci.ts` dichiara nella sua intestazione di
+     * restare solo come riferimento per le prove — oppure può essere
+     * codice di produzione morto, tenuto in vita da un test che lo prova
+     * e basta. Sono due cose diverse e vanno lette diversamente, quindi si
+     * separano invece di finire nello stesso mucchio.
+     */
+    const neiTest = [...testi].some(([g, t]) =>
+      g !== f && g.includes('.test.') && re.test(t))
+    ;(neiTest ? soloTest : orfani).push({ file: relative('.', f), nome })
   }
 }
 
-if (orfani.length === 0) {
+const elenca = (titolo, righe) => {
+  if (righe.length === 0) return
+  console.log(`\n${titolo}\n`)
+  let precedente = ''
+  for (const o of righe.sort((a, b) => a.file.localeCompare(b.file))) {
+    if (o.file !== precedente) { console.log(`  ${o.file}`); precedente = o.file }
+    console.log(`      ${o.nome}`)
+  }
+}
+
+if (orfani.length === 0 && soloTest.length === 0) {
   console.log('Nessun orfano: ogni cosa esportata ha almeno un chiamante.')
   process.exit(0)
 }
 
-console.log(`${orfani.length} cose esportate che nessun altro file usa:\n`)
-let precedente = ''
-for (const o of orfani.sort((a, b) => a.file.localeCompare(b.file))) {
-  if (o.file !== precedente) { console.log(`  ${o.file}`); precedente = o.file }
-  console.log(`      ${o.nome}`)
-}
+elenca(`${orfani.length} cose che NON CHIAMA NESSUNO, nemmeno un test:`, orfani)
+elenca(`${soloTest.length} cose che chiama SOLO un test:`, soloTest)
 console.log(
   '\nNon è detto che siano difetti: alcune cose sono esportate per essere\n'
   + 'provate, altre servono a un solo file. Ma ognuna merita la domanda —\n'

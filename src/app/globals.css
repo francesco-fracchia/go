@@ -2890,3 +2890,5 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 .scorta-fatti dd { margin: 0; font-size: 15px; }
 
 .scorta-invito { margin-bottom: var(--s5); text-align: center; }
+
+.chiama { margin-bottom: var(--s4); text-align: center; }
