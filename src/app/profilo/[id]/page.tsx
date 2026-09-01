@@ -20,7 +20,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
   const mio = io === id
   const [{ data: p }, d, recensioni, tutte, codice, portati] = await Promise.all([
     db.from('profili')
-      .select('id, nome, cognome, foto_url, data_nascita, bio, creato_il, telefono_ok, email_ok, stripe_pronto, veicoli(marca, modello, colore)')
+      .select('id, nome, cognome, foto_url, data_nascita, bio, creato_il, telefono_ok, email_ok, stripe_pronto, chiacchiere, musica, soste, veicoli(marca, modello, colore)')
       .eq('id', id).single(),
     distintivi(id),
     recensioniDi(id, 10),
@@ -61,6 +61,19 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     sintesi: riassunto(tutte),
     abitudini: abitudini(tutte),
     fatti: contaFatti(tutte),
+    /**
+     * Quello che DICE di essere, accanto a quello che gli altri raccontano.
+     *
+     * Le preferenze sono una dichiarazione, le abitudini un'osservazione.
+     * Mostrarle vicine è onesto in tutti e due i sensi: se coincidono la
+     * persona è affidabile anche nelle piccole cose, e se divergono chi
+     * legge lo vede da solo senza che nessuno debba dirglielo.
+     */
+    preferenze: {
+      chiacchiere: p.chiacchiere as 'volentieri' | 'dipende' | 'poco',
+      musica: p.musica as 'volentieri' | 'dipende' | 'poco',
+      soste: p.soste as boolean,
+    },
   }
 
   return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>

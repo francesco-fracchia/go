@@ -46,6 +46,8 @@ export interface DatiProfilo {
   abitudini?: string[]
   /** I fatti contati una volta sola, invece che ripetuti su ogni carta. */
   fatti?: Array<{ segno: string; etichetta: string; si: number; su: number }>
+  /** Come dice di viaggiare. Dichiarazione, non osservazione. */
+  preferenze?: { chiacchiere: string; musica: string; soste: boolean }
 }
 
 export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
@@ -84,6 +86,24 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
 
         <div className="profilo-corpo">
           <div className="pila" style={{ gap: 'var(--s5)' }}>
+
+            {/* ── Come dice di viaggiare ──
+                Prima delle recensioni, perché chi sta per prenotare vuole
+                sapere cosa aspettarsi prima di sapere cosa ne pensano gli
+                altri. E sono frasi, non impostazioni: «di solito parla
+                poco» si legge, «chiacchiere: poco» si decifra. */}
+            {p.preferenze && (
+              <section>
+                <p className="occhiello" style={{ marginBottom: 'var(--s3)' }}>Come viaggia</p>
+                <div className="abitudini">
+                  <span className="abitudine">{frase('chiacchiere', p.preferenze.chiacchiere)}</span>
+                  <span className="abitudine">{frase('musica', p.preferenze.musica)}</span>
+                  <span className="abitudine">
+                    {p.preferenze.soste ? '☕ si ferma volentieri' : '➡️ preferisce filare dritto'}
+                  </span>
+                </div>
+              </section>
+            )}
 
             {/* ── Le recensioni: solo se esistono davvero ── */}
             {p.recensioni.length > 0 ? (
@@ -259,6 +279,23 @@ function Verifica({ ok, testo, nota }: { ok: boolean; testo: string; nota?: stri
       </span>
     </div>
   )
+}
+
+/** Una scala a tre gradini letta come la direbbe una persona. */
+function frase(cosa: 'chiacchiere' | 'musica', q: string): string {
+  const detto: Record<string, Record<string, string>> = {
+    chiacchiere: {
+      volentieri: '💬 chiacchiera volentieri',
+      dipende: '💬 dipende dalla serata',
+      poco: '🤫 di solito parla poco',
+    },
+    musica: {
+      volentieri: '🎵 musica volentieri',
+      dipende: '🎵 musica, dipende',
+      poco: '🔇 di solito niente musica',
+    },
+  }
+  return detto[cosa]?.[q] ?? ''
 }
 
 function Voce({ href, testo, nota, segno, pericolo }: {

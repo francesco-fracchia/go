@@ -1,5 +1,7 @@
 'use client'
 import { Cancellami } from './Cancellami.tsx'
+import { Preferenze } from './Preferenze.tsx'
+import type { Quanto } from '../server/profili.ts'
 import { useEffect, useState } from 'react'
 import { Carta, MetodoSalvato } from './Carta.tsx'
 import { LuoghiSalvati, type Salvato } from './LuoghiSalvati.tsx'
@@ -28,6 +30,8 @@ export interface DatiImpostazioni {
   metodo: { marchio: string; ultime4: string | null } | null
   luoghi: Salvato[]
   mappa: boolean
+  /** Come viaggi: della persona, non della macchina. */
+  preferenze: { chiacchiere: Quanto; musica: Quanto; soste: boolean }
 }
 
 export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
@@ -143,6 +147,11 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
             qui.
           </p>
         </div>
+
+        <Gruppo titolo="Come viaggi"
+          nota="Lo vede chi sta per salire con te, prima di prenotare. Non è una promessa: è quello che di solito succede.">
+          <Preferenze iniziali={iniziali.preferenze} />
+        </Gruppo>
 
         <Cancellami />
       </div>
