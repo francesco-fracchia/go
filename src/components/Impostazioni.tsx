@@ -34,10 +34,12 @@ export interface DatiImpostazioni {
   preferenze: { chiacchiere: Quanto; musica: Quanto; soste: boolean }
 }
 
-export function Impostazioni({ iniziali, bloccati = [] }: {
+export function Impostazioni({ iniziali, bloccati = [], moderatore = false }: {
   iniziali: DatiImpostazioni
   /** Chi hai bloccato: sparisce dalla ricerca, quindi va ritrovato da qui. */
   bloccati?: Array<{ id: string; nome: string }>
+  /** Chi modera: le due schermate di servizio, altrimenti invisibili. */
+  moderatore?: boolean
 }) {
   const [push, setPush] = useState(iniziali.push)
   const [sms, setSms] = useState(iniziali.sms)
@@ -134,6 +136,20 @@ export function Impostazioni({ iniziali, bloccati = [] }: {
             {bloccati.map((b) => (
               <SbloccaRiga key={b.id} id={b.id} nome={b.nome} />
             ))}
+          </Gruppo>
+        )}
+
+        {moderatore && (
+          <Gruppo titolo="Strumenti"
+            nota="Le vedi perché sei fra chi modera. Non compaiono a nessun altro.">
+            <div style={{ display: 'grid', gap: 10 }}>
+              <a href="/pannello" style={{ fontSize: 15 }}>
+                Il pannello — chi sta usando l&apos;applicazione, e come
+              </a>
+              <a href="/moderazione" style={{ fontSize: 15 }}>
+                La coda — segnalazioni, account fermi, commenti da leggere
+              </a>
+            </div>
           </Gruppo>
         )}
 

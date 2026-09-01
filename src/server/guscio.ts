@@ -2,6 +2,7 @@ import { db } from './db.ts'
 import { utenteCorrente } from './auth.ts'
 import { modoCorrente, type Modo } from './modo.ts'
 import { daLeggere } from './notifiche.ts'
+import { eModeratore } from './moderazione.ts'
 
 /**
  * Quello che serve al telaio, in una chiamata sola.
@@ -22,6 +23,8 @@ export interface Guscio {
   fotoUrl?: string | null
   /** Quante notifiche non ha ancora visto. Il pallino sulla campanella. */
   daLeggere?: number
+  /** Se modera: compare il collegamento al pannello. */
+  moderatore?: boolean
 }
 
 export async function guscio(): Promise<Guscio> {
@@ -38,6 +41,7 @@ export async function guscio(): Promise<Guscio> {
       iniziale: (data?.nome ?? '').charAt(0).toUpperCase() || undefined,
       fotoUrl: data?.foto_url ?? null,
       daLeggere: quante,
+      moderatore: eModeratore(utente),
     }
   } catch {
     return { modo, utente }

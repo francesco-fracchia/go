@@ -43,6 +43,10 @@ export async function GET() {
       // spegnere prima di aprire le iscrizioni.
       dettagliErrori: process.env.DETTAGLI_ERRORI === '1',
       notifiche: c('VAPID_PRIVATE_KEY'),
+      /* Senza, la coda di moderazione e il pannello rispondono «non hai
+         accesso» a chiunque — compreso a chi li ha costruiti. Dice solo se
+         la variabile c'è, mai chi c'è dentro. */
+      moderatori: c('MODERATORI'),
       sms: c('TWILIO_SID'),
       // Quanto si è speso in SMS questo mese, e il tetto: superato, il
       // canale si spegne da solo invece di far arrivare una fattura.

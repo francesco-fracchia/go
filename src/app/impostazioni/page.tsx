@@ -20,7 +20,8 @@ export default async function Pagina() {
     statoMappa().catch(() => ({ attiva: false })),
     mieiBlocchi(utente).catch(() => []),
   ])
-  return <Telaio attiva="/profilo" {...await guscio()}><Impostazioni iniziali={{
+  const g = await guscio()
+  return <Telaio attiva="/profilo" {...g}><Impostazioni iniziali={{
     push: p?.push_attive ?? true, sms: p?.sms_attivi ?? true, metodo,
     telefono: p?.telefono ?? null,
     luoghi, mappa: mappa.attiva,
@@ -29,7 +30,7 @@ export default async function Pagina() {
       musica: p?.musica ?? 'volentieri',
       soste: p?.soste ?? true,
     },
-  }} bloccati={blocchi.map((b) => ({
+  }} moderatore={g.moderatore ?? false} bloccati={blocchi.map((b) => ({
     id: b.bloccato,
     nome: (b.profili as unknown as { nome: string } | null)?.nome ?? 'qualcuno',
   }))} /></Telaio>
