@@ -13,7 +13,11 @@ import { useEffect, useState } from 'react'
  * di qui. È anche la ragione per cui qualcuno accetta di salire in macchina
  * con uno sconosciuto — non gli lascia il proprio numero.
  */
-export function Chiama({ corsa, chi }: { corsa: string; chi: string }) {
+export function Chiama({ corsa, chi, stretto }: {
+  corsa: string; chi: string
+  /** accanto a «Scrivi», senza la nota sotto */
+  stretto?: boolean
+}) {
   const [numero, setNumero] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,6 +30,14 @@ export function Chiama({ corsa, chi }: { corsa: string; chi: string }) {
   }, [corsa])
 
   if (!numero) return null
+
+  if (stretto) {
+    return (
+      <a href={`tel:${numero}`} className="azione azione-vuota" style={{ flex: 1 }}>
+        Chiama
+      </a>
+    )
+  }
 
   return (
     <div className="chiama">

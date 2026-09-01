@@ -168,15 +168,17 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
           </div>
         )}
 
+        {/* Scrivere e chiamare, uno accanto all'altro.
+            Il «Chiama» che c'era portava a /chiama/[id], una pagina che non
+            esiste: chi lo premeva alle due di notte, cioè esattamente quando
+            serviva, finiva su un 404. Ora il pulsante lo decide `Chiama`,
+            che si mostra solo quando la chiamata può davvero partire —
+            finestra aperta e centralino configurato. */}
         <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
           <a href={`/chat/${c.id}`} style={{ flex: 1, textDecoration: 'none' }}>
             <Bottone variante="contorno">Scrivi</Bottone>
           </a>
-          {minutiAllaPartenza <= 30 && (
-            <a href={`/chiama/${p.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-              <Bottone variante="contorno">Chiama</Bottone>
-            </a>
-          )}
+          <Chiama corsa={c.id} chi={conducente?.nome ?? 'chi guida'} stretto />
         </div>
       </Riquadro>
       )}
@@ -217,8 +219,7 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
       {(p.stato === 'autorizzata' || p.stato === 'richiesta') && (
         <div style={{ marginTop: 26 }}>
           <Disdetta politica={c.politica} minuti={minutiAllaPartenza} prenotazione={p.id}
-            destinazione={c.destinazioneLabel} corsa={c.id}
-            conducente={conducente?.nome ?? 'chi guida'} />
+            destinazione={c.destinazioneLabel} />
         </div>
       )}
     </main>
@@ -266,9 +267,9 @@ function Voce({ nome, valore }: { nome: string; valore: number }) {
  * Un pulsante "annulla" che scopre la penale solo nella schermata di
  * conferma è il modo più veloce di far sentire qualcuno raggirato.
  */
-function Disdetta({ politica, minuti, prenotazione, destinazione, corsa, conducente }: {
+function Disdetta({ politica, minuti, prenotazione, destinazione }: {
   politica: 'flessibile' | 'rigida'; minuti: number; prenotazione: string
-  destinazione: string; corsa: string; conducente: string
+  destinazione: string
 }) {
   // Le regole stanno in un posto solo: qui si leggono, non si riscrivono.
   const ore = minuti / 60
@@ -279,10 +280,6 @@ function Disdetta({ politica, minuti, prenotazione, destinazione, corsa, conduce
     <div>
       {/* Sopra la disdetta, perché il momento in cui serve è quello in cui
           si sta per uscire — non quello in cui si sta per rinunciare. */}
-      {/* Il pulsante compare da solo quando la finestra si apre, e sparisce
-          quando si chiude: non c'è niente da spiegare a chi aspetta al buio. */}
-      <Chiama corsa={corsa} chi={conducente} />
-
       <Scorta prenotazione={prenotazione} destinazione={destinazione} />
 
       <p style={{ fontSize: 13, color: 'var(--tenue)', margin: 'var(--s5) 0 10px', textAlign: 'center' }}>
