@@ -124,8 +124,10 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         minutiAggiunti: p.minutiAggiunti,
         ritardoMin: p.ritardoMin,
         allOrigine: p.allOrigine,
+        partenzaFatta: p.partenzaFatta,
         passaggi: p.passaggi.map((x) => ({
-          etichetta: x.etichetta, chi: x.chi, quando: x.quando.toISOString(),
+          fermata: x.fermata, etichetta: x.etichetta, chi: x.chi,
+          quando: x.quando.toISOString(), passata: x.passata,
         })),
       }).catch(() => null),
       passeggeri: aBordo.map((x) => ({

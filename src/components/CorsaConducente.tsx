@@ -5,6 +5,7 @@ import { Condividi } from './Condividi.tsx'
 import { InViaggio } from './InViaggio.tsx'
 import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuotePersonalizzate } from './QuotePersonalizzate.tsx'
+import { SonoPartito } from './SonoPartito.tsx'
 
 /**
  * La corsa vista da chi guida.
@@ -65,7 +66,11 @@ export interface DatiCorsaConducente {
     minutiAggiunti: number
     ritardoMin: number
     allOrigine: string[]
-    passaggi: Array<{ etichetta: string; chi: string[]; quando: string }>
+    partenzaFatta: boolean
+    passaggi: Array<{
+      fermata: string; etichetta: string; chi: string[]
+      quando: string; passata: boolean
+    }>
   } | null
   passeggeri: Array<{
     id: string
@@ -83,6 +88,15 @@ export interface DatiCorsaConducente {
 export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const liberi = c.postiOfferti - c.passeggeri.length
   const restaACarico = c.costoCent - c.rientroNettoCent
+  /**
+   * Su una corsa pubblica non si parla in gruppo.
+   *
+   * Chi si trova con una ricerca non è una comitiva: la conversazione
+   * comune sarebbe l'unico posto in cui un passeggero scopre chi altro
+   * sale, e la sua schermata non li elenca affatto, di proposito.
+   */
+  const pubblica = c.modalita === 'pubblica'
+
   const minutiAllaPartenza = (new Date(c.oraPartenza).getTime() - Date.now()) / 60_000
 
   /**
@@ -96,7 +110,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
    * Quella pubblicata non sparisce: resta scritta sotto, perché è l'ora
    * che i passeggeri hanno letto e che qualcuno potrebbe citarti.
    */
-  const partenzaVera = c.piano && c.piano.ritardoMin > 0 ? c.piano.partenza : c.oraPartenza
+  const partenzaVera = c.piano ? c.piano.partenza : c.oraPartenza
 
   /**
    * Una corsa finita deve SEMBRARE finita.
@@ -136,7 +150,9 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             ? `Annullata. Sarebbe partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}.`
             : finita
               ? `Partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}, arrivata alle ${orario(c.oraArrivo)}.`
-              : `Parti alle ${orario(partenzaVera)} da ${c.origineLabel}`}
+              : c.piano?.partenzaFatta
+                ? `Partito alle ${orario(partenzaVera)} da ${c.origineLabel}`
+                : `Parti alle ${orario(partenzaVera)} da ${c.origineLabel}`}
         </p>
       </div>
 
@@ -191,7 +207,9 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
       <Riquadro>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
           <div style={{ minWidth: 0 }}>
-            <Etichetta>{finita ? 'era partita alle' : 'parti alle'}</Etichetta>
+            <Etichetta>
+              {finita ? 'era partita alle' : c.piano?.partenzaFatta ? 'sei partito alle' : 'parti alle'}
+            </Etichetta>
             <div style={{
               fontFamily: 'var(--titoli)', fontWeight: 700, fontSize: 30,
               letterSpacing: '-.03em', margin: '3px 0 2px',
@@ -230,7 +248,8 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
         </Etichetta>
 
         {c.piano && c.piano.passaggi.length > 0 && (
-          <Itinerario piano={c.piano} origine={c.origineLabel} destinazione={c.destinazioneLabel} />
+          <Itinerario piano={c.piano} corsa={c.id}
+            origine={c.origineLabel} destinazione={c.destinazioneLabel} />
         )}
 
         <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
@@ -244,7 +263,12 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
                   backgroundSize: 'cover',
                 }} />
                 <div style={{ flexGrow: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15.5 }}>{p.nome}</div>
+                  {p.profiloId
+                    ? <a href={`/profilo/${p.profiloId}`} style={{
+                        fontWeight: 600, fontSize: 15.5, textDecoration: 'none',
+                        color: 'var(--inchiostro)',
+                      }}>{p.nome}</a>
+                    : <div style={{ fontWeight: 600, fontSize: 15.5 }}>{p.nome}</div>}
                   <div style={{ fontSize: 13.5, color: 'var(--tenue)' }}>
                     {finita ? 'saliva' : 'sale'} a {p.punto}
                   </div>
@@ -256,10 +280,16 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
                     tutte. Il collegamento per persona esiste — è il suo
                     profilo — e per scrivere c'è un bottone solo, sotto, che
                     dice a chi arriva il messaggio. */}
-                {p.profiloId && (
-                  <a href={`/profilo/${p.profiloId}`} style={{
+                {/* Su una corsa pubblica ogni passeggero ha la SUA
+                    conversazione con chi guida, e questo collegamento ci
+                    porta davvero: prima erano tre «Scrivi» accanto a tre
+                    nomi che finivano tutti nella stessa chat di gruppo.
+                    Sulle corse private si parla in gruppo, e il pulsante
+                    unico sta sotto. */}
+                {pubblica && chatAperta && p.profiloId && (
+                  <a href={`/chat/${c.id}?con=${p.profiloId}`} style={{
                     flexShrink: 0, fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                  }}>Profilo</a>
+                  }}>Scrivi</a>
                 )}
               </div>
             </Riquadro>
@@ -327,7 +357,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             </p>
           )}
 
-          {c.passeggeri.length > 0 && chatAperta && (
+          {c.passeggeri.length > 0 && chatAperta && !pubblica && (
             <a href={`/chat/${c.id}`} className="azione azione-vuota"
               style={{ width: '100%', marginTop: 'var(--s4)' }}>
               {finita ? 'Scrivi a chi era a bordo' : 'Scrivi a chi sale'}
@@ -413,26 +443,47 @@ function CartaProposta({ p }: { p: Proposta }) {
  * lettura che serve a chi guida, ed è quella che si può dire al passeggero
  * senza tradurla.
  */
-function Itinerario({ piano, origine, destinazione }: {
+function Itinerario({ piano, origine, destinazione, corsa }: {
   piano: NonNullable<DatiCorsaConducente['piano']>
   origine: string
   destinazione: string
+  corsa: string
 }) {
-  const riga = (ora: string, dove: string, chi?: string, forte?: boolean) => (
-    <div key={`${ora}-${dove}`} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+  /**
+   * Un comando solo, sulla riga che viene adesso.
+   *
+   * Mostrare «sono partito» accanto a ogni fermata vorrebbe dire chiedere
+   * a chi guida di scegliere quale premere mentre guida. La prossima è
+   * una sola, e il bottone sta lì.
+   */
+  const prossima = piano.partenzaFatta
+    ? piano.passaggi.find((x) => !x.passata)?.fermata ?? null
+    : 'partenza'
+
+  const riga = (
+    ora: string, dove: string, chi?: string, forte?: boolean,
+    azione?: { quale: string; testo: string }, fatta?: boolean,
+  ) => (
+    <div key={`${ora}-${dove}`} style={{
+      display: 'flex', gap: 12, alignItems: 'baseline',
+      opacity: fatta ? 0.45 : 1,
+    }}>
       <span style={{
         fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--mono)',
         fontSize: 13.5, minWidth: 44, flexShrink: 0,
         color: forte ? 'var(--inchiostro)' : 'var(--tenue)',
         fontWeight: forte ? 600 : 400,
       }}>{orario(ora)}</span>
-      <span style={{ minWidth: 0 }}>
+      <span style={{ minWidth: 0, flexGrow: 1 }}>
         {chi && <strong style={{ fontSize: 15 }}>{chi}</strong>}
         <span style={{
           fontSize: chi ? 13.5 : 15, color: chi ? 'var(--tenue)' : 'var(--inchiostro)',
           display: chi ? 'block' : undefined,
         }}>{dove}</span>
       </span>
+      {azione && (
+        <SonoPartito corsa={corsa} quale={azione.quale} testo={azione.testo} />
+      )}
     </div>
   )
 
@@ -448,8 +499,14 @@ function Itinerario({ piano, origine, destinazione }: {
       </div>
 
       <div style={{ display: 'grid', gap: 11 }}>
-        {riga(piano.partenza, origine, piano.allOrigine.join(' e ') || undefined, true)}
-        {piano.passaggi.map((p) => riga(p.quando, p.etichetta, p.chi.join(' e ')))}
+        {riga(piano.partenza, origine, piano.allOrigine.join(' e ') || undefined, true,
+          prossima === 'partenza' ? { quale: 'partenza', testo: 'sono partito' } : undefined,
+          piano.partenzaFatta)}
+        {piano.passaggi.map((p) => riga(p.quando, p.etichetta, p.chi.join(' e '), false,
+          prossima === p.fermata
+            ? { quale: p.fermata, testo: `ho preso ${p.chi[0] ?? 'chi sale'}` }
+            : undefined,
+          p.passata))}
         {riga(piano.arrivo, destinazione, undefined, true)}
       </div>
 
