@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Marchio, MarchioEsteso } from './Marchio.tsx'
 import { Interruttore } from './Modo.tsx'
-import { SegnoCerca, SegnoGuida, SegnoPosti, SegnoViaggi, SegnoComitiva, SegnoTu, SegnoPiu } from './segni.tsx'
+import { SegnoCerca, SegnoGuida, SegnoPosti, SegnoViaggi, SegnoComitiva, SegnoTu, SegnoPiu, SegnoCampana } from './segni.tsx'
 import type { Modo } from '../server/modo.ts'
 
 /**
@@ -48,7 +48,7 @@ const VOCI: Record<Modo, Voce[]> = {
   ],
 }
 
-export function Telaio({ children, attiva, modo = 'passeggero', utente, iniziale, fotoUrl, vetrina }: {
+export function Telaio({ children, attiva, modo = 'passeggero', utente, iniziale, fotoUrl, vetrina, daLeggere = 0 }: {
   children: ReactNode
   attiva?: string
   modo?: Modo
@@ -63,6 +63,8 @@ export function Telaio({ children, attiva, modo = 'passeggero', utente, iniziale
   utente?: string | null
   iniziale?: string
   fotoUrl?: string | null
+  /** Quante notifiche non ha ancora visto: decide solo se accendere il pallino. */
+  daLeggere?: number
 }) {
   const voci = VOCI[modo]
 
@@ -89,6 +91,19 @@ export function Telaio({ children, attiva, modo = 'passeggero', utente, iniziale
               </a>
             ))}
           </nav>
+
+          {utente && !vetrina && (
+            /* La campanella sta accanto al profilo perché è l'altra cosa
+               che riguarda te e non il viaggio che stai guardando. Il
+               pallino compare solo se c'è qualcosa: un contrassegno che
+               c'è sempre smette di significare qualcosa. */
+            <a href="/notifiche" className="campanella" aria-label={
+              daLeggere > 0 ? `Notifiche, ${daLeggere} da leggere` : 'Notifiche'
+            }>
+              <SegnoCampana />
+              {daLeggere > 0 && <span className="campanella-pallino" aria-hidden />}
+            </a>
+          )}
 
           {utente ? (
             <a href="/profilo" className="pastiglia-profilo" aria-label="Il tuo profilo"

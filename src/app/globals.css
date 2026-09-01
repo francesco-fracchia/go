@@ -2923,3 +2923,22 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 
 .chat-errore { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; }
+
+/* ── La campanella ──
+   Sta nella barra accanto al profilo. Il pallino non porta un numero:
+   sapere QUANTE non cambia cosa fai, e un numero che cresce è un compito
+   che si accumula invece di un invito a guardare. */
+.campanella {
+  position: relative; flex-shrink: 0; margin-left: var(--s2);
+  width: 34px; height: 34px; border-radius: 999px;
+  display: grid; place-items: center;
+  color: var(--inchiostro-2); text-decoration: none;
+  border: 1px solid transparent;
+}
+.campanella:hover { border-color: var(--riga); background: var(--superficie); }
+.campanella svg { width: 19px; height: 19px; }
+.campanella-pallino {
+  position: absolute; top: 6px; right: 6px;
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--accento); border: 2px solid var(--carta);
+}

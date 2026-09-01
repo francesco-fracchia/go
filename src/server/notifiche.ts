@@ -114,18 +114,32 @@ export async function notifica(n: Notifica): Promise<'push' | 'sms' | 'nessuno' 
     }
   }
 
-  if (!canale) return 'nessuno'
-
+  /**
+   * La riga si scrive SEMPRE, consegnata o no.
+   *
+   * Prima si scriveva solo dopo una consegna riuscita, e senza il testo:
+   * un messaggio che nessun canale aveva portato via non esisteva da
+   * nessuna parte. Con zero iscrizioni push in produzione — che è lo stato
+   * normale finché qualcuno non concede il permesso — voleva dire che ogni
+   * notifica evaporava: prenotazione accettata, corsa annullata, account
+   * sospeso.
+   *
+   * Adesso «app» significa: è successo, ed è scritto dove puoi leggerlo.
+   * Il push resta il modo veloce, non l'unico.
+   */
   await db.from('notifiche').insert({
     destinatario: n.destinatario,
     tipo: n.tipo,
-    canale,
+    canale: canale ?? 'app',
+    titolo: n.titolo,
+    testo: n.testo,
+    url: n.url ?? null,
     corsa: n.corsa ?? null,
     prenotazione: n.prenotazione ?? null,
     costo_cent: canale === 'sms' ? COSTO_SMS_CENT : 0,
     chiave: n.chiave,
   })
-  return canale
+  return canale ?? 'nessuno'
 }
 
 async function inviaPush(n: Notifica): Promise<boolean> {
@@ -228,4 +242,46 @@ export async function costoSmsPeriodo(da: Date, a: Date): Promise<number> {
     .gte('inviata_il', da.toISOString())
     .lte('inviata_il', a.toISOString())
   return (data ?? []).reduce((s, r) => s + r.costo_cent, 0)
+}
+
+/**
+ * Le notifiche di una persona, le più recenti prima.
+ *
+ * È la superficie che mancava. Finché non esisteva, il prodotto parlava
+ * solo attraverso il push — e il push è un permesso che si può negare, che
+ * su iPhone richiede di installare l'applicazione, e che in produzione non
+ * aveva concesso nessuno.
+ */
+export async function mieNotifiche(utente: string, limite = 40) {
+  const { data } = await db
+    .from('notifiche')
+    .select('id, tipo, titolo, testo, url, canale, letta_il, inviata_il')
+    .eq('destinatario', utente)
+    .order('inviata_il', { ascending: false })
+    .limit(limite)
+  return data ?? []
+}
+
+/** Quante ne deve ancora vedere. Serve al pallino sulla campanella. */
+export async function daLeggere(utente: string): Promise<number> {
+  const { count } = await db
+    .from('notifiche')
+    .select('id', { count: 'exact', head: true })
+    .eq('destinatario', utente)
+    .is('letta_il', null)
+  return count ?? 0
+}
+
+/**
+ * Segna lette quelle già mostrate.
+ *
+ * Si segna all'apertura dell'elenco, non al singolo tocco: chi apre la
+ * lista le ha viste tutte, e chiedergli di toccarle una per una per
+ * spegnere un pallino è un lavoro che facciamo fare a lui invece che noi.
+ */
+export async function segnaLette(utente: string) {
+  await db.from('notifiche')
+    .update({ letta_il: new Date().toISOString() })
+    .eq('destinatario', utente)
+    .is('letta_il', null)
 }

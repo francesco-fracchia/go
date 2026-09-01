@@ -224,3 +224,11 @@ export const SegnoTutti = () => (
   <svg {...base}><circle cx="7.2" cy="7.2" r="3" /><circle cx="16.8" cy="7.2" r="3" />
     <circle cx="7.2" cy="16.8" r="3" /><circle cx="16.8" cy="16.8" r="3" /></svg>
 )
+
+/** Una campana: le cose che ti riguardano e che non hai ancora letto. */
+export const SegnoCampana = () => (
+  <svg {...base}>
+    <path d="M18 8.6a6 6 0 1 0-12 0c0 5.2-1.7 6.6-1.7 6.6h15.4S18 13.8 18 8.6" />
+    <path d="M13.7 19a2 2 0 0 1-3.4 0" />
+  </svg>
+)

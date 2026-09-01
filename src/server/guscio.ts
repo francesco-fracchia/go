@@ -1,6 +1,7 @@
 import { db } from './db.ts'
 import { utenteCorrente } from './auth.ts'
 import { modoCorrente, type Modo } from './modo.ts'
+import { daLeggere } from './notifiche.ts'
 
 /**
  * Quello che serve al telaio, in una chiamata sola.
@@ -19,6 +20,8 @@ export interface Guscio {
   utente: string | null
   iniziale?: string
   fotoUrl?: string | null
+  /** Quante notifiche non ha ancora visto. Il pallino sulla campanella. */
+  daLeggere?: number
 }
 
 export async function guscio(): Promise<Guscio> {
@@ -26,12 +29,15 @@ export async function guscio(): Promise<Guscio> {
   if (!utente) return { modo, utente: null }
 
   try {
-    const { data } = await db
-      .from('profili').select('nome, foto_url').eq('id', utente).maybeSingle()
+    const [{ data }, quante] = await Promise.all([
+      db.from('profili').select('nome, foto_url').eq('id', utente).maybeSingle(),
+      daLeggere(utente).catch(() => 0),
+    ])
     return {
       modo, utente,
       iniziale: (data?.nome ?? '').charAt(0).toUpperCase() || undefined,
       fotoUrl: data?.foto_url ?? null,
+      daLeggere: quante,
     }
   } catch {
     return { modo, utente }
