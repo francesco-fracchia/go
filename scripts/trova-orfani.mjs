@@ -55,9 +55,17 @@ for (const [f, testo] of testi) {
 
   for (const nome of nomi) {
     if (AMMESSI.has(nome)) continue
-    const usato = [...testi].some(([g, t]) =>
+    /**
+     * Conta anche gli usi NELLO STESSO file, tolta la riga che lo esporta.
+     *
+     * Senza questo, ogni funzione usata solo dal suo modulo risultava orfana
+     * — e in un elenco pieno di falsi positivi le tre righe vere non le
+     * legge nessuno. Un controllo che grida sempre è un controllo spento.
+     */
+    const altrove = [...testi].some(([g, t]) =>
       g !== f && !g.includes('.test.') && new RegExp(`\\b${nome}\\b`).test(t))
-    if (!usato) orfani.push({ file: relative('.', f), nome })
+    const quiDentro = [...testo.matchAll(new RegExp(`\\b${nome}\\b`, 'g'))].length > 1
+    if (!altrove && !quiDentro) orfani.push({ file: relative('.', f), nome })
   }
 }
 

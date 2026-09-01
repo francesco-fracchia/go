@@ -2,6 +2,7 @@ import * as lavori from '../../../server/lavori.ts'
 import {
   chiudiContestazioni, liquidaSettimanaScorsa, fondiNonRitirati,
 } from '../../../server/liquidazioni.ts'
+import { invitaARecensire } from '../../../server/recensioni.ts'
 import { dimenticaPosizioni } from '../../../server/posizione.ts'
 import { db } from '../../../server/db.ts'
 import { json } from '../_risposta.ts'
@@ -30,6 +31,10 @@ const REGISTRO: Record<string, () => Promise<unknown>> = {
      restava fermo sul saldo. */
   liquida: liquidaSettimanaScorsa,
   fondi_non_ritirati: fondiNonRitirati,
+  /* Chiedere una recensione: scritto, corretto, e non chiamato da nessuno.
+     Vuol dire che nessuno è mai stato invitato a lasciarne una — e tutto
+     l'impianto della reputazione dipende da recensioni che nessuno chiede. */
+  invita_recensioni: invitaARecensire,
   dimentica_posizioni: dimenticaPosizioni,
 }
 

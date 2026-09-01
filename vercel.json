@@ -47,6 +47,10 @@
     {
       "path": "/api/cron?lavoro=fondi_non_ritirati",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron?lavoro=invita_recensioni",
+      "schedule": "0 */2 * * *"
     }
   ]
 }
