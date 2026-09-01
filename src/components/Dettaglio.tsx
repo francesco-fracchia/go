@@ -179,10 +179,16 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
                     ? 'Il posto è tuo appena prenoti: non serve che nessuno accetti.'
                     : `${c.conducente.nome} riceve la tua richiesta e risponde. Fino ad allora non ti addebitiamo niente.`}
                 </li>
+                {/* La stessa promessa che si legge al momento della
+                    disdetta, e con la stessa precisione: dire «senza costi»
+                    e poi trattenere la quota di servizio è già stato un
+                    difetto una volta, e questo è il posto dove pesa di più —
+                    qui la promessa è quella su cui si decide se salire. */}
                 <li>
-                  {c.politica === 'flessibile'
-                    ? 'Puoi disdire senza costi fino a un’ora prima della partenza.'
-                    : 'Puoi disdire senza costi fino a sei ore prima della partenza.'}
+                  Puoi disdire senza costi fino a{' '}
+                  {c.politica === 'flessibile' ? 'un’ora' : 'sei ore'} prima
+                  della partenza. Nelle ultime ventiquattro resta la quota di
+                  servizio, {euro(c.feeCent)}.
                 </li>
                 <li>
                   La carta viene bloccata adesso e addebitata quando il viaggio
