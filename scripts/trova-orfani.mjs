@@ -55,12 +55,37 @@ const senzaCommenti = (t) => t
   .replace(/\/\*[\s\S]*?\*\//g, ' ')
   .replace(/(^|[^:])\/\/.*$/gm, '$1 ')
 
-const testi = new Map(file.map((f) => [f, senzaCommenti(readFileSync(f, 'utf8'))]))
+/**
+ * Nemmeno un import conta come chiamante.
+ *
+ * Importare un nome non è usarlo. Se ne è accorto il controllo stesso:
+ * piantando il difetto di `apriFinestraEsito` — la chiamata commentata,
+ * l'import rimasto — non lo trovava, perché quella riga d'import bastava
+ * a farla sembrare viva. È lo stesso inganno dei commenti, e in più è
+ * quello che resta in un file quando si toglie una chiamata.
+ */
+const senzaImport = (t) => t.replace(/^import\s[\s\S]*?from\s+'[^']*'\s*$/gm, ' ')
+
+const testi = new Map(file.map(
+  (f) => [f, senzaImport(senzaCommenti(readFileSync(f, 'utf8')))]))
+
+/**
+ * Il codice finto: le prove e i dati dimostrativi.
+ *
+ * Vanno tenuti distinti dalla produzione, perché una funzione che chiama
+ * SOLO il seed della demo è irraggiungibile per un utente vero pur avendo
+ * chiamanti. È il travestimento che ha nascosto `apriFinestraEsito`: la
+ * chiamava `demo/dati.ts`, il controllo la vedeva usata, e intanto in
+ * produzione nessuna prenotazione maturava e nessun conducente veniva
+ * pagato. I soldi si prendevano dal passeggero e restavano fermi.
+ */
+const finto = (f) => f.includes('.test.') || f.includes('/demo/')
 
 const orfani = []
 const soloTest = []
+const soloDemo = []
 for (const [f, testo] of testi) {
-  if (f.includes('.test.')) continue
+  if (finto(f)) continue
 
   const nomi = [...testo.matchAll(
     /^export\s+(?:async\s+)?(?:function|const|class)\s+([A-Za-z_$][\w$]*)/gm,
@@ -77,7 +102,7 @@ for (const [f, testo] of testi) {
      */
     const re = new RegExp(`\\b${nome}\\b`)
     const inProduzione = [...testi].some(([g, t]) =>
-      g !== f && !g.includes('.test.') && re.test(t))
+      g !== f && !finto(g) && re.test(t))
     const quiDentro = [...testo.matchAll(new RegExp(`\\b${nome}\\b`, 'g'))].length > 1
     if (inProduzione || quiDentro) continue
 
@@ -90,9 +115,12 @@ for (const [f, testo] of testi) {
      * e basta. Sono due cose diverse e vanno lette diversamente, quindi si
      * separano invece di finire nello stesso mucchio.
      */
-    const neiTest = [...testi].some(([g, t]) =>
-      g !== f && g.includes('.test.') && re.test(t))
-    ;(neiTest ? soloTest : orfani).push({ file: relative('.', f), nome })
+    const dove = (quali) => [...testi].some(([g, t]) =>
+      g !== f && quali(g) && re.test(t))
+    const mucchio = dove((g) => g.includes('/demo/')) ? soloDemo
+      : dove((g) => g.includes('.test.')) ? soloTest
+      : orfani
+    mucchio.push({ file: relative('.', f), nome })
   }
 }
 
@@ -106,13 +134,17 @@ const elenca = (titolo, righe) => {
   }
 }
 
-if (orfani.length === 0 && soloTest.length === 0) {
+if (orfani.length === 0 && soloTest.length === 0 && soloDemo.length === 0) {
   console.log('Nessun orfano: ogni cosa esportata ha almeno un chiamante.')
   process.exit(0)
 }
 
 elenca(`${orfani.length} cose che NON CHIAMA NESSUNO, nemmeno un test:`, orfani)
 elenca(`${soloTest.length} cose che chiama SOLO un test:`, soloTest)
+elenca(
+  `${soloDemo.length} cose che chiama SOLO la demo — per un utente vero non\n`
+  + 'esistono, ed è la forma che aveva il difetto peggiore del progetto:',
+  soloDemo)
 console.log(
   '\nNon è detto che siano difetti: alcune cose sono esportate per essere\n'
   + 'provate, altre servono a un solo file. Ma ognuna merita la domanda —\n'
