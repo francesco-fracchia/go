@@ -96,7 +96,8 @@ export async function prenota(req: RichiestaPrenotazione) {
     .select('*, veicoli(centesimi_per_km)')
     .eq('id', req.corsaId)
     .single<RigaCorsa>()
-  if (error || !riga) throw new ErrorePrenotazione('corsa', 'corsa non trovata')
+  if (error || !riga) throw new ErrorePrenotazione('corsa',
+      'questa corsa non esiste più: forse è stata annullata mentre la guardavi')
 
   if (!['pubblicata', 'confermata'].includes(riga.stato)) {
     throw new ErrorePrenotazione('stato', 'la corsa non accetta prenotazioni')
@@ -300,7 +301,8 @@ export async function prenotaAndataRitorno(req: RichiestaPrenotazione) {
   }
 
   const rigaAndata = await carica(req.corsaId)
-  if (!rigaAndata) throw new ErrorePrenotazione('corsa', 'corsa non trovata')
+  if (!rigaAndata) throw new ErrorePrenotazione('corsa',
+      'questa corsa non esiste più: forse è stata annullata mentre la guardavi')
   if (!rigaAndata.corsa_ritorno) {
     throw new ErrorePrenotazione('ritorno', 'questa corsa non ha un rientro collegato')
   }

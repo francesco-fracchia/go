@@ -3,12 +3,12 @@ import { richiediUtente } from '../../../server/auth.ts'
 import { json, rispostaErrore } from '../_risposta.ts'
 
 const MESSAGGI: Record<string, string> = {
-  presto: 'aspetta che il viaggio sia finito',
-  tardi: 'sono passati troppi giorni',
+  presto: 'aspetta che il viaggio sia finito: si recensisce dopo, non prima',
+  tardi: 'sono passate più di due settimane dal viaggio',
   gia_fatta: 'hai già lasciato una recensione',
   non_tua: 'non hai viaggiato su questa corsa',
-  non_trovata: 'corsa non trovata',
-  errore: 'non siamo riusciti a salvarla',
+  non_trovata: 'non troviamo questo viaggio',
+  errore: 'non siamo riusciti a salvarla. Riprova fra poco',
 }
 
 export async function POST(req: Request) {

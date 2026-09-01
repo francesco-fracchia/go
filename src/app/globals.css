@@ -2921,3 +2921,5 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   border-radius: var(--r-m); background: var(--superficie-2);
   font-size: 14px; line-height: 1.55; color: var(--inchiostro-2);
 }
+
+.chat-errore { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; }

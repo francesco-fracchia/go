@@ -76,7 +76,7 @@ export async function segnala(opts: {
     .select('id, passeggero, stato, corse!inner(id, conducente)')
     .eq('id', opts.prenotazioneId)
     .single()
-  if (!p) return { ok: false, errore: 'prenotazione non trovata' }
+  if (!p) return { ok: false, errore: 'non troviamo questo viaggio fra i tuoi' }
 
   const c = p.corse as unknown as { id: string; conducente: string }
   const passeggero = p.passeggero === opts.autoreId

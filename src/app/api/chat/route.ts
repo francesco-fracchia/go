@@ -15,7 +15,24 @@ export async function POST(req: Request) {
   try {
     const utente = await richiediUtente()
     const { corsa, testo } = await req.json()
-    const m = await scrivi(corsa, utente, String(testo ?? ''))
-    return json(m ? { messaggio: m } : { errore: 'non inviato' }, m ? 201 : 403)
+    const esito = await scrivi(corsa, utente, String(testo ?? ''))
+    if (esito.ok) return json({ messaggio: esito.messaggio }, 201)
+
+    /**
+     * Ogni rifiuto dice cosa è successo e, dove ha senso, cosa fare.
+     * «Non inviato» costava un tentativo, poi un secondo, poi la fiducia.
+     */
+    const spiegazione: Record<string, [string, number]> = {
+      vuoto: ['scrivi qualcosa prima di mandare', 400],
+      lungo: ['il messaggio è troppo lungo: massimo duemila caratteri', 400],
+      assente: ['questa corsa non esiste più', 404],
+      chiusa: [
+        'la conversazione si è chiusa due giorni dopo l’arrivo. '
+        + 'Se è successo qualcosa, segnalacelo dal viaggio.', 409,
+      ],
+      estraneo: ['non hai viaggiato su questa corsa', 403],
+    }
+    const [messaggio, stato] = spiegazione[esito.motivo] ?? ['non inviato', 403]
+    return json({ errore: messaggio, codice: esito.motivo }, stato)
   } catch (e) { return rispostaErrore(e) }
 }

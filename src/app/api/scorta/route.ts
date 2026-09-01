@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     if (!prenotazione) return json({ errore: 'prenotazione mancante' }, 400)
 
     const t = await collegamentoScorta(prenotazione, utente)
-    if (!t) return json({ errore: 'viaggio non trovato' }, 404)
+    if (!t) return json({ errore: 'non troviamo questo viaggio fra i tuoi' }, 404)
     return json({ percorso: `/viaggio/${t}` })
   } catch (e) { return rispostaErrore(e) }
 }

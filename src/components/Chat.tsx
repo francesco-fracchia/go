@@ -36,6 +36,7 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
 }) {
   const [messaggi, setMessaggi] = useState(iniziali)
   const [testo, setTesto] = useState('')
+  const [errore, setErrore] = useState<string | null>(null)
   const fondo = useRef<HTMLDivElement>(null)
 
   useEffect(() => { fondo.current?.scrollIntoView({ behavior: 'smooth' }) }, [messaggi.length])
@@ -69,9 +70,22 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
       body: JSON.stringify({ corsa: corsaId, testo: pulito }),
     })
     if (!r.ok) {
+      /**
+       * Si dice PERCHÉ, non solo che non è andata.
+       *
+       * Prima il messaggio spariva e il testo tornava nella casella, senza
+       * una parola: chi lo vedeva pensava a un tocco andato a vuoto e
+       * ripremeva. Adesso che la conversazione si chiude due giorni dopo
+       * l'arrivo, il rifiuto è un caso NORMALE — e un caso normale
+       * raccontato come un guasto fa credere che l'applicazione sia rotta.
+       */
       setMessaggi((m) => m.filter((x) => x.id !== provvisorio.id))
       setTesto(pulito)
+      const d = await r.json().catch(() => ({}))
+      setErrore(d.errore ?? 'Non siamo riusciti a mandarlo. Riprova.')
+      return
     }
+    setErrore(null)
   }
 
   return (
@@ -122,6 +136,7 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
       </div>
 
       <div className="conversazione-piede">
+        {errore && <p className="errore chat-errore">{errore}</p>}
         <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 9 }}>
           {PRONTE.map((p) => (
             <button key={p} onClick={() => invia(p)} style={{

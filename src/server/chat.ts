@@ -45,9 +45,28 @@ export async function messaggi(corsaId: string, utenteId: string) {
  */
 export const ORE_CHAT_DOPO_ARRIVO = 48
 
-export async function scrivi(corsaId: string, autoreId: string, testo: string) {
+/**
+ * Perché un messaggio non è partito.
+ *
+ * Prima `scrivi` restituiva `null` per qualunque ragione e la rotta
+ * traduceva in «non inviato»: due parole che sembrano un guasto. Da quando
+ * la chat si chiude due giorni dopo l'arrivo il caso è diventato normale —
+ * si scrive a un compagno di viaggio della settimana scorsa — e ricevere
+ * «non inviato» fa credere che l'applicazione sia rotta invece che chiusa.
+ *
+ * Un rifiuto che non dice perché costa un tentativo, poi un secondo, poi
+ * la fiducia.
+ */
+export type EsitoScrittura =
+  | { ok: true; messaggio: { id: string; testo: string; creato_il: string } }
+  | { ok: false; motivo: 'vuoto' | 'lungo' | 'assente' | 'chiusa' | 'estraneo' }
+
+export async function scrivi(
+  corsaId: string, autoreId: string, testo: string,
+): Promise<EsitoScrittura> {
   const pulito = testo.trim()
-  if (!pulito || pulito.length > 2000) return null
+  if (!pulito) return { ok: false, motivo: 'vuoto' }
+  if (pulito.length > 2000) return { ok: false, motivo: 'lungo' }
 
   /**
    * La chat si chiude da sola, e si chiude sul SERVER.
@@ -58,20 +77,22 @@ export async function scrivi(corsaId: string, autoreId: string, testo: string) {
    */
   const { data: corsa } = await db
     .from('corse').select('ora_arrivo, stato').eq('id', corsaId).single()
-  if (!corsa) return null
+  if (!corsa) return { ok: false, motivo: 'assente' }
 
   const finita = ['conclusa', 'annullata', 'scaduta'].includes(corsa.stato)
   const oreDaArrivo = (Date.now() - new Date(corsa.ora_arrivo).getTime()) / 3600_000
-  if (finita && oreDaArrivo > ORE_CHAT_DOPO_ARRIVO) return null
+  if (finita && oreDaArrivo > ORE_CHAT_DOPO_ARRIVO) return { ok: false, motivo: 'chiusa' }
 
   const { data, error } = await db.from('messaggi')
     .insert({ corsa: corsaId, autore: autoreId, testo: pulito })
     .select('id, testo, creato_il')
     .single()
-  if (error) return null
+  // L'unica ragione per cui l'inserimento fallisce è che chi scrive non ha
+  // niente a che fare con questa corsa: lo dice la politica sulla tabella.
+  if (error || !data) return { ok: false, motivo: 'estraneo' }
 
   await avvisaGliAltri(corsaId, autoreId, pulito)
-  return data
+  return { ok: true, messaggio: data }
 }
 
 async function avvisaGliAltri(corsaId: string, autoreId: string, testo: string) {
