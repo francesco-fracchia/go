@@ -10,6 +10,7 @@ import {
 import type { Cents } from '../lib/money.ts'
 import { FUSO } from '../lib/tempo.ts'
 import { ritiroVicino, creaRitiro } from './fermate.ts'
+import { bloccati } from './blocchi.ts'
 
 /**
  * Creazione di una prenotazione.
@@ -119,6 +120,18 @@ export async function prenota(req: RichiestaPrenotazione) {
   }
   if (riga.conducente === req.passeggeroId) {
     throw new ErrorePrenotazione('conducente', 'non si prenota la propria corsa')
+  }
+
+  /**
+   * Un blocco, in un verso o nell'altro, chiude la porta.
+   *
+   * Il messaggio non dice che c'è un blocco e non dice chi l'ha messo:
+   * dirlo consegnerebbe a chi è bloccato l'informazione che qualcuno ha
+   * deciso di evitarlo, che è precisamente ciò che potrebbe farlo
+   * reagire. Vede una corsa che non si può prenotare, come quando è piena.
+   */
+  if (await bloccati(riga.conducente, req.passeggeroId)) {
+    throw new ErrorePrenotazione('pieno', 'questa corsa non è disponibile')
   }
 
   const kmDeviazione = req.kmDeviazione ?? 0

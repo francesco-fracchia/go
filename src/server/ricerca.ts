@@ -2,6 +2,7 @@ import { db } from './db.ts'
 import type { Punto } from './percorsi.ts'
 import type { Cents } from '../lib/money.ts'
 import { feePasseggero, type Corsa } from '../lib/pricing.ts'
+import { daEvitare } from './blocchi.ts'
 
 /**
  * Ricerca.
@@ -78,7 +79,21 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
     flessibilita_min: number
   }>
 
-  const righe = f.escludi ? tutte.filter((r) => r.conducente !== f.escludi) : tutte
+  const senzaMe = f.escludi ? tutte.filter((r) => r.conducente !== f.escludi) : tutte
+
+  /**
+   * Le corse di chi si evita non compaiono proprio.
+   *
+   * Lasciarle nell'elenco e rifiutarle alla prenotazione sarebbe sicuro
+   * ma crudele nei due sensi: chi ha bloccato continua a vedere quella
+   * faccia fra i risultati, e chi è bloccato ci prova e si becca un
+   * rifiuto che non sa spiegarsi. Una corsa in meno non si nota; un
+   * rifiuto sì.
+   */
+  const evitare = f.escludi ? await daEvitare(f.escludi) : new Set<string>()
+  const righe = evitare.size > 0
+    ? senzaMe.filter((r) => !evitare.has(r.conducente))
+    : senzaMe
 
   return righe
     .filter((r) => r.fermata_ritiro !== null || r.deviazione_ammessa)

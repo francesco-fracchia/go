@@ -77,7 +77,15 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     },
   }
 
-  return <Telaio attiva="/profilo" {...g}><Profilo p={dati} mio={mio} /></Telaio>
+  const { data: blocco } = mio
+    ? { data: null }
+    : await db.from('blocchi').select('id').eq('chi', io).eq('bloccato', id).maybeSingle()
+
+  return (
+    <Telaio attiva="/profilo" {...g}>
+      <Profilo p={dati} mio={mio} bloccato={!!blocco} />
+    </Telaio>
+  )
 }
 
 const eta = (n: string) => {

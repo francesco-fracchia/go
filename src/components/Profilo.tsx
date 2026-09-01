@@ -2,6 +2,7 @@ import { SegnoAvanti, SegnoEsci } from './segni.tsx'
 import { Invita } from './Invita.tsx'
 import { Foto } from './Foto.tsx'
 import { segnoDescrittore } from '../lib/recensione.ts'
+import { Blocca } from './Blocca.tsx'
 
 /**
  * Il profilo.
@@ -50,7 +51,12 @@ export interface DatiProfilo {
   preferenze?: { chiacchiere: string; musica: string; soste: boolean }
 }
 
-export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
+export function Profilo({ p, mio, bloccato }: {
+  p: DatiProfilo
+  mio?: boolean
+  /** Se lo hai già bloccato: il comando diventa «sblocca». */
+  bloccato?: boolean
+}) {
   return (
     <div className="fascia">
       <div className="dentro dentro-app profilo-dentro">
@@ -258,6 +264,11 @@ export function Profilo({ p, mio }: { p: DatiProfilo; mio?: boolean }) {
                 attività di trasporto di persone.
               </p>
             )}
+
+            {/* Sta in fondo, sotto tutto il resto, e senza colore: è un
+                gesto che deve essere trovabile da chi lo cerca e invisibile
+                a chi sta solo guardando un profilo. */}
+            {!mio && <Blocca persona={p.id} nome={p.nome} bloccato={!!bloccato} />}
           </aside>
         </div>
       </div>
