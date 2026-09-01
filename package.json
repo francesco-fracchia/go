@@ -15,8 +15,9 @@
     "query": "node --env-file=.env.local scripts/verifica-query.mjs",
     "orfani": "node scripts/trova-orfani.mjs",
     "collegamenti": "node scripts/verifica-collegamenti.mjs",
-    "verifica": "npm run typecheck && npm test && npm run collegamenti && npm run orfani && npm run query && npm run funzioni",
-    "funzioni": "node --env-file=.env.local scripts/verifica-funzioni.mjs"
+    "verifica": "npm run typecheck && npm test && npm run collegamenti && npm run orfani && npm run query && npm run funzioni && npm run enum",
+    "funzioni": "node --env-file=.env.local scripts/verifica-funzioni.mjs",
+    "enum": "node --env-file=.env.local scripts/verifica-enum.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
