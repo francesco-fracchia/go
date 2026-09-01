@@ -33,7 +33,7 @@ export interface DatiCorsa {
   kmDeviazione: number
   accettaDeviazioni: boolean
   prenotaImmediata: boolean
-  politica: 'flessibile' | 'rigida'
+  politica: 'flessibile' | 'rigida' | 'nessuna'
   note?: string
   /**
    * Se questa corsa accetta ancora prenotazioni.
@@ -185,10 +185,11 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
                     difetto una volta, e questo è il posto dove pesa di più —
                     qui la promessa è quella su cui si decide se salire. */}
                 <li>
-                  Puoi disdire senza costi fino a{' '}
-                  {c.politica === 'flessibile' ? 'un’ora' : 'sei ore'} prima
-                  della partenza. Nelle ultime ventiquattro resta la quota di
-                  servizio, {euro(c.feeCent)}.
+                  {c.politica === 'nessuna'
+                    ? `${c.conducente.nome} non trattiene niente: disdici quando vuoi.`
+                    : `Puoi disdire senza costi fino a ${c.politica === 'flessibile' ? 'un’ora' : 'sei ore'} prima della partenza.`}
+                  {' '}Nelle ultime ventiquattro resta la quota di servizio,{' '}
+                  {euro(c.feeCent)}.
                 </li>
                 <li>
                   La carta viene bloccata adesso e addebitata quando il viaggio

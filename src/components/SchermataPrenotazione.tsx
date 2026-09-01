@@ -40,7 +40,7 @@ export interface DatiPrenotazione {
     oraPartenza: string
     oraArrivo: string
     destinazioneLabel: string
-    politica: 'flessibile' | 'rigida'
+    politica: 'flessibile' | 'rigida' | 'nessuna'
   }
   conducente: { nome: string; fotoUrl: string | null } | null
   veicolo: { marca: string; modello: string; colore: string | null; targa: string } | null
@@ -271,7 +271,7 @@ function Voce({ nome, valore }: { nome: string; valore: number }) {
  * conferma è il modo più veloce di far sentire qualcuno raggirato.
  */
 function Disdetta({ politica, minuti, prenotazione, destinazione, feeCent }: {
-  politica: 'flessibile' | 'rigida'; minuti: number; prenotazione: string
+  politica: 'flessibile' | 'rigida' | 'nessuna'; minuti: number; prenotazione: string
   destinazione: string
   /** La quota di servizio, per poterla nominare invece di chiamarla «costi». */
   feeCent: number
@@ -309,7 +309,7 @@ const orario = (iso: string) =>
 interface Corsa {
   id: string; ora_partenza: string; ora_arrivo: string
   origine_label: string; destinazione_label: string
-  politica: 'flessibile' | 'rigida'; conducente: string
+  politica: 'flessibile' | 'rigida' | 'nessuna'; conducente: string
   profili: { nome: string; foto_url: string | null; telefono: string } | null
   veicoli: { marca: string; modello: string; colore: string | null; targa: string } | null
 }

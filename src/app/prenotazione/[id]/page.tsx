@@ -57,7 +57,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
 interface RigaCorsa {
   id: string; ora_partenza: string; ora_arrivo: string
   origine_label: string; destinazione_label: string
-  politica: 'flessibile' | 'rigida'
+  politica: 'flessibile' | 'rigida' | 'nessuna'
   profili: { nome: string; foto_url: string | null } | null
   veicoli: { marca: string; modello: string; colore: string | null; targa: string } | null
 }

@@ -51,7 +51,7 @@ export interface RichiestaPubblicazione {
    * livello mandato su una corsa pubblica non fa niente, per costruzione.
    */
   livelloRimborso?: LivelloRimborso
-  politica?: 'flessibile' | 'rigida'
+  politica?: 'flessibile' | 'rigida' | 'nessuna'
   note?: string
   /**
    * Ora di ritorno. Se c'è, si pubblica anche la corsa inversa e le due si

@@ -130,3 +130,44 @@ test('sopra le ventiquattro ore è davvero senza costi', () => {
   assert.equal(testoDisdetta(48, 'flessibile', 30), 'Puoi disdire senza costi.')
   assert.equal(testoDisdetta(48, 'rigida', 30), 'Puoi disdire senza costi.')
 })
+
+// ─── «Non trattengo niente» ───────────────────────────────────────────
+
+test('con la politica nessuna, a chi guida non va mai niente', () => {
+  for (const ore of [-1, 0, 0.5, 1, 2, 6, 12, 24, 48]) {
+    const p = calcolaPenale({
+      oreMancanti: ore, politica: 'nessuna',
+      quotaConducente: 355, fee: 30, totale: 385,
+    })
+    assert.equal(p.alConducente, 0, `a ${ore} ore andrebbero ${p.alConducente} a chi guida`)
+  }
+})
+
+/**
+ * Il conducente rinuncia alla PROPRIA quota, non a quella di servizio:
+ * quella non è sua. Chiamarla «niente» sarebbe la stessa bugia di prima,
+ * detta da un'opzione che si vende come la più generosa delle tre.
+ */
+test('la quota di servizio resta anche con la politica nessuna', () => {
+  const sotto = calcolaPenale({
+    oreMancanti: 3, politica: 'nessuna', quotaConducente: 355, fee: 30, totale: 385,
+  })
+  assert.equal(sotto.daCatturare, 30)
+  assert.equal(gratuita(3, 'nessuna'), false)
+
+  const sopra = calcolaPenale({
+    oreMancanti: 30, politica: 'nessuna', quotaConducente: 355, fee: 30, totale: 385,
+  })
+  assert.equal(sopra.daCatturare, 0)
+  assert.equal(gratuita(30, 'nessuna'), true)
+})
+
+test('il testo resta vero anche per la terza politica', () => {
+  for (let ore = 0; ore <= 48; ore += 0.5) {
+    const senzaCosti = testoDisdetta(ore, 'nessuna').includes('senza costi')
+    const p = calcolaPenale({
+      oreMancanti: ore, politica: 'nessuna', quotaConducente: 355, fee: 30, totale: 385,
+    })
+    assert.equal(senzaCosti, p.daCatturare === 0, `a ${ore} ore il testo non corrisponde`)
+  }
+})

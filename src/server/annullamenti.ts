@@ -156,5 +156,5 @@ const no = (m: string): EsitoDisdetta => ({
 
 interface RigaCorsa {
   id: string; conducente: string; ora_partenza: string
-  politica: 'flessibile' | 'rigida'; destinazione_label: string
+  politica: 'flessibile' | 'rigida' | 'nessuna'; destinazione_label: string
 }

@@ -78,7 +78,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
     'tutto' | 'carburante_pedaggi' | 'carburante' | 'niente'>('tutto')
   const [immediata, setImmediata] = useState(false)
   const [deviazioni, setDeviazioni] = useState(true)
-  const [politica, setPolitica] = useState<'flessibile' | 'rigida'>('flessibile')
+  const [politica, setPolitica] = useState<'flessibile' | 'rigida' | 'nessuna'>('flessibile')
   const [dichiarato, setDichiarato] = useState(false)
   const [note, setNote] = useState('')
   const [oraRitorno, setOraRitorno] = useState('')
@@ -367,6 +367,7 @@ export function FormPubblica({ veicoli, destinazione: destinazioneIniziale, cate
                     <Opzioni titolo="Se disdicono" segno={<SegnoOrologio />} valore={politica}
                       onCambia={(v) => setPolitica(v as typeof politica)}
                       opzioni={[
+                        { v: 'nessuna', t: 'Non trattengo niente', n: 'Disdicono quando vogliono' },
                         { v: 'flessibile', t: 'Fino a un’ora prima', n: 'Più gente prenota, ma può saltare' },
                         { v: 'rigida', t: 'Fino a sei ore prima', n: 'Posto più sicuro, meno prenotazioni' },
                       ]} />

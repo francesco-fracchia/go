@@ -14,7 +14,14 @@ import type { Cents } from './money.ts'
  * quanto trattiene.
  */
 
-export type Politica = 'flessibile' | 'rigida'
+/**
+ * Quanto chi guida trattiene se qualcuno disdice.
+ *
+ * `nessuna` rinuncia alla QUOTA DEL CONDUCENTE, non a quella di servizio:
+ * quella non è sua e non può regalarla. È il gemello dei livelli di
+ * rimborso — si può sempre rinunciare a qualcosa, mai pretendere di più.
+ */
+export type Politica = 'flessibile' | 'rigida' | 'nessuna'
 
 /** Oltre questa distanza dalla partenza il servizio non si è ancora svolto. */
 export const ORE_FEE_GRATUITA = 24
@@ -44,7 +51,10 @@ export function calcolaPenale(opts: {
   const feeDovuta = oreMancanti < ORE_FEE_GRATUITA ? fee : 0
 
   let alConducente = 0
-  if (politica === 'flessibile') {
+  if (politica === 'nessuna') {
+    // Chi guida ha scelto di non trattenere niente: non c'è nessun gradino.
+    alConducente = 0
+  } else if (politica === 'flessibile') {
     // Gratis fino a un'ora prima. Sotto, la quota resta a chi guida: sta
     // già uscendo di casa.
     if (oreMancanti < 1) alConducente = quotaConducente
@@ -87,6 +97,7 @@ export function calcolaPenale(opts: {
  */
 export function gratuita(oreMancanti: number, politica: Politica): boolean {
   if (oreMancanti < ORE_FEE_GRATUITA) return false
+  if (politica === 'nessuna') return true
   return politica === 'flessibile' ? oreMancanti >= 1 : oreMancanti >= 6
 }
 
@@ -101,9 +112,11 @@ export function testoDisdetta(
 ): string {
   if (gratuita(oreMancanti, politica)) return 'Puoi disdire senza costi.'
 
-  const quotaResta = politica === 'flessibile'
-    ? oreMancanti < 1
-    : oreMancanti < 2
+  const quotaResta = politica === 'nessuna'
+    ? false
+    : politica === 'flessibile'
+      ? oreMancanti < 1
+      : oreMancanti < 2
   const meta = politica === 'rigida' && oreMancanti >= 2 && oreMancanti < 6
 
   if (quotaResta) {
