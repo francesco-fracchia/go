@@ -21,7 +21,8 @@ export function InViaggio({ corsa, tappe, prossimoRitiro }: {
 }) {
   const [nav, setNav] = useState<Navigatore>('google')
   const [condivide, setCondivide] = useState(false)
-  const [stato, setStato] = useState<'ferma' | 'attiva' | 'negata' | 'finita'>('ferma')
+  const [stato, setStato] = useState<
+    'ferma' | 'attiva' | 'negata' | 'finita' | 'interrotta'>('ferma')
   const guardia = useRef<number | null>(null)
 
   useEffect(() => { setNav(predefinito()) }, [])
@@ -52,10 +53,23 @@ export function InViaggio({ corsa, tappe, prossimoRitiro }: {
           }),
         }).catch(() => null)
 
-        // Il server rifiuta fuori dalla finestra: si smette da soli invece
-        // di continuare a mandare punti che nessuno registra.
-        if (r && r.status === 409) { setCondivide(false); setStato('finita') }
-        else setStato('attiva')
+        /**
+         * «Attiva» solo se il punto è stato DAVVERO registrato.
+         *
+         * Prima si guardava solo il 409, e qualunque altra risposta —
+         * compreso un 500 — diventava «posizione attiva». Per mesi il
+         * database ha rifiutato ogni punto con un errore
+         * (`type "geography" does not exist`, un percorso di ricerca
+         * sbagliato nella funzione) e questa schermata ha continuato a
+         * dire a chi guidava che stava condividendo la posizione.
+         *
+         * Dire di fare una cosa che non si sta facendo è peggio che non
+         * offrirla: chi la riceve conta su qualcosa che non c'è.
+         */
+        if (!r) { setStato('interrotta'); return }
+        if (r.status === 409) { setCondivide(false); setStato('finita'); return }
+        if (!r.ok) { setStato('interrotta'); return }
+        setStato('attiva')
       },
       () => setStato('negata'),
       { enableHighAccuracy: true, maximumAge: 20_000, timeout: 20_000 },
@@ -105,7 +119,13 @@ export function InViaggio({ corsa, tappe, prossimoRitiro }: {
                 ? 'Il telefono non ci dà la posizione. Puoi sempre scrivere in chat.'
                 : stato === 'finita'
                   ? 'La corsa è finita: abbiamo smesso.'
-                  : 'Solo chi ha prenotato, solo fino all’arrivo. Non teniamo niente.'}
+                  : stato === 'interrotta'
+                    // Si dice che non sta arrivando, invece di lasciar credere
+                    // di sì: chi aspetta sta contando su questo puntino.
+                    ? 'Non riusciamo a mandare la posizione. Riproviamo da soli, ma chi ti aspetta per ora non ti vede.'
+                    : stato === 'attiva'
+                      ? 'La stanno vedendo. Si spegne da sola all’arrivo.'
+                      : 'Solo chi ha prenotato, solo fino all’arrivo. Non teniamo niente.'}
             </div>
           </div>
           <button

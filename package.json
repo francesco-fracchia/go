@@ -12,7 +12,8 @@
     "demo": "npm run prepara && DEMO=1 next dev --webpack",
     "prepara": "node scripts/copia-worker.mjs",
     "migra": "node --env-file-if-exists=.env.local scripts/migra.mjs",
-    "query": "node --env-file=.env.local scripts/verifica-query.mjs"
+    "query": "node --env-file=.env.local scripts/verifica-query.mjs",
+    "orfani": "node scripts/trova-orfani.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
