@@ -88,8 +88,21 @@ export async function notifica(n: Notifica): Promise<'push' | 'sms' | 'nessuno' 
     if (consegnato) canale = 'push'
   }
 
-  // L'SMS interviene solo se il push non è arrivato E la cosa è critica.
-  if (!canale && CRITICI.has(n.tipo) && profilo.sms_attivi && profilo.telefono) {
+  /**
+   * L'SMS interviene solo se il push non è arrivato E la cosa è critica —
+   * e solo finché la spesa del mese sta sotto la soglia.
+   *
+   * Il freno esisteva a metà: `costoSmsPeriodo` era scritta e non la
+   * chiamava nessuno, quindi niente fermava la spesa. Un ciclo sbagliato in
+   * un lavoro notturno avrebbe mandato messaggi finché qualcuno non se ne
+   * fosse accorto leggendo una fattura — che è troppo tardi per definizione.
+   *
+   * Superata la soglia non si rompe niente: si smette di mandare SMS. Il
+   * push continua, la notifica resta in applicazione, e la corsa funziona.
+   * È la stessa scelta della mappa: degradare invece di guastarsi.
+   */
+  if (!canale && CRITICI.has(n.tipo) && profilo.sms_attivi && profilo.telefono
+      && await sottoSoglia()) {
     try {
       await inviaSms(profilo.telefono, `${n.titolo}\n${n.testo}`)
       canale = 'sms'
@@ -161,6 +174,49 @@ async function inviaSms(numero: string, testo: string) {
 /** Non è un errore dell'utente: è un canale che su questo ambiente non c'è. */
 export class SmsNonConfigurati extends Error {
   constructor() { super('SMS non configurati'); this.name = 'SmsNonConfigurati' }
+}
+
+/**
+ * Quanto si può spendere in SMS in un mese, in centesimi.
+ *
+ * ⚠️  Da alzare quando il volume cresce. È deliberatamente bassa: al primo
+ *     mese con utenti veri deve fermarsi PRIMA che arrivi una fattura, non
+ *     dopo. Una soglia che non morde non è un freno.
+ */
+export const SOGLIA_SMS_MESE_CENT = 2_000
+
+/**
+ * La spesa non si ricalcola a ogni notifica.
+ *
+ * Girerebbe una query per ogni messaggio mandato, in un percorso che sta
+ * dentro lavori che ne mandano decine di fila. Cinque minuti di ritardo
+ * sulla soglia costano al massimo qualche messaggio; una query in più per
+ * ogni notifica costa a tutti, sempre.
+ */
+let spesaVista = { quando: 0, cent: 0 }
+
+async function sottoSoglia(): Promise<boolean> {
+  const adesso = Date.now()
+  if (adesso - spesaVista.quando > 300_000) {
+    const inizio = new Date()
+    inizio.setDate(1)
+    inizio.setHours(0, 0, 0, 0)
+    try {
+      spesaVista = { quando: adesso, cent: await costoSmsPeriodo(inizio, new Date()) }
+    } catch {
+      // Un contatore rotto non deve togliere un canale che funziona.
+      return true
+    }
+  }
+  if (spesaVista.cent >= SOGLIA_SMS_MESE_CENT) {
+    console.error(
+      `soglia SMS superata: ${spesaVista.cent} centesimi questo mese. `
+      + 'Gli SMS sono sospesi fino al mese prossimo; push e notifiche in '
+      + 'applicazione continuano.',
+    )
+    return false
+  }
+  return true
 }
 
 /** Quanto sono costati gli SMS in un periodo. Serve a sapere se la regola tiene. */

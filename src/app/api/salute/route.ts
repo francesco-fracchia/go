@@ -1,4 +1,5 @@
 import { json } from '../_risposta.ts'
+import { costoSmsPeriodo, SOGLIA_SMS_MESE_CENT } from '../../../server/notifiche.ts'
 
 /**
  * Che cosa è vivo, qui.
@@ -12,6 +13,13 @@ import { json } from '../_risposta.ts'
  * lunghezza, mai un pezzo: sapere che una chiave manca serve a chi la deve
  * mettere, sapere com'è fatta serve solo a chi la vuole usare.
  */
+const spesaSmsDelMese = () => {
+  const inizio = new Date()
+  inizio.setDate(1)
+  inizio.setHours(0, 0, 0, 0)
+  return costoSmsPeriodo(inizio, new Date())
+}
+
 export async function GET() {
   const c = (nome: string) => Boolean(process.env[nome])
 
@@ -36,6 +44,10 @@ export async function GET() {
       dettagliErrori: process.env.DETTAGLI_ERRORI === '1',
       notifiche: c('VAPID_PRIVATE_KEY'),
       sms: c('TWILIO_SID'),
+      // Quanto si è speso in SMS questo mese, e il tetto: superato, il
+      // canale si spegne da solo invece di far arrivare una fattura.
+      smsSpesiCent: await spesaSmsDelMese().catch(() => null),
+      smsTettoCent: SOGLIA_SMS_MESE_CENT,
     },
   })
 }
