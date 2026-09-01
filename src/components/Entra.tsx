@@ -52,6 +52,20 @@ function spiega(messaggio: string): string {
   if (m.includes('rate limit') || m.includes('too many')) {
     return 'Abbiamo mandato troppe mail in poco tempo. Aspetta qualche minuto e riprova.'
   }
+  /**
+   * Il limite per singolo indirizzo lo dice in un modo tutto suo.
+   *
+   * «For security purposes, you can only request this after 192 seconds»
+   * non contiene né «rate limit» né «too many», quindi finiva nel ripiego
+   * — e chi chiedeva un codice si vedeva una frase in inglese con dentro
+   * un numero senza unità. Qui i secondi ci sono: si dicono.
+   */
+  const attesa = messaggio.match(/after (\d+) seconds?/i)
+  if (attesa) {
+    const s = Number(attesa[1])
+    const quanto = s < 90 ? `${s} secondi` : `${Math.ceil(s / 60)} minuti`
+    return `Ne abbiamo appena mandato uno. Puoi richiederlo fra ${quanto}.`
+  }
   if (m.includes('password') && (m.includes('weak') || m.includes('short') || m.includes('least'))) {
     return 'Questa password è troppo debole: mettine una più lunga.'
   }
