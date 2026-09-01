@@ -35,8 +35,21 @@ export async function middleware(req: NextRequest) {
   if (process.env.DEMO === '1') return NextResponse.next()
 
   const percorso = req.nextUrl.pathname
-  const protetta = PROTETTE.some((p) => percorso.startsWith(p))
-    || PROTETTE_ESATTE.includes(percorso)
+  /**
+   * Il confronto si ferma al confine della parola.
+   *
+   * Con un semplice `startsWith`, `/viaggio/xyz` risultava protetto da
+   * `/viaggi`: «viaggio» comincia per «viaggi». La pagina fatta apposta per
+   * chi NON ha un account — quella che si manda a casa uscendo la sera —
+   * rimandava alla schermata di accesso.
+   *
+   * È il genere di difetto che non si vede rileggendo l'elenco, perché
+   * l'elenco è giusto: sbagliato era il modo di confrontarlo. E si è
+   * manifestato solo il giorno in cui è nata una rotta il cui nome
+   * cominciava come un'altra.
+   */
+  const dentro = (p: string) => percorso === p || percorso.startsWith(`${p}/`)
+  const protetta = PROTETTE.some(dentro) || PROTETTE_ESATTE.includes(percorso)
 
   /**
    * Senza le chiavi si lascia passare.
