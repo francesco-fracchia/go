@@ -55,6 +55,10 @@ export default async function Pagina({ searchParams }: {
   const filtri = {
     origine: { lat: num('olat'), lng: num('olng') },
     destinazione: { lat: num('dlat'), lng: num('dlng') },
+    // I nomi dei due capi servono al diario: «Lodi → Milano» dice dove
+    // manca un conducente, due coppie di coordinate no.
+    origineLabel: q.parti || undefined,
+    destinazioneLabel: q.dove || undefined,
     da: new Date(q.da ?? Date.now()),
     a: new Date(q.a ?? Date.now() + 12 * 3600_000),
     posti: Number(q.posti ?? 1),

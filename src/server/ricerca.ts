@@ -46,6 +46,15 @@ export interface Filtri {
   raggioM?: number
   soloSenzaProposta?: boolean
   /**
+   * Come si chiamano i due capi, per il diario.
+   *
+   * Servono solo a scrivere «Lodi → Milano» invece di due coppie di
+   * coordinate: chi legge il diario deve capire dove manca un conducente,
+   * e «45.31, 9.50» non lo dice a nessuno.
+   */
+  origineLabel?: string
+  destinazioneLabel?: string
+  /**
    * Chi sta cercando, per non proporgli le proprie corse.
    *
    * Non è una raffinatezza: la propria corsa non si può prenotare — il
@@ -95,7 +104,7 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
     ? senzaMe.filter((r) => !evitare.has(r.conducente))
     : senzaMe
 
-  return righe
+  const esiti = righe
     .filter((r) => r.fermata_ritiro !== null || r.deviazione_ammessa)
     .filter((r) => (f.soloSenzaProposta ? r.fermata_ritiro !== null : true))
     .map((r): RisultatoRicerca => ({
@@ -112,6 +121,30 @@ export async function cerca(f: Filtri): Promise<RisultatoRicerca[]> {
       flessibileMin: Number(r.flessibilita_min ?? 0),
     }))
     .sort(ordinamento)
+
+  /**
+   * Si scrive che qualcuno ha cercato, e se ha trovato.
+   *
+   * È la metà dell'uso che non lasciava nessuna riga: chi cerca
+   * «Lodi → Milano» tre volte e non prenota mai, per noi non era mai
+   * esistito. In un mercato appena nato è il dato più utile che ci sia —
+   * dice su quale tratta manca un conducente, che è l'unica cosa su cui
+   * si può agire davvero.
+   *
+   * Non blocca niente e non fa fallire niente: una ricerca che funziona e
+   * non viene annotata è meglio di una ricerca che si rompe perché
+   * l'annotazione è andata storta.
+   */
+  void db.from('ricerche').insert({
+    utente: f.escludi ?? null,
+    origine: f.origineLabel ?? `${f.origine.lat.toFixed(3)}, ${f.origine.lng.toFixed(3)}`,
+    destinazione: f.destinazioneLabel
+      ?? `${f.destinazione.lat.toFixed(3)}, ${f.destinazione.lng.toFixed(3)}`,
+    quando_partenza: f.da.toISOString(),
+    risultati: esiti.length,
+  }).then(() => {}, () => {})
+
+  return esiti
 }
 
 /**

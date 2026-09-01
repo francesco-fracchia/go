@@ -42,6 +42,12 @@ export default function Pagina() {
         all&apos;altro invece di raccontare il viaggio.
       </p>
 
+      <p>
+        <strong>Cosa cerchi.</strong> Da dove a dove, quando, e se hai trovato
+        qualcosa. Serve a una cosa sola e concreta: capire su quali tratte manca
+        un conducente, per andare a cercarlo. Le teniamo tre mesi.
+      </p>
+
       <H2>La posizione durante il viaggio</H2>
       <p>
         Quando una corsa è in corso, e <strong>solo se dai il permesso al
@@ -126,6 +132,9 @@ export default function Pagina() {
       <p>
         <strong>Le posizioni durante il viaggio</strong> spariscono da sole
         entro poche ore, come scritto sopra.
+      </p>
+      <p>
+        <strong>Le ricerche</strong> tre mesi.
       </p>
       <p>
         <strong>I dati di un viaggio</strong> vanno conservati dieci anni: lo

@@ -1,9 +1,4 @@
-import * as lavori from '../../../server/lavori.ts'
-import {
-  chiudiContestazioni, liquidaSettimanaScorsa, fondiNonRitirati,
-} from '../../../server/liquidazioni.ts'
-import { invitaARecensire } from '../../../server/recensioni.ts'
-import { dimenticaPosizioni } from '../../../server/posizione.ts'
+import { REGISTRO } from '../../../server/registro-lavori.ts'
 import { db } from '../../../server/db.ts'
 import { json } from '../_risposta.ts'
 
@@ -16,27 +11,6 @@ import { json } from '../_risposta.ts'
  * Tutti i lavori sono idempotenti, quindi una doppia esecuzione è innocua —
  * ed è bene che lo sia, perché prima o poi capiterà.
  */
-const REGISTRO: Record<string, () => Promise<unknown>> = {
-  promemoria_24h: lavori.promemoria24h,
-  riautorizza: lavori.riautorizza,
-  chiedi_conferma: lavori.chiediConferma,
-  rimatch: lavori.rimatchNonConfermate,
-  in_arrivo: lavori.inArrivo,
-  cattura: lavori.catturaPartenze,
-  scadi_proposte: lavori.scadiProposte,
-  chiudi_arrivate: lavori.chiudiArrivate,
-  chiudi_contestazioni: chiudiContestazioni,
-  /* I due lavori che pagano chi guida. Erano scritti, corretti, e non
-     chiamati da nessuna parte: il denaro si catturava dai passeggeri e
-     restava fermo sul saldo. */
-  liquida: liquidaSettimanaScorsa,
-  fondi_non_ritirati: fondiNonRitirati,
-  /* Chiedere una recensione: scritto, corretto, e non chiamato da nessuno.
-     Vuol dire che nessuno è mai stato invitato a lasciarne una — e tutto
-     l'impianto della reputazione dipende da recensioni che nessuno chiede. */
-  invita_recensioni: invitaARecensire,
-  dimentica_posizioni: dimenticaPosizioni,
-}
 
 /**
  * Vercel chiama i cron in GET. Noi esportavamo solo POST.

@@ -16,7 +16,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 /** Protette insieme a tutto quello che ci sta sotto. */
 const PROTETTE = [
   '/viaggi', '/pubblica', '/conto', '/veicoli', '/impostazioni',
-  '/prenotazione', '/chat', '/recensione', '/cerco', '/moderazione', '/notifiche',
+  '/prenotazione', '/chat', '/recensione', '/cerco', '/moderazione', '/notifiche', '/pannello',
   '/serate',
 ]
 
