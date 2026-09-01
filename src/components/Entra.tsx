@@ -335,7 +335,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
               minuti.
             </p>
             <Campo etichetta="Codice" valore={codice} onChange={setCodice}
-              segnaposto="123456" completa="one-time-code" mono invio={verificaEntrata} />
+              segnaposto="12345678" completa="one-time-code" mono invio={verificaEntrata} />
 
             {errore && <p className="errore">{errore}</p>}
 
@@ -362,7 +362,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
               password.
             </p>
             <Campo etichetta="Codice" valore={codice} onChange={setCodice}
-              segnaposto="123456" completa="one-time-code" mono invio={verificaCodice} />
+              segnaposto="12345678" completa="one-time-code" mono invio={verificaCodice} />
 
             {errore && <p className="errore">{errore}</p>}
 
