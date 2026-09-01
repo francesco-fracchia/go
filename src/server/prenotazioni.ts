@@ -2,6 +2,8 @@ import { db } from './db.ts'
 import { autorizza } from './stripe.ts'
 import {
   preventivo, autorizzazioneMassima, quotaApplicata,
+  risparmioIncassoUnico,
+  autorizzazioneAndataRitorno,
   ViolazioneConformita,
   type Corsa, type Passeggero,
 } from '../lib/pricing.ts'
@@ -43,6 +45,8 @@ interface RigaCorsa {
   deviazioni_ritiro: boolean
   deviazioni_deposito: boolean
   ora_partenza: string
+  /** il rientro collegato, se chi guida ne ha pubblicato uno */
+  corsa_ritorno: string | null
   veicoli: { centesimi_per_km: number } | null
 }
 
@@ -71,6 +75,19 @@ export interface RichiestaPrenotazione {
   /** prenotazioni riservate insieme; ognuna paga comunque per sé */
   gruppo?: string
   messaggio?: string
+  /**
+   * L'autorizzazione copre anche un'altra tratta, in centesimi.
+   *
+   * Serve al saldo unico andata e ritorno: la carta si impegna una volta
+   * sola, per la somma. Non è un importo scelto dal client — lo calcola
+   * `prenotaAndataRitorno` con le stesse funzioni del motore.
+   */
+  autorizzatoForzato?: Cents
+  /**
+   * Questa prenotazione la salda un'ALTRA: nessun PaymentIntent proprio,
+   * autorizzato a zero, e la riga punta a chi porta i soldi.
+   */
+  saldataDa?: string
 }
 
 export async function prenota(req: RichiestaPrenotazione) {
@@ -149,7 +166,17 @@ export async function prenota(req: RichiestaPrenotazione) {
 
   const mia = calcolo.quote.find((q) => q.passeggeroId === req.passeggeroId)!
   // Si autorizza lo scenario peggiore: passeggero solo a bordo, fee piena.
-  const autorizzato: Cents = autorizzazioneMassima(corsa, passeggeri.at(-1)!)
+  /**
+   * L'autorizzazione la decide il motore, sempre.
+   *
+   * `autorizzatoForzato` non è un importo che arriva dal client: è il
+   * risultato di `autorizzazioneAndataRitorno`, che somma le due tratte E
+   * fa rispettare la regola di conformità. Passarlo qui evita di avere due
+   * posti dove si decide quanto impegnare su una carta.
+   */
+  const autorizzato: Cents = req.saldataDa
+    ? 0
+    : req.autorizzatoForzato ?? autorizzazioneMassima(corsa, passeggeri.at(-1)!)
 
   // Una proposta di deviazione non blocca il posto e non tocca la carta:
   // il posto resta prenotabile da altri finché il conducente non accetta.
@@ -187,6 +214,7 @@ export async function prenota(req: RichiestaPrenotazione) {
       fee_cent: mia.fee,
       totale_cent: mia.totale,
       autorizzato_cent: autorizzato,
+      saldata_con: req.saldataDa ?? null,
       stato: richiedeApprovazione ? 'richiesta' : 'autorizzata',
       messaggio: req.messaggio ?? null,
       scade_il: richiedeApprovazione ? scadenzaProposta(riga.ora_partenza) : null,
@@ -196,7 +224,9 @@ export async function prenota(req: RichiestaPrenotazione) {
 
   if (errIns) throw new ErrorePrenotazione('db', errIns.message)
 
-  if (!richiedeApprovazione) {
+  // Chi è saldato da un'altra prenotazione non ha una carta da impegnare:
+  // l'impegno l'ha già preso l'andata, per la somma delle due tratte.
+  if (!richiedeApprovazione && !req.saldataDa) {
     // La carta è quella già salvata sul profilo: non si ripete l'inserimento
     // a ogni prenotazione. Se manca, la prenotazione non nasce — meglio un
     // errore adesso che una prenotazione che sembra valida e non lo è.
@@ -239,4 +269,83 @@ export async function preventivaPer(corsaId: string): Promise<Cents | null> {
     .eq('id', corsaId)
     .single<RigaCorsa>()
   return data ? quotaApplicata(aCorsa(data)) : null
+}
+
+/**
+ * Andata e ritorno, un pagamento solo.
+ *
+ * La regola di conformità non è scritta qui: la fa rispettare
+ * `autorizzazioneAndataRitorno`, che SOLLEVA un'eccezione se una delle due
+ * tratte non è privata. Su una corsa pubblica il pagamento unico
+ * prometterebbe un rientro che non possiamo garantire — il conducente
+ * dell'andata può volersene andare prima, e il ritorno può essere di un
+ * altro. Sarebbe la garanzia di rientro che abbiamo deciso di non dare,
+ * reintrodotta di nascosto dal modo di pagare.
+ *
+ * Si chiama la funzione del motore invece di ricontrollare le modalità qui:
+ * due copie della stessa regola divergono al primo ritocco, e quando
+ * divergono nessuno se ne accorge.
+ *
+ * L'ordine conta. Si prenota PRIMA il ritorno, senza carta, poi l'andata
+ * con l'autorizzazione che copre entrambe: se il posto al ritorno non c'è
+ * più, non si è impegnato niente su nessuna carta. Il contrario lascerebbe
+ * un'autorizzazione viva su un viaggio che non esiste.
+ */
+export async function prenotaAndataRitorno(req: RichiestaPrenotazione) {
+  const carica = async (id: string) => {
+    const { data } = await db
+      .from('corse').select('*, veicoli(centesimi_per_km)').eq('id', id)
+      .single<RigaCorsa>()
+    return data
+  }
+
+  const rigaAndata = await carica(req.corsaId)
+  if (!rigaAndata) throw new ErrorePrenotazione('corsa', 'corsa non trovata')
+  if (!rigaAndata.corsa_ritorno) {
+    throw new ErrorePrenotazione('ritorno', 'questa corsa non ha un rientro collegato')
+  }
+
+  const rigaRitorno = await carica(rigaAndata.corsa_ritorno)
+  if (!rigaRitorno) throw new ErrorePrenotazione('ritorno', 'il rientro non è più disponibile')
+
+  /**
+   * Qui si calcola E si vieta, in una riga sola.
+   *
+   * Se una delle due non è privata la funzione solleva
+   * `ViolazioneConformita`, che la rotta traduce in un 409 con un messaggio
+   * che si può leggere. Non serve un controllo in più: servirebbe solo a
+   * poter divergere.
+   */
+  const passeggero = { id: req.passeggeroId, kmDeviazione: req.kmDeviazione ?? 0 }
+  const autorizzato = autorizzazioneAndataRitorno([
+    { corsa: aCorsa(rigaAndata), passeggero },
+    { corsa: aCorsa(rigaRitorno), passeggero },
+  ])
+
+  // Prima il ritorno, e senza carta: se il posto non c'è più si scopre
+  // adesso, quando non si è ancora impegnato niente su nessuna carta.
+  const ritorno = await prenota({ ...req, corsaId: rigaAndata.corsa_ritorno })
+
+  try {
+    const andata = await prenota({ ...req, autorizzatoForzato: autorizzato })
+
+    await db.from('prenotazioni')
+      .update({ saldata_con: andata.prenotazione.id, autorizzato_cent: 0 })
+      .eq('id', ritorno.prenotazione.id)
+
+    return {
+      andata, ritorno: ritorno.prenotazione,
+      autorizzatoCent: autorizzato,
+      risparmiatoCent: risparmioIncassoUnico(2),
+    }
+  } catch (e) {
+    /**
+     * Se l'andata non riesce, il ritorno da solo non ha senso: era stato
+     * preso PER tornare. Si annulla, invece di lasciare mezza prenotazione
+     * a qualcuno che non sa di averla.
+     */
+    await db.from('prenotazioni')
+      .update({ stato: 'annullata' }).eq('id', ritorno.prenotazione.id)
+    throw e
+  }
 }

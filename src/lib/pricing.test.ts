@@ -582,3 +582,30 @@ test('lo sconto non può mai far salire la quota', () => {
   assert.ok(sconto >= 0)
   assert.ok(quotaApplicata({ ...c, scontoConducente: sconto }) <= quotaPiena(c))
 })
+
+// ─── Saldo unico: quanto si impegna e quanto si risparmia ─────────────
+// La regola di conformità è già provata più sopra («A/R in una transazione
+// sola è rifiutato sulle corse pubbliche»). Qui si prova solo l'aritmetica,
+// che è l'altra metà: quanto finisce impegnato sulla carta, e quanto si
+// risparmia a pagare una volta invece di due.
+
+const trattaPrivata = (): { corsa: Corsa; passeggero: Passeggero } => ({
+  corsa: {
+    modalita: 'privata', kmBase: 34.6, centesimiPerKm: 41,
+    pedaggio: 0, parcheggio: 0, postiOfferti: 3,
+  },
+  passeggero: { id: 'p', kmDeviazione: 0 },
+})
+
+test('l’impegno sulla carta è la somma esatta delle due tratte', () => {
+  const t = trattaPrivata()
+  const somma = autorizzazioneAndataRitorno([t, trattaPrivata()])
+  assert.equal(somma, autorizzazioneMassima(t.corsa, t.passeggero) * 2)
+})
+
+test('si risparmia una commissione fissa per ogni tratta in meno', () => {
+  assert.equal(risparmioIncassoUnico(0), 0)
+  assert.equal(risparmioIncassoUnico(1), 0)
+  assert.equal(risparmioIncassoUnico(2), STRIPE_FISSA)
+  assert.equal(risparmioIncassoUnico(3), STRIPE_FISSA * 2)
+})

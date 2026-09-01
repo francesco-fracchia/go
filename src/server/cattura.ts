@@ -74,6 +74,24 @@ export async function catturaCorsa(corsaId: string) {
      * Il primo caso è normale e va registrato. Il secondo è un'anomalia e va
      * URLATA, non saltata in silenzio: sono soldi che qualcuno si aspetta.
      */
+    /**
+     * Il saldo unico andata e ritorno.
+     *
+     * Se questa prenotazione è saldata da un'altra, i suoi soldi li ha già
+     * presi la gemella all'andata: qui non c'è niente da catturare, ma c'è
+     * eccome da CHIUDERE. Lasciarla `autorizzata` la escluderebbe da
+     * `maturato_conducente` — che conta solo `catturata` e `completata` —
+     * e chi guida non verrebbe pagato per il rientro che ha fatto davvero.
+     */
+    if (p.saldata_con) {
+      await db.from('prenotazioni').update({
+        quota_cent: q.quota, deviazione_cent: q.deviazione,
+        fee_cent: q.fee, totale_cent: q.totale,
+        catturato_cent: 0, stato: 'catturata',
+      }).eq('id', p.id)
+      continue
+    }
+
     if (!p.stripe_payment_intent && q.totale > 0) {
       console.error(
         `prenotazione ${p.id}: ${q.totale} centesimi da incassare e nessun `
@@ -82,22 +100,40 @@ export async function catturaCorsa(corsaId: string) {
       continue
     }
 
+    /**
+     * Quanto c'è da prendere: questa tratta, più quella che salda.
+     *
+     * Su un andata e ritorno l'autorizzazione è una sola e copre entrambe.
+     * Si cattura tutto alla PRIMA partenza, non alla seconda: una cattura
+     * parziale su Stripe chiude l'autorizzazione e libera il resto, quindi
+     * un secondo prelievo non esisterebbe. Prendere tutto adesso è l'unica
+     * forma che regge — ed è coerente con quello che il passeggero ha
+     * scelto, cioè un viaggio solo in due tratte.
+     */
+    const { data: collegate } = await db
+      .from('prenotazioni')
+      .select('totale_cent')
+      .eq('saldata_con', p.id)
+      .not('stato', 'in', '("rifiutata","scaduta","annullata")')
+    const daAltre = (collegate ?? []).reduce((sum, x) => sum + x.totale_cent, 0)
+    const daPrendere = q.totale + daAltre
+
     // Non si cattura mai più di quanto autorizzato: se la matematica lo
     // chiedesse, c'è un errore a monte e ci si ferma.
-    if (q.totale > p.autorizzato_cent) {
+    if (daPrendere > p.autorizzato_cent) {
       throw new Error(
-        `prenotazione ${p.id}: da catturare ${q.totale} su ${p.autorizzato_cent} autorizzati`,
+        `prenotazione ${p.id}: da catturare ${daPrendere} su ${p.autorizzato_cent} autorizzati`,
       )
     }
 
     if (p.stripe_payment_intent) {
-      if (q.totale === 0) {
+      if (daPrendere === 0) {
         // Autorizzato e poi diventato gratuito: si libera la carta invece di
         // catturare zero, che su Stripe costa comunque la commissione fissa.
         await annulla(p.stripe_payment_intent)
       } else {
-        await cattura(p.stripe_payment_intent, q.totale)
-        incassato += q.totale
+        await cattura(p.stripe_payment_intent, daPrendere)
+        incassato += daPrendere
         catturate++
       }
     }
@@ -107,7 +143,9 @@ export async function catturaCorsa(corsaId: string) {
       deviazione_cent: q.deviazione,
       fee_cent: q.fee,
       totale_cent: q.totale,
-      catturato_cent: q.totale,
+      // Si registra quanto è stato PRESO su questa riga, che su un andata
+      // e ritorno comprende anche la tratta gemella.
+      catturato_cent: daPrendere,
       stato: 'catturata',
     }).eq('id', p.id)
   }
