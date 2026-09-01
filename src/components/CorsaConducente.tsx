@@ -161,7 +161,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
       <Riquadro>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
           <div style={{ minWidth: 0 }}>
-            <Etichetta>parti alle</Etichetta>
+            <Etichetta>{finita ? 'era partita alle' : 'parti alle'}</Etichetta>
             <div style={{
               fontFamily: 'var(--titoli)', fontWeight: 700, fontSize: 30,
               letterSpacing: '-.03em', margin: '3px 0 2px',
@@ -207,7 +207,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
                 <div style={{ flexGrow: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 15.5 }}>{p.nome}</div>
                   <div style={{ fontSize: 13.5, color: 'var(--tenue)' }}>
-                    sale a {p.punto}
+                    {finita ? 'saliva' : 'sale'} a {p.punto}
                   </div>
                 </div>
                 <a href={`/chat/${c.id}`} style={{
