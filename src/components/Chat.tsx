@@ -25,8 +25,13 @@ export interface Messaggio {
 
 const PRONTE = ['Sono arrivato, dove sei?', 'Arrivo fra 5 minuti', 'Sto uscendo ora']
 
-export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
+export function Chat({ corsaId, con, mio, iniziali, titolo, sottotitolo, ritorno, segnala }: {
   corsaId: string
+  /** Con chi si sta parlando: nullo è la conversazione di gruppo. */
+  con?: string | null
+  sottotitolo: string
+  /** La prenotazione da segnalare, se c'è: apre la schermata di segnalazione. */
+  segnala?: string | null
   mio: string
   iniziali: Messaggio[]
   titolo: string
@@ -65,7 +70,8 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
     // più elegante, ma qui una conversazione dura pochi minuti e il costo
     // di tenere aperta una connessione per ogni corsa non vale l'eleganza.
     const t = setInterval(async () => {
-      const r = await fetch(`/api/chat?corsa=${corsaId}`)
+      const r = await fetch(
+        `/api/chat?corsa=${corsaId}${con ? `&con=${encodeURIComponent(con)}` : ''}`)
       if (!r.ok) return
       const d = await r.json()
       setMessaggi(d.messaggi.map(mappa))
@@ -86,7 +92,7 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
     setMessaggi((m) => [...m, provvisorio])
     const r = await fetch('/api/chat', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ corsa: corsaId, testo: pulito }),
+      body: JSON.stringify({ corsa: corsaId, testo: pulito, con: con ?? null }),
     })
     if (!r.ok) {
       /**
@@ -120,9 +126,14 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
         <div className="cresci" style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 16, fontFamily: 'var(--titoli)' }}>{titolo}</div>
           <div style={{ fontSize: 12.5, color: 'var(--tenue)' }}>
-            Vedono tutti quelli che salgono
+            {sottotitolo}
           </div>
         </div>
+        {segnala && (
+          <a href={`/segnala/${segnala}`} className="conversazione-segnala">
+            Segnala
+          </a>
+        )}
       </header>
 
       <div className="conversazione-corpo" ref={corpo}>

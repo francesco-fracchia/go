@@ -2955,3 +2955,13 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   width: 8px; height: 8px; border-radius: 999px;
   background: var(--accento); border: 2px solid var(--carta);
 }
+
+/* Segnalare senza uscire dalla conversazione.
+   Sta in alto a destra, piccolo e sempre lì: chi ne ha bisogno lo trova
+   senza cercarlo, e chi non ne ha bisogno non lo legge nemmeno. Metterlo
+   dietro un menu vuol dire che quando serve non si trova. */
+.conversazione-segnala {
+  flex-shrink: 0; font-size: 13px; color: var(--tenue);
+  text-decoration: none; padding: 6px 10px; border-radius: 999px;
+}
+.conversazione-segnala:hover { background: var(--superficie-2); color: var(--inchiostro); }

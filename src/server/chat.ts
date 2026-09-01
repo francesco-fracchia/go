@@ -46,21 +46,74 @@ async function partecipa(corsaId: string, utenteId: string): Promise<boolean> {
   return corsa.conducente === utenteId || (prenotazione ?? []).length > 0
 }
 
-export async function messaggi(corsaId: string, utenteId: string) {
+/**
+ * Quale conversazione, e se questa persona ci appartiene.
+ *
+ * Su una corsa PRIVATA o con collegamento si parla in gruppo: un filo
+ * solo, `passeggero` nullo. Chi viaggia insieme lì si conosce, e ogni
+ * messaggio ha dei testimoni.
+ *
+ * Su una corsa PUBBLICA ogni passeggero parla con chi guida e basta. Il
+ * filo lo identifica il passeggero — e non lo sceglie il client: se a
+ * scrivere è un passeggero il filo è il suo, punto. Lasciarglielo passare
+ * come parametro vorrebbe dire lasciargli leggere la conversazione di un
+ * altro chiedendola per nome.
+ */
+export type Filo =
+  | { ok: true; passeggero: string | null; gruppo: boolean }
+  | { ok: false; motivo: 'estraneo' | 'quale' }
+
+export async function filo(
+  corsaId: string, utenteId: string, chiesto?: string | null,
+): Promise<Filo> {
+  const [{ data: corsa }, { data: prenotazione }] = await Promise.all([
+    db.from('corse').select('conducente, modalita').eq('id', corsaId).maybeSingle(),
+    db.from('prenotazioni').select('id')
+      .eq('corsa', corsaId).eq('passeggero', utenteId)
+      .not('stato', 'in', '("rifiutata","scaduta")')
+      .limit(1),
+  ])
+  if (!corsa) return { ok: false, motivo: 'estraneo' }
+
+  const guida = corsa.conducente === utenteId
+  const sale = (prenotazione ?? []).length > 0
+  if (!guida && !sale) return { ok: false, motivo: 'estraneo' }
+
+  if (corsa.modalita !== 'pubblica') return { ok: true, passeggero: null, gruppo: true }
+
+  if (!guida) return { ok: true, passeggero: utenteId, gruppo: false }
+
+  if (!chiesto) return { ok: false, motivo: 'quale' }
+  const { data: suo } = await db
+    .from('prenotazioni').select('id')
+    .eq('corsa', corsaId).eq('passeggero', chiesto)
+    .not('stato', 'in', '("rifiutata","scaduta")')
+    .limit(1)
+  if ((suo ?? []).length === 0) return { ok: false, motivo: 'estraneo' }
+  return { ok: true, passeggero: chiesto, gruppo: false }
+}
+
+export async function messaggi(
+  corsaId: string, utenteId: string, con?: string | null,
+) {
   // Un estraneo non riceve «non autorizzato», riceve il vuoto: sapere che
   // una conversazione ESISTE è già qualcosa che non gli riguarda.
-  if (!await partecipa(corsaId, utenteId)) return []
+  const f = await filo(corsaId, utenteId, con)
+  if (!f.ok) return []
 
-  const { data } = await db
+  const dove = <T extends { eq: Function; is: Function }>(q: T) =>
+    (f.passeggero === null ? q.is('passeggero', null) : q.eq('passeggero', f.passeggero)) as T
+
+  const { data } = await dove(db
     .from('messaggi')
     .select('id, autore, testo, creato_il, profili:autore(nome, foto_url)')
-    .eq('corsa', corsaId)
+    .eq('corsa', corsaId))
     .order('creato_il', { ascending: true })
     .limit(200)
 
-  await db.from('messaggi')
+  await dove(db.from('messaggi')
     .update({ letto_il: new Date().toISOString() })
-    .eq('corsa', corsaId)
+    .eq('corsa', corsaId))
     .neq('autore', utenteId)
     .is('letto_il', null)
 
@@ -94,10 +147,10 @@ export const ORE_CHAT_DOPO_ARRIVO = 48
  */
 export type EsitoScrittura =
   | { ok: true; messaggio: { id: string; testo: string; creato_il: string } }
-  | { ok: false; motivo: 'vuoto' | 'lungo' | 'assente' | 'chiusa' | 'estraneo' }
+  | { ok: false; motivo: 'vuoto' | 'lungo' | 'assente' | 'chiusa' | 'estraneo' | 'quale' }
 
 export async function scrivi(
-  corsaId: string, autoreId: string, testo: string,
+  corsaId: string, autoreId: string, testo: string, con?: string | null,
 ): Promise<EsitoScrittura> {
   const pulito = testo.trim()
   if (!pulito) return { ok: false, motivo: 'vuoto' }
@@ -114,14 +167,15 @@ export async function scrivi(
     .from('corse').select('ora_arrivo, stato').eq('id', corsaId).single()
   if (!corsa) return { ok: false, motivo: 'assente' }
 
-  if (!await partecipa(corsaId, autoreId)) return { ok: false, motivo: 'estraneo' }
+  const f = await filo(corsaId, autoreId, con)
+  if (!f.ok) return { ok: false, motivo: f.motivo === 'quale' ? 'quale' : 'estraneo' }
 
   const finita = ['conclusa', 'annullata', 'scaduta'].includes(corsa.stato)
   const oreDaArrivo = (Date.now() - new Date(corsa.ora_arrivo).getTime()) / 3600_000
   if (finita && oreDaArrivo > ORE_CHAT_DOPO_ARRIVO) return { ok: false, motivo: 'chiusa' }
 
   const { data, error } = await db.from('messaggi')
-    .insert({ corsa: corsaId, autore: autoreId, testo: pulito })
+    .insert({ corsa: corsaId, autore: autoreId, testo: pulito, passeggero: f.passeggero })
     .select('id, testo, creato_il')
     .single()
   // A questo punto chi scrive è già stato riconosciuto: un errore qui è un
@@ -130,11 +184,21 @@ export async function scrivi(
   // mai, ed è il motivo per cui questo controllo mancava del tutto.
   if (error || !data) return { ok: false, motivo: 'assente' }
 
-  await avvisaGliAltri(corsaId, autoreId, pulito)
+  await avvisaGliAltri(corsaId, autoreId, pulito, f.passeggero)
   return { ok: true, messaggio: data }
 }
 
-async function avvisaGliAltri(corsaId: string, autoreId: string, testo: string) {
+/**
+ * Chi va avvisato dipende da CHI STA IN QUESTA CONVERSAZIONE.
+ *
+ * Su una corsa di gruppo sono tutti; su una pubblica sono due, e mandare
+ * la notifica a tutti i passeggeri direbbe a Bea che Ciro ha scritto
+ * qualcosa al conducente — cioè esattamente la cosa che separare le
+ * conversazioni serve a non fare.
+ */
+async function avvisaGliAltri(
+  corsaId: string, autoreId: string, testo: string, passeggero: string | null,
+) {
   const [{ data: corsa }, { data: prenotazioni }, { data: autore }] = await Promise.all([
     db.from('corse').select('conducente, destinazione_label').eq('id', corsaId).single(),
     db.from('prenotazioni').select('passeggero')
@@ -145,12 +209,17 @@ async function avvisaGliAltri(corsaId: string, autoreId: string, testo: string) 
 
   const destinatari = new Set<string>()
   if (corsa?.conducente) destinatari.add(corsa.conducente)
-  for (const p of prenotazioni ?? []) destinatari.add(p.passeggero)
+  if (passeggero === null) {
+    for (const p of prenotazioni ?? []) destinatari.add(p.passeggero)
+  } else {
+    destinatari.add(passeggero)
+  }
   destinatari.delete(autoreId)
 
   // La chiave cambia ogni cinque minuti: due messaggi ravvicinati generano
   // una notifica sola, uno un'ora dopo ne genera un'altra.
   const finestra = Math.floor(Date.now() / 300_000)
+  const quale = passeggero ?? 'gruppo'
 
   for (const d of destinatari) {
     await notifica({
@@ -160,7 +229,7 @@ async function avvisaGliAltri(corsaId: string, autoreId: string, testo: string) 
       testo: testo.length > 90 ? testo.slice(0, 88) + '…' : testo,
       url: `/chat/${corsaId}`,
       corsa: corsaId,
-      chiave: `chat:${corsaId}:${d}:${finestra}`,
+      chiave: `chat:${corsaId}:${quale}:${d}:${finestra}`,
     })
   }
 }
