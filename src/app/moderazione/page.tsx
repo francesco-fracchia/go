@@ -130,6 +130,15 @@ export default async function Pagina() {
                 </p>
               )}
 
+              {/* Aprire la conversazione è un atto, e resta scritto: sta
+                  dietro un collegamento e non in linea, altrimenti bastasse
+                  guardare la coda per leggere la corrispondenza di dieci
+                  persone. */}
+              <a href={`/moderazione/conversazione/${s.id}`} style={{
+                display: 'inline-block', marginBottom: 12,
+                fontSize: 13.5, fontWeight: 600, textDecoration: 'none',
+              }}>Leggi la conversazione →</a>
+
               <DecidiSegnalazione id={s.id} />
             </Riquadro>
           ))}

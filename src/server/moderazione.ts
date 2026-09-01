@@ -205,3 +205,94 @@ export async function osservati() {
     })),
   }
 }
+
+/**
+ * La conversazione su cui si sta decidendo.
+ *
+ * Chiudere la chat ai soli partecipanti aveva chiuso fuori anche chi
+ * modera: una segnalazione per molestia arrivava senza le prove, e la
+ * decisione si sarebbe presa sulla parola di uno contro quella dell'altro
+ * — che è esattamente l'istruttoria a senso unico che la sospensione
+ * cautelare promette di non essere.
+ *
+ * Si riapre stretta e tracciata: solo su una segnalazione APERTA, solo la
+ * conversazione che la riguarda, e la traccia si scrive PRIMA di mostrare
+ * i messaggi. Se la scrittura fallisce, la lettura non avviene: una
+ * traccia che si può perdere per strada non è una traccia.
+ */
+export interface ConversazioneSegnalata {
+  corsa: string
+  destinazione: string
+  gruppo: boolean
+  messaggi: Array<{ id: string; nome: string; testo: string; quando: string; accusato: boolean }>
+}
+
+export async function conversazioneDi(
+  segnalazioneId: string, moderatoreId: string,
+): Promise<ConversazioneSegnalata | null> {
+  if (!eModeratore(moderatoreId)) return null
+
+  const { data: s } = await db
+    .from('segnalazioni')
+    .select(`
+      id, autore, chiusa_il,
+      prenotazioni!inner (
+        passeggero,
+        corse!inner (id, modalita, destinazione_label, conducente)
+      )
+    `)
+    .eq('id', segnalazioneId)
+    .maybeSingle()
+  if (!s || s.chiusa_il) return null
+
+  const pren = s.prenotazioni as unknown as {
+    passeggero: string
+    corse: { id: string; modalita: string; destinazione_label: string; conducente: string }
+  }
+  const corsa = pren.corse
+  const gruppo = corsa.modalita !== 'pubblica'
+  const filo = gruppo ? null : pren.passeggero
+
+  // Prima la traccia. Se non si scrive, non si legge.
+  const { data: traccia, error } = await db.from('accessi_chat').insert({
+    moderatore: moderatoreId, corsa: corsa.id,
+    segnalazione: s.id, passeggero: filo,
+  }).select('id').single()
+  if (error || !traccia) {
+    throw new Error(`traccia dell'accesso non scritta: ${error?.message}`)
+  }
+
+  const q = db.from('messaggi')
+    .select('id, testo, creato_il, autore, profili:autore(nome)')
+    .eq('corsa', corsa.id)
+  const { data: righe } = await (filo === null ? q.is('passeggero', null) : q.eq('passeggero', filo))
+    .order('creato_il', { ascending: true })
+    .limit(200)
+
+  /**
+   * Chi è l'accusato si evidenzia, e non è cosmesi: chi modera legge
+   * decine di scambi, e distinguere a colpo d'occhio chi ha scritto cosa
+   * è la differenza fra leggere e credere di aver letto.
+   */
+  const accusato = s.autore === pren.passeggero ? corsa.conducente : pren.passeggero
+
+  /* Si aggiorna la riga appena scritta per id: un `update` con `order` e
+     `limit` PostgREST non lo accetta, e sarebbe fallito in silenzio
+     lasciando la traccia senza il conto dei messaggi. */
+  await db.from('accessi_chat')
+    .update({ messaggi_letti: (righe ?? []).length })
+    .eq('id', traccia.id)
+
+  return {
+    corsa: corsa.id,
+    destinazione: corsa.destinazione_label,
+    gruppo,
+    messaggi: (righe ?? []).map((m) => ({
+      id: m.id,
+      nome: (m.profili as unknown as { nome: string } | null)?.nome ?? '',
+      testo: m.testo,
+      quando: m.creato_il,
+      accusato: m.autore === accusato,
+    })),
+  }
+}
