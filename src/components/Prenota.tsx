@@ -18,7 +18,7 @@ import { Carta, MetodoSalvato } from './Carta.tsx'
 
 export interface Metodo { marchio: string; ultime4: string | null }
 
-export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, prenotaImmediata, kmDeviazione, fermataPronta }: {
+export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, prenotaImmediata, kmDeviazione, fermataPronta, ritorno }: {
   corsa: string
   totaleCent: number
   nomeConducente: string
@@ -26,8 +26,15 @@ export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, pre
   prenotaImmediata: boolean
   kmDeviazione: number
   fermataPronta: boolean
+  /**
+   * Il rientro collegato, quando chi guida l'ha pubblicato e le due corse
+   * consentono un pagamento solo. Se manca, la scelta non compare — è la
+   * regola di sempre: niente comandi che portano a un rifiuto.
+   */
+  ritorno?: { quotaCent: number; quando: string } | null
 }) {
   const [aperto, setAperto] = useState(false)
+  const [conRitorno, setConRitorno] = useState(false)
   const [metodo, setMetodo] = useState<Metodo | null>(metodoIniziale)
   const [cambia, setCambia] = useState(false)
   const [invio, setInvio] = useState(false)
@@ -41,7 +48,11 @@ export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, pre
     setInvio(true); setErrore(null)
     const r = await fetch('/api/prenotazioni', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ corsaId: corsa, kmDeviazione: fermataPronta ? 0 : kmDeviazione }),
+      body: JSON.stringify({
+        corsaId: corsa,
+        kmDeviazione: fermataPronta ? 0 : kmDeviazione,
+        conRitorno: conRitorno || undefined,
+      }),
     })
     const d = await r.json()
     if (!r.ok) { setErrore(d.errore ?? 'Non è andata'); setInvio(false); return }
@@ -71,8 +82,29 @@ export function Prenota({ corsa, totaleCent, nomeConducente, metodoIniziale, pre
           <span style={{
             fontFamily: 'var(--titoli)', fontWeight: 700, fontSize: 26,
             letterSpacing: '-.02em',
-          }}>{euro(totaleCent)}</span>
+          }}>{euro(conRitorno && ritorno ? totaleCent + ritorno.quotaCent : totaleCent)}</span>
         </div>
+
+        {/* ── Anche il ritorno, con un pagamento solo ──
+            Compare solo se il rientro esiste ed è pagabile insieme. La
+            conseguenza sta scritta accanto, non nascosta in una nota
+            legale: chi paga una volta per due tratte non può disdire solo
+            la seconda, perché quei soldi sono già stati presi alla prima
+            partenza. Scoprirlo dopo sarebbe un tradimento. */}
+        {ritorno && (
+          <label className="riquadro riquadro-spunta" style={{ marginBottom: 'var(--s5)' }}>
+            <input type="checkbox" checked={conRitorno}
+              onChange={(e) => setConRitorno(e.target.checked)} />
+            <span className="cresci">
+              <span className="spunta-titolo">Prendo anche il ritorno</span>
+              <span className="spunta-nota">
+                {ritorno.quando} · {euro(ritorno.quotaCent)} in più, ma un
+                pagamento solo: si risparmia una commissione.
+                {conRitorno && ' Da qui in poi le due tratte vanno insieme: non potrai disdire solo il ritorno.'}
+              </span>
+            </span>
+          </label>
+        )}
 
         {serveCarta ? (
           <>

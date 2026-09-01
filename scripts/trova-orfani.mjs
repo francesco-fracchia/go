@@ -40,7 +40,22 @@ const file = []
   }
 })(RADICE)
 
-const testi = new Map(file.map((f) => [f, readFileSync(f, 'utf8')]))
+/**
+ * I commenti non contano come chiamanti.
+ *
+ * Senza questa riga il controllo si lascia ingannare dalle proprie note:
+ * `prenotaAndataRitorno` era citata in un commento dentro il suo stesso
+ * file, e tanto è bastato perché non comparisse fra gli orfani — mentre
+ * nessuna riga di codice, in nessun file, la chiamava.
+ *
+ * Un controllo che una nota può zittire si spegne da solo col tempo, e non
+ * te ne accorgi finché non serve.
+ */
+const senzaCommenti = (t) => t
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1 ')
+
+const testi = new Map(file.map((f) => [f, senzaCommenti(readFileSync(f, 'utf8'))]))
 
 const orfani = []
 const soloTest = []

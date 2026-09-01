@@ -35,7 +35,13 @@ export interface DatiCorsa {
   prenotaImmediata: boolean
   politica: 'flessibile' | 'rigida'
   note?: string
-  ritorno?: { id: string; orario: string } | null
+  ritorno?: {
+    id: string; orario: string
+    /** se le due tratte si possono pagare insieme */
+    insieme?: boolean
+    quotaCent?: number | null
+    quando?: string
+  } | null
   conducente: {
     id?: string
     nome: string; fotoUrl: string | null; eta?: number
@@ -231,6 +237,9 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
                   corsa={c.id} totaleCent={c.totaleCent} nomeConducente={c.conducente.nome}
                   metodoIniziale={metodo ?? null} prenotaImmediata={c.prenotaImmediata}
                   kmDeviazione={c.kmDeviazione} fermataPronta={c.fermataPronta}
+                  ritorno={c.ritorno?.insieme && c.ritorno.quotaCent
+                    ? { quotaCent: c.ritorno.quotaCent, quando: c.ritorno.quando ?? '' }
+                    : null}
                 />
               </div>
 

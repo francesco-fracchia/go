@@ -2907,3 +2907,9 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
 }
 .preferenza-nome { margin: 0; font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; }
 .preferenza-nota { margin: 2px 0 0; font-size: 13.5px; color: var(--tenue); line-height: 1.45; }
+
+.spunta-titolo { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.spunta-nota {
+  display: block; margin-top: 4px; font-size: 13.5px;
+  line-height: 1.5; color: var(--inchiostro-2);
+}

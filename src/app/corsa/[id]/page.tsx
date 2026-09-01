@@ -4,6 +4,7 @@ import { leggiPunto } from '../../../server/geo.ts'
 import { utenteCorrente } from '../../../server/auth.ts'
 import { distintivi } from '../../../server/profili.ts'
 import { metodoAttuale } from '../../../server/pagamento.ts'
+import { preventivaPer } from '../../../server/prenotazioni.ts'
 import { Dettaglio, type DatiCorsa } from '../../../components/Dettaglio.tsx'
 import { CorsaConducente, type DatiCorsaConducente } from '../../../components/CorsaConducente.tsx'
 import {
@@ -35,6 +36,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       id, conducente, stato, modalita, ora_partenza, ora_arrivo,
       origine_label, destinazione_label, km_base, pedaggio_cent, parcheggio_cent,
       posti_offerti, sconto_cent, politica, note, prenota_immediata, corsa_ritorno,
+      ritorno_incasso_unico,
       accetta_deviazioni, deviazioni_ritiro, deviazioni_deposito, token_link,
       profili:conducente ( nome, foto_url, data_nascita ),
       veicoli ( marca, modello, colore, fumo, animali, bagagli, centesimi_per_km ),
@@ -176,6 +178,20 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       id: ritorno.id,
       orario: new Date(ritorno.ora_partenza)
         .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+      /**
+       * Il rientro si può prendere insieme, con un pagamento solo?
+       *
+       * La bandiera la accende il trigger sul database, che la spegne da
+       * solo se una delle due corse non è privata. La quota si legge dal
+       * motore, non si stima: è lo stesso numero che si pagherebbe
+       * prenotando quella corsa da sola.
+       */
+      insieme: r.ritorno_incasso_unico === true,
+      quotaCent: r.ritorno_incasso_unico === true
+        ? await preventivaPer(ritorno.id).catch(() => null)
+        : null,
+      quando: new Date(ritorno.ora_partenza)
+        .toLocaleString('it-IT', { weekday: 'short', hour: '2-digit', minute: '2-digit' }),
     } : null,
     conducente: {
       id: r.conducente,

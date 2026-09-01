@@ -61,7 +61,7 @@ const stato = (codice: string) => ({
   pieno: 409, doppia: 409, tardi: 410, sospeso: 403, limitato: 403,
   sistematicita: 403, dichiarazione: 428, telefono: 428, carta: 402, luogo: 422,
   nome: 422, codice: 404, estraneo: 403, impedimenti: 409, accesso: 500,
-  foto: 428,
+  foto: 428, ritorno: 409,
 }[codice] ?? 400)
 
 export const json = (corpo: unknown, stato = 200) =>
