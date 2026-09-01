@@ -12,7 +12,7 @@
  * che non clicca. Si trova solo confrontando le stringhe con l'elenco vero
  * delle rotte, che è quello che fa questo controllo.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const cammina = (d, out = []) => {
@@ -40,7 +40,20 @@ for (const f of cammina('src/app')) {
 rotte.add('/')
 
 /* ── 2. I collegamenti scritti nel codice ────────────────────────────── */
-const sorgenti = [...cammina('src/components'), ...cammina('src/app')]
+/**
+ * Anche il server, non solo le schermate.
+ *
+ * Le notifiche portano un indirizzo — `url: '/rimatch/${p.id}'` — e quello
+ * non è un href: è una stringa dentro un oggetto, che nessun controllo
+ * sugli attributi JSX vedrebbe mai. È così che `/rimatch/[id]` è rimasto
+ * inesistente mentre la notifica che ci mandava sopra veniva spedita a chi
+ * era appena rimasto a piedi.
+ *
+ * Gli indirizzi delle notifiche sono più pericolosi di quelli delle
+ * schermate, non meno: una schermata la si guarda mentre si sviluppa, una
+ * notifica arriva mesi dopo, a qualcuno, di notte.
+ */
+const sorgenti = [...cammina('src/components'), ...cammina('src/app'), ...cammina('src/server')]
   .filter((f) => /\.tsx?$/.test(f) && !f.includes('.test.'))
 
 const rotti = []
@@ -50,12 +63,26 @@ for (const f of sorgenti) {
     ...testo.matchAll(/href="(\/[^"#?]*)"/g),
     ...testo.matchAll(/href=\{`(\/[^`#?]*)`\}/g),
     ...testo.matchAll(/window\.location\.href\s*=\s*[`'"](\/[^`'"#?]*)/g),
+    /**
+     * Nel server: QUALUNQUE stringa che sembri un indirizzo interno.
+     *
+     * Ancorarsi a `url:` non basta, perché il valore è spesso un ternario e
+     * l'apice non segue i due punti. Meglio guardare tutte le stringhe: un
+     * falso positivo si mette in elenco una volta, un indirizzo rotto
+     * arriva a qualcuno di notte.
+     */
+    ...(f.startsWith('src/server/')
+      ? [...testo.matchAll(/[`'"](\/[a-z][a-z0-9\-/[\]$}{.]*)[`'"]/gi)]
+      : []),
   ]
   for (const [, grezzo] of trovati) {
     // `${...}` diventa un segmento qualsiasi, come [x] fra le rotte.
     const p = grezzo.replace(/\$\{[^}]*\}/g, '*').replace(/\/$/, '') || '/'
     if (p.startsWith('/api/')) continue
     if (rotte.has(p)) continue
+    // Un file in `public` non è una rotta ma esiste lo stesso: /marchio.svg
+    // si serve, e non deve comparire fra i collegamenti rotti.
+    if (existsSync(join('public', p))) continue
     // Un segmento variabile può contenere una barra a runtime: si accetta
     // se esiste una rotta che comincia allo stesso modo.
     if ([...rotte].some((r) => r === p || r.startsWith(`${p}/`))) continue
