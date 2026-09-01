@@ -9,6 +9,7 @@ import {
 } from '../lib/pricing.ts'
 import type { Cents } from '../lib/money.ts'
 import { FUSO } from '../lib/tempo.ts'
+import { ritiroVicino, creaRitiro } from './fermate.ts'
 
 /**
  * Creazione di una prenotazione.
@@ -71,6 +72,16 @@ export interface RichiestaPrenotazione {
   passeggeroId: string
   /** fermata esistente a cui salire, oppure una deviazione proposta */
   fermataId?: string
+  /**
+   * Dove passare a prenderlo, quando non è il punto di partenza della corsa.
+   *
+   * Prima arrivava solo `kmDeviazione`: un numero, senza il posto. La
+   * ricerca diceva «passa vicino a te», calcolava la deviazione, e il
+   * punto moriva lì — il conducente si vedeva scritto che salivi alla sua
+   * origine. Un chilometraggio senza un indirizzo non manda nessuno da
+   * nessuna parte.
+   */
+  ritiro?: { lat: number; lng: number; etichetta: string }
   kmDeviazione?: number
   tipoDeviazione?: 'ritiro' | 'deposito'
   /** prenotazioni riservate insieme; ognuna paga comunque per sé */
@@ -139,6 +150,17 @@ export async function prenota(req: RichiestaPrenotazione) {
     throw new ErrorePrenotazione('doppia', 'hai già una prenotazione su questa corsa')
   }
 
+  /*
+   * Se il punto coincide con un ritiro già previsto, si sale lì: la
+   * deviazione è già pagata da qualcun altro e il preventivo deve saperlo
+   * PRIMA di calcolare. Se è un punto nuovo la fermata non si crea ancora
+   * — solo dopo che il preventivo ha detto di sì.
+   */
+  const fermataId = req.fermataId
+    ?? (req.ritiro
+      ? await ritiroVicino(req.corsaId, { lat: req.ritiro.lat, lng: req.ritiro.lng }) ?? undefined
+      : undefined)
+
   const corsa = aCorsa(riga)
   const passeggeri: Passeggero[] = [
     ...bordo.map((b): Passeggero => ({
@@ -149,7 +171,7 @@ export async function prenota(req: RichiestaPrenotazione) {
     })),
     {
       id: req.passeggeroId,
-      fermataId: req.fermataId,
+      fermataId,
       kmDeviazione,
     },
   ]
@@ -184,6 +206,23 @@ export async function prenota(req: RichiestaPrenotazione) {
   // il posto resta prenotabile da altri finché il conducente non accetta.
   const richiedeApprovazione = kmDeviazione > 0 || !riga.prenota_immediata
 
+  /**
+   * Adesso il punto di ritiro diventa un posto vero.
+   *
+   * Si crea qui e non prima: il preventivo ha già detto di sì, quindi
+   * questa fermata avrà almeno una persona che ci sale. Crearla sopra
+   * lascerebbe una fermata vuota su ogni prenotazione rifiutata, e i
+   * numeri d'ordine su una corsa sono contati.
+   */
+  const fermataFinale = fermataId
+    ?? (req.ritiro
+      ? await creaRitiro(
+        req.corsaId,
+        { lat: req.ritiro.lat, lng: req.ritiro.lng },
+        req.ritiro.etichetta,
+        kmDeviazione)
+      : null)
+
   const { data: profiloPag } = await db
     .from('profili')
     .select('stripe_cliente_id, metodo_pagamento, foto_url')
@@ -209,7 +248,7 @@ export async function prenota(req: RichiestaPrenotazione) {
     .insert({
       corsa: req.corsaId,
       passeggero: req.passeggeroId,
-      fermata: req.fermataId ?? null,
+      fermata: fermataFinale,
       gruppo: req.gruppo ?? null,
       quota_cent: mia.quota,
       deviazione_cent: mia.deviazione,
