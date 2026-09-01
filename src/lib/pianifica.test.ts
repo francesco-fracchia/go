@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { pianifica, SOSTA_MIN } from './pianifica.ts'
+import { pianifica, avanza, SOSTA_MIN } from './pianifica.ts'
 
 const ORE = (s: string) => new Date(`2026-09-01T${s}:00Z`)
 const hhmm = (d: Date) => d.toISOString().slice(11, 16)
@@ -93,4 +93,46 @@ test('rifacendo il conto in avanti si arriva all\'ora promessa', () => {
     t += (SOSTA_MIN + tratte[k + 1]!) * 60_000
   }
   assert.equal(t, p.arrivo.getTime(), 'il viaggio rifatto in avanti non arriva quando dovrebbe')
+})
+
+
+/**
+ * L'invariante fra i due conti.
+ *
+ * `pianifica` va all'indietro dall'arrivo, `avanza` va in avanti da
+ * un'ora vera. Partendo dall'ora che il primo calcola, il secondo deve
+ * ridare esattamente le stesse fermate e lo stesso arrivo — altrimenti
+ * chi guida vedrebbe un orario prima di partire e un altro subito dopo
+ * aver premuto «sono partito», senza che sia successo niente.
+ */
+test('andare avanti dall\'ora calcolata ridà lo stesso viaggio', () => {
+  const tratte = [8, 6, 5, 25]
+  const fermate = [
+    { etichetta: 'a', chi: ['Bea'] }, { etichetta: 'b', chi: ['Ciro'] },
+    { etichetta: 'c', chi: ['Dina'] },
+  ]
+  const indietro = pianifica({ oraArrivo: ORE('22:00'), tratte, fermate })
+  const avanti = avanza({ adesso: indietro.partenza, tratte, fermate })
+
+  assert.deepEqual(
+    avanti.passaggi.map((x) => hhmm(x.quando)),
+    indietro.passaggi.map((x) => hhmm(x.quando)))
+  assert.equal(hhmm(avanti.arrivo), hhmm(indietro.arrivo))
+})
+
+test('partendo in ritardo, tutto il resto slitta della stessa quantità', () => {
+  const tratte = [10, 30]
+  const fermate = [{ etichetta: 'via Roma', chi: ['Bea'] }]
+  const puntuale = avanza({ adesso: ORE('21:00'), tratte, fermate })
+  const tardi = avanza({ adesso: ORE('21:07'), tratte, fermate })
+
+  assert.equal(hhmm(puntuale.passaggi[0]!.quando), '21:10')
+  assert.equal(hhmm(tardi.passaggi[0]!.quando), '21:17', 'sette minuti tardi anche da Bea')
+  assert.equal(hhmm(tardi.arrivo), '21:50')
+})
+
+test('senza fermate rimaste resta solo la strada per arrivare', () => {
+  const a = avanza({ adesso: ORE('21:40'), tratte: [20], fermate: [] })
+  assert.equal(a.passaggi.length, 0)
+  assert.equal(hhmm(a.arrivo), '22:00')
 })

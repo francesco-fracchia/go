@@ -107,3 +107,44 @@ export function pianifica(i: Ingredienti): Piano {
       : Math.max(0, Math.round(totale - i.minutiDiretti)),
   }
 }
+
+
+/**
+ * Lo stesso viaggio, ma partendo da adesso.
+ *
+ * `pianifica` conta all'indietro da un'ora promessa: serve PRIMA, per
+ * decidere quando uscire. Questa conta in avanti da un'ora vera: serve
+ * DOPO, quando chi guida dice «sono partito» e da quel momento tutte le
+ * ore che seguono non sono più una previsione ma una conseguenza.
+ *
+ * È la differenza fra «passo da te verso le nove e mezza» e «sono partito,
+ * sono da te fra dodici minuti». La seconda è l'unica su cui una persona
+ * può decidere se scendere adesso o fra un po', ed è il motivo per cui
+ * qualcuno resta in casa al caldo invece che in strada.
+ */
+export function avanza(i: {
+  /** Da quando si conta: l'ora vera in cui si è ripartiti. */
+  adesso: Date
+  /** Le tratte che restano: da qui alla prossima fermata, e via fino in fondo. */
+  tratte: number[]
+  /** Le fermate che restano. */
+  fermate: Fermata[]
+  sostaMin?: number
+}): { passaggi: Passaggio[]; arrivo: Date } {
+  if (i.tratte.length !== i.fermate.length + 1) {
+    throw new Error(
+      `le tratte devono essere una più delle fermate: ${i.tratte.length} e ${i.fermate.length}`,
+    )
+  }
+  const sosta = i.sostaMin ?? SOSTA_MIN
+  const passaggi: Passaggio[] = []
+  let t = i.adesso.getTime()
+
+  for (const [k, f] of i.fermate.entries()) {
+    t += (i.tratte[k] ?? 0) * 60_000
+    passaggi.push({ ...f, quando: new Date(t) })
+    t += sosta * 60_000
+  }
+  t += (i.tratte[i.tratte.length - 1] ?? 0) * 60_000
+  return { passaggi, arrivo: new Date(t) }
+}
