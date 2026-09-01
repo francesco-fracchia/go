@@ -15,7 +15,42 @@ import { notifica } from './notifiche.ts'
 
 export const ATTESA_NOTIFICA_MS = 45_000
 
+/**
+ * Chi ha diritto di stare in questa conversazione.
+ *
+ * La regola esisteva già, ed era scritta bene: la politica «chat solo tra
+ * chi condivide la corsa» sulla tabella `messaggi`. Solo che non veniva
+ * mai attraversata — queste funzioni usano il client di servizio, che le
+ * politiche le scavalca per definizione. La protezione era in un punto
+ * che nessuna richiesta tocca.
+ *
+ * L'effetto, provato: un utente qualunque che conoscesse l'identificativo
+ * di una corsa ne leggeva l'INTERA conversazione e ci scriveva dentro. Fra
+ * due persone che si sono conosciute per quaranta minuti in macchina,
+ * questa non è una svista di permessi: è la corrispondenza di qualcun
+ * altro.
+ *
+ * Le condizioni qui sotto ricalcano la politica riga per riga, di
+ * proposito. Due strati che dicono cose diverse sono peggio di uno solo:
+ * si corregge quello sbagliato e si resta convinti di aver corretto.
+ */
+async function partecipa(corsaId: string, utenteId: string): Promise<boolean> {
+  const [{ data: corsa }, { data: prenotazione }] = await Promise.all([
+    db.from('corse').select('conducente').eq('id', corsaId).maybeSingle(),
+    db.from('prenotazioni').select('id')
+      .eq('corsa', corsaId).eq('passeggero', utenteId)
+      .not('stato', 'in', '("rifiutata","scaduta")')
+      .limit(1),
+  ])
+  if (!corsa) return false
+  return corsa.conducente === utenteId || (prenotazione ?? []).length > 0
+}
+
 export async function messaggi(corsaId: string, utenteId: string) {
+  // Un estraneo non riceve «non autorizzato», riceve il vuoto: sapere che
+  // una conversazione ESISTE è già qualcosa che non gli riguarda.
+  if (!await partecipa(corsaId, utenteId)) return []
+
   const { data } = await db
     .from('messaggi')
     .select('id, autore, testo, creato_il, profili:autore(nome, foto_url)')
@@ -79,6 +114,8 @@ export async function scrivi(
     .from('corse').select('ora_arrivo, stato').eq('id', corsaId).single()
   if (!corsa) return { ok: false, motivo: 'assente' }
 
+  if (!await partecipa(corsaId, autoreId)) return { ok: false, motivo: 'estraneo' }
+
   const finita = ['conclusa', 'annullata', 'scaduta'].includes(corsa.stato)
   const oreDaArrivo = (Date.now() - new Date(corsa.ora_arrivo).getTime()) / 3600_000
   if (finita && oreDaArrivo > ORE_CHAT_DOPO_ARRIVO) return { ok: false, motivo: 'chiusa' }
@@ -87,9 +124,11 @@ export async function scrivi(
     .insert({ corsa: corsaId, autore: autoreId, testo: pulito })
     .select('id, testo, creato_il')
     .single()
-  // L'unica ragione per cui l'inserimento fallisce è che chi scrive non ha
-  // niente a che fare con questa corsa: lo dice la politica sulla tabella.
-  if (error || !data) return { ok: false, motivo: 'estraneo' }
+  // A questo punto chi scrive è già stato riconosciuto: un errore qui è un
+  // guasto, non un rifiuto. Restava scritto che a fermarlo fosse la
+  // politica sulla tabella — che con il client di servizio non interviene
+  // mai, ed è il motivo per cui questo controllo mancava del tutto.
+  if (error || !data) return { ok: false, motivo: 'assente' }
 
   await avvisaGliAltri(corsaId, autoreId, pulito)
   return { ok: true, messaggio: data }
