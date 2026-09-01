@@ -64,6 +64,13 @@ function spiega(messaggio: string): string {
   return `Non è andata: ${messaggio}`
 }
 
+/** L'ultimo giorno di nascita che oggi da diciotto anni compiuti. */
+function maggiorenneDa(): string {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 18)
+  return d.toISOString().slice(0, 10)
+}
+
 const GOOGLE = process.env.NEXT_PUBLIC_OAUTH_GOOGLE === '1'
 const APPLE = process.env.NEXT_PUBLIC_OAUTH_APPLE === '1'
 
@@ -71,6 +78,7 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
   const [schermata, setSchermata] = useState<Schermata>('entra')
   const [indirizzo, setIndirizzo] = useState('')
   const [password, setPassword] = useState('')
+  const [nascita, setNascita] = useState('')
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [codice, setCodice] = useState('')
@@ -153,7 +161,10 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
     setAttesa(true)
     const r = await fetch('/api/profilo', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ nome: nome.trim(), cognome: cognome.trim(), email: email() }),
+      body: JSON.stringify({
+        nome: nome.trim(), cognome: cognome.trim(), email: email(),
+        dataNascita: nascita || null,
+      }),
     })
     setAttesa(false)
     // Un profilo che esiste già non è un errore: vuol dire che si stava
@@ -303,12 +314,17 @@ export function Entra({ ritorno = '/' }: { ritorno?: string }) {
             <Campo etichetta="Email" tipo="email" valore={indirizzo} onChange={setIndirizzo}
               segnaposto="nome@esempio.it" completa="email" />
             <Campo etichetta="Password" tipo="password" valore={password} onChange={setPassword}
-              segnaposto="almeno 8 caratteri" completa="new-password" invio={registra} />
+              segnaposto="almeno 8 caratteri" completa="new-password" />
+            {/* GO e riservato ai maggiorenni, e finora nessuno lo chiedeva:
+                il controllo esisteva nel codice E nel database, ma su un
+                campo che non veniva mai riempito passava sempre. */}
+            <Campo etichetta="Data di nascita" tipo="date" valore={nascita} onChange={setNascita}
+              segnaposto="" completa="bday" massimo={maggiorenneDa()} invio={registra} />
 
             {errore && <p className="errore">{errore}</p>}
 
             <button type="button" className="azione azione-piena ingresso-invia"
-              aria-disabled={attesa || !nome || !cognome || !indirizzo || password.length < 8}
+              aria-disabled={attesa || !nome || !cognome || !indirizzo || password.length < 8 || !nascita}
               onClick={registra}>
               {attesa ? 'Un attimo…' : 'Continua'}
             </button>
@@ -459,17 +475,20 @@ const SegnoApple = () => (
   </svg>
 )
 
-function Campo({ etichetta, valore, onChange, segnaposto, tipo = 'text', completa, mono, invio }: {
+function Campo({ etichetta, valore, onChange, segnaposto, tipo = 'text', completa, mono, invio, massimo }: {
   etichetta: string; valore: string; onChange: (v: string) => void
   segnaposto: string; tipo?: string; completa?: string; mono?: boolean
   invio?: () => void
+  /** Per le date: l'ultimo giorno accettabile. Un selettore che non lascia
+      nemmeno scegliere una data sbagliata vale piu di un errore dopo. */
+  massimo?: string
 }) {
   return (
     <label className="campo ingresso-campo">
       <span className="campo-nome">{etichetta}</span>
       <input
         type={tipo} value={valore} onChange={(e) => onChange(e.target.value)}
-        placeholder={segnaposto} autoComplete={completa}
+        placeholder={segnaposto} autoComplete={completa} max={massimo}
         inputMode={mono ? 'numeric' : undefined}
         onKeyDown={(e) => { if (e.key === 'Enter' && invio) invio() }}
         style={mono ? { fontFamily: 'var(--mono)', letterSpacing: '.3em', fontSize: 20 } : undefined}

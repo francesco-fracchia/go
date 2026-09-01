@@ -42,10 +42,27 @@ export async function creaProfilo(r: Registrazione) {
   if (r.nome.trim().length < 2) throw new ErroreProfilo('nome', 'manca il nome')
   if (r.cognome.trim().length < 2) throw new ErroreProfilo('cognome', 'manca il cognome')
 
-  // Solo maggiorenni nella prima versione. Il vincolo esiste anche nel
-  // database: qui serve a dare un messaggio comprensibile invece di un
-  // errore di violazione di vincolo.
-  if (r.dataNascita && eta(r.dataNascita) < 18) {
+  /**
+   * Solo maggiorenni, e adesso la data si chiede davvero.
+   *
+   * Il controllo era scritto qui E nel database, in tutte e due i posti
+   * nella forma «se c'è la data, allora dev'essere maggiorenne». La data
+   * non veniva chiesta da nessuna parte: tutti i profili in produzione
+   * l'avevano vuota, e un cancello che si apre da solo quando manca la
+   * chiave non è un cancello.
+   *
+   * Il vincolo nel database resta com'è — accetta il nullo — perché i
+   * profili nati prima di questa riga ce l'hanno vuoto e un vincolo che
+   * rifiuta di aggiornarli li congelerebbe. Qui invece non si passa.
+   */
+  if (!r.dataNascita) {
+    throw new ErroreProfilo('nascita', 'manca la data di nascita')
+  }
+  const anni = eta(r.dataNascita)
+  if (!Number.isFinite(anni) || anni > 120) {
+    throw new ErroreProfilo('nascita', 'questa data non sembra giusta')
+  }
+  if (anni < 18) {
     throw new ErroreProfilo('minorenne',
       'per ora GO è riservato ai maggiorenni')
   }
@@ -61,7 +78,7 @@ export async function creaProfilo(r: Registrazione) {
     email_ok: !!r.email,
     nome: r.nome.trim(),
     cognome: r.cognome.trim(),
-    data_nascita: r.dataNascita ?? null,
+    data_nascita: r.dataNascita,
   }).select().single()
 
   if (error) {
