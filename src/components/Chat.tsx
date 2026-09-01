@@ -37,9 +37,28 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
   const [messaggi, setMessaggi] = useState(iniziali)
   const [testo, setTesto] = useState('')
   const [errore, setErrore] = useState<string | null>(null)
-  const fondo = useRef<HTMLDivElement>(null)
+  const corpo = useRef<HTMLDivElement>(null)
+  const apertura = useRef(true)
 
-  useEffect(() => { fondo.current?.scrollIntoView({ behavior: 'smooth' }) }, [messaggi.length])
+  /**
+   * Si apre in fondo, dove sta l'ultimo messaggio.
+   *
+   * Prima lo faceva `scrollIntoView` su una sentinella, e funzionava
+   * perché a scorrere era il documento. Adesso a scorrere è il corpo
+   * della conversazione, e la sentinella non basta: si sposta il
+   * contenitore, che è l'unica cosa di cui si conosce l'altezza.
+   *
+   * La prima volta senza animazione. Guardare la conversazione scorrere
+   * dall'inizio ogni volta che la si apre è un'attesa che non racconta
+   * niente — l'animazione serve quando arriva un messaggio nuovo, perché
+   * lì il movimento È l'informazione.
+   */
+  useEffect(() => {
+    const c = corpo.current
+    if (!c) return
+    c.scrollTo({ top: c.scrollHeight, behavior: apertura.current ? 'auto' : 'smooth' })
+    apertura.current = false
+  }, [messaggi.length])
 
   useEffect(() => {
     // Si ricontrolla ogni dieci secondi. Un canale in tempo reale sarebbe
@@ -106,7 +125,7 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
         </div>
       </header>
 
-      <div style={{ flexGrow: 1, padding: '18px 20px', display: 'grid', gap: 10, alignContent: 'start' }}>
+      <div className="conversazione-corpo" ref={corpo}>
         {messaggi.length === 0 && (
           <p style={{ color: 'var(--tenue)', fontSize: 14, textAlign: 'center', margin: '30px 0' }}>
             Ancora niente. Un «ciao» prima di partire rende tutto più facile.
@@ -115,8 +134,13 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
         {messaggi.map((m) => {
           const mioMessaggio = m.autore === mio
           return (
+            /* `justifySelf`, non `alignSelf`: il contenitore è una griglia,
+               dove `align-self` governa l'asse VERTICALE. Con quello i
+               fumetti restavano tutti a sinistra e larghi uguale — anche
+               «Sto uscendo ora» occupava la riga intera — perché una cella
+               di griglia senza allineamento orizzontale si allarga. */
             <div key={m.id} style={{
-              alignSelf: mioMessaggio ? 'flex-end' : 'flex-start', maxWidth: '82%',
+              justifySelf: mioMessaggio ? 'end' : 'start', maxWidth: '82%',
             }}>
               {!mioMessaggio && (
                 <div style={{ fontSize: 12, color: 'var(--tenue)', marginBottom: 3, paddingLeft: 4 }}>
@@ -132,7 +156,6 @@ export function Chat({ corsaId, mio, iniziali, titolo, ritorno }: {
             </div>
           )
         })}
-        <div ref={fondo} />
       </div>
 
       <div className="conversazione-piede">

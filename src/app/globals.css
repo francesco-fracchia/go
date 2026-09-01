@@ -665,6 +665,19 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   transition: background .16s ease;
 }
 .conversazione-indietro:hover { background: var(--superficie-2); }
+/* Il corpo scorre da solo.
+   Su telefono la pagina era alta quanto il contenuto e a scorrere era il
+   documento, quindi funzionava. Da 900px in su la conversazione prende
+   un'altezza fissa con `overflow: hidden`, e senza queste due righe i
+   messaggi venivano semplicemente TAGLIATI: niente barra, niente rotella,
+   la conversazione finiva a metà. `min-height: 0` non è ornamentale — un
+   elemento flessibile non scende sotto la propria altezza naturale finché
+   non glielo si dice, e senza quello `overflow` non ha niente da fare. */
+.conversazione-corpo {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 18px 20px; display: grid; gap: 10; align-content: start;
+}
+
 .conversazione-piede {
   position: sticky; bottom: 0; background: var(--superficie);
   border-top: 1px solid var(--riga);
