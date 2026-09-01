@@ -18,6 +18,15 @@ import { Mappa } from './Mappa.tsx'
  */
 
 export interface LuogoScelto {
+  /**
+   * L'identificativo, se viene da un luogo salvato.
+   *
+   * Serve a registrare che è stato usato: `luoghiSalvati` ordina per
+   * `usato_volte`, ma nessuno incrementava mai quel campo — quindi
+   * l'ordine per frequenza non partiva mai e la casa restava dove il caso
+   * l'aveva messa.
+   */
+  id?: string
   etichetta: string
   lat: number
   lng: number
@@ -87,6 +96,23 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
    * primo tocco è la differenza fra un'applicazione che si usa una volta e
    * una che si usa tutti i giorni.
    */
+  /**
+   * Scegliere un luogo, e ricordarsene.
+   *
+   * La registrazione dell'uso è deliberatamente «manda e dimentica»: se
+   * fallisce, la scelta è già avvenuta e non deve succedere niente. Un
+   * conteggio è un lusso, la scelta no.
+   */
+  function scegli(l: LuogoScelto) {
+    onScegli(l)
+    if (l.fonte === 'salvato' && l.id) {
+      void fetch('/api/preferiti/uso', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: l.id }),
+      }).catch(() => { /* l'ordine si aggiusterà la prossima volta */ })
+    }
+  }
+
   async function mostraSalvati() {
     if (testo.trim().length > 0) return
     try {
@@ -94,7 +120,8 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
       if (!r.ok) return
       const d = await r.json()
       const l = (d.luoghi ?? []).map((x: Record<string, unknown>) => ({
-        etichetta: String(x.etichetta), lat: Number(x.lat), lng: Number(x.lng),
+        id: String(x.id), etichetta: String(x.etichetta),
+        lat: Number(x.lat), lng: Number(x.lng),
         comune: String(x.indirizzo ?? ''), fonte: 'salvato' as const,
       }))
       if (l.length > 0) { setSuggerimenti(l); setAperto(true) }
@@ -164,7 +191,7 @@ export function CampoLuogo({ etichetta, segnaposto, valore, onScegli, vicino, ma
             <li key={`${l.lat},${l.lng},${i}`}>
               <button
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => { onScegli(l); setTesto(l.etichetta); setAperto(false) }}
+                onClick={() => { scegli(l); setTesto(l.etichetta); setAperto(false) }}
                 style={{
                   width: '100%', textAlign: 'left', padding: '11px 15px',
                   background: 'none', border: 'none',
