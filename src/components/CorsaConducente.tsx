@@ -68,6 +68,22 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const restaACarico = c.costoCent - c.rientroNettoCent
   const minutiAllaPartenza = (new Date(c.oraPartenza).getTime() - Date.now()) / 60_000
 
+  /**
+   * Una corsa finita deve SEMBRARE finita.
+   *
+   * Fino a ieri in tutta questa schermata c'era una sola cosa che
+   * dipendesse dallo stato: tutto il resto — il collegamento da mandare, la
+   * chat, i posti liberi, il prezzo — si comportava identico che la corsa
+   * fosse di domani o di tre mesi fa. Il risultato è che si poteva invitare
+   * gente su un viaggio già fatto.
+   */
+  const finita = ['conclusa', 'annullata', 'scaduta'].includes(c.stato)
+  const annullata = c.stato === 'annullata'
+  const oreDaArrivo = (Date.now() - new Date(c.oraArrivo).getTime()) / 3_600_000
+  // La chat resta aperta due giorni: copre la sciarpa dimenticata e chiude
+  // il resto. La stessa soglia sta sul server, che è dove conta.
+  const chatAperta = !finita || oreDaArrivo <= 48
+
   return (
     <div className="fascia"><div className="dentro dentro-app dettaglio-dentro">
 
@@ -77,12 +93,20 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             collegamento senza aver scelto di entrare in modalità
             conducente. Una riga grigia in coda alla data non bastava. */}
         <p className="fila" style={{ gap: 'var(--s3)' }}>
-          <span className="pastiglia pastiglia-viola">guidi tu</span>
+          <span className={`pastiglia ${finita ? 'pastiglia-quieta' : 'pastiglia-viola'}`}>
+            {annullata ? 'annullata' : finita ? 'conclusa' : 'guidi tu'}
+          </span>
           <span className="occhiello">{giorno(c.oraPartenza)}</span>
         </p>
         <h1 className="t-titolo" style={{ marginTop: 'var(--s2)' }}>{c.destinazioneLabel}</h1>
+        {/* Al passato quando è passata: «parti alle 21:17» su un viaggio di
+            tre mesi fa è la frase che fa dubitare di tutto il resto. */}
         <p className="t-guida" style={{ marginTop: 'var(--s2)' }}>
-          Parti alle {orario(c.oraPartenza)} da {c.origineLabel}
+          {annullata
+            ? `Annullata. Sarebbe partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}.`
+            : finita
+              ? `Partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}, arrivata alle ${orario(c.oraArrivo)}.`
+              : `Parti alle ${orario(c.oraPartenza)} da ${c.origineLabel}`}
         </p>
       </div>
 
@@ -126,7 +150,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
       {/* ── Si parte ──
           Nella mezz'ora prima della partenza tutto il resto arretra: quello
           che serve è il navigatore e niente altro. */}
-      {c.tappe && c.tappe.length >= 2 && minutiAllaPartenza <= 30 && (
+      {!finita && c.tappe && c.tappe.length >= 2 && minutiAllaPartenza <= 30 && (
         <section>
           <InViaggio corsa={c.id} tappe={c.tappe}
             prossimoRitiro={c.tappe[1]} />
@@ -161,11 +185,13 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
 
       {/* ── Chi sale ── */}
       <section>
+        {/* «Ancora» e «posti liberi» guardano avanti: su un viaggio finito
+            non descrivono niente. Lì il vuoto è un esito. */}
         <Etichetta>
           {c.passeggeri.length === 0
-            ? 'nessuno ancora'
-            : `${c.passeggeri.length} a bordo`}
-          {liberi > 0 && ` · ${liberi} ${liberi === 1 ? 'posto libero' : 'posti liberi'}`}
+            ? (finita ? 'non è salito nessuno' : 'nessuno ancora')
+            : `${c.passeggeri.length} ${finita ? (c.passeggeri.length === 1 ? 'è salita' : 'sono salite') : 'a bordo'}`}
+          {!finita && liberi > 0 && ` · ${liberi} ${liberi === 1 ? 'posto libero' : 'posti liberi'}`}
         </Etichetta>
 
         <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
@@ -193,7 +219,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
 
           {/* Su una corsa non pubblica il posto vuoto si riempie mandando
               il collegamento, non aspettando che qualcuno la trovi. */}
-          {liberi > 0 && c.modalita !== 'pubblica' && c.tokenLink && (
+          {!finita && liberi > 0 && c.modalita !== 'pubblica' && c.tokenLink && (
             <Condividi privata percorso={`/invito/${c.tokenLink}`}
               destinazione={c.destinazioneLabel} orario={orario(c.oraPartenza)}
               sotto="Non compare nelle ricerche. Manda il collegamento a chi vuoi: chi lo apre può prenotare." />
@@ -202,7 +228,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
           {/* Il posto vuoto non è uno spazio bianco: è un invito.
               Nel primo anno la maggior parte delle corse parte mezza vuota,
               e questa è l'unica leva che il conducente ha in mano. */}
-          {liberi > 0 && c.modalita === 'pubblica' && (
+          {!finita && liberi > 0 && c.modalita === 'pubblica' && (
             <Condividi percorso={`/corsa/${c.id}`}
               destinazione={c.destinazioneLabel} orario={orario(c.oraPartenza)}
               sotto={`${liberi === 1 ? 'Resta un posto' : `Restano ${liberi} posti`}. La corsa è già nelle ricerche, ma ogni persona in più sono ${euro(Math.floor(c.costoCent / (c.postiOfferti + 1)))} che non paghi tu: mandarla a chi sai che ci va è la strada più corta.`} />
@@ -245,7 +271,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             </span>
           </div>
 
-          {liberi > 0 && (
+          {!finita && liberi > 0 && (
             <p className="t-nota" style={{ marginTop: 'var(--s3)' }}>
               Ogni persona in più sono{' '}
               {euro(Math.floor(c.costoCent / (c.postiOfferti + 1)))} che non
@@ -253,11 +279,16 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             </p>
           )}
 
-          {c.passeggeri.length > 0 && (
+          {c.passeggeri.length > 0 && chatAperta && (
             <a href={`/chat/${c.id}`} className="azione azione-vuota"
               style={{ width: '100%', marginTop: 'var(--s4)' }}>
-              Scrivi a chi sale
+              {finita ? 'Scrivi a chi era a bordo' : 'Scrivi a chi sale'}
             </a>
+          )}
+          {c.passeggeri.length > 0 && !chatAperta && (
+            <p className="t-nota" style={{ marginTop: 'var(--s4)' }}>
+              La conversazione si è chiusa due giorni dopo l&apos;arrivo.
+            </p>
           )}
         </div>
       </aside>

@@ -2913,3 +2913,11 @@ select:focus-visible, textarea:focus-visible, [role="switch"]:focus-visible {
   display: block; margin-top: 4px; font-size: 13.5px;
   line-height: 1.5; color: var(--inchiostro-2);
 }
+
+/* Una corsa che non si può più prenotare lo dice, e offre la strada
+   successiva invece di lasciare un vicolo cieco. */
+.chiusa {
+  margin: var(--s4) 0 0; padding: var(--s4);
+  border-radius: var(--r-m); background: var(--superficie-2);
+  font-size: 14px; line-height: 1.55; color: var(--inchiostro-2);
+}

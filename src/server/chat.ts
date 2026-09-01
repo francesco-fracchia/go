@@ -32,9 +32,37 @@ export async function messaggi(corsaId: string, utenteId: string) {
   return data ?? []
 }
 
+/**
+ * Per quanto si può scrivere dopo l'arrivo.
+ *
+ * Non zero: capita di aver lasciato una sciarpa in macchina, o di voler
+ * dire grazie il giorno dopo. Ma non per sempre: una conversazione aperta
+ * a tempo indeterminato fra due persone che si sono conosciute per
+ * quaranta minuti diventa un canale che nessuno ha chiesto — e da cui non
+ * si esce, perché non c'è un pulsante per uscirne.
+ *
+ * Due giorni coprono il caso vero e chiudono il resto.
+ */
+export const ORE_CHAT_DOPO_ARRIVO = 48
+
 export async function scrivi(corsaId: string, autoreId: string, testo: string) {
   const pulito = testo.trim()
   if (!pulito || pulito.length > 2000) return null
+
+  /**
+   * La chat si chiude da sola, e si chiude sul SERVER.
+   *
+   * Nasconderla nell'interfaccia lascerebbe la rotta aperta a chiunque
+   * conosca l'indirizzo, che su un canale fra sconosciuti non è un
+   * dettaglio.
+   */
+  const { data: corsa } = await db
+    .from('corse').select('ora_arrivo, stato').eq('id', corsaId).single()
+  if (!corsa) return null
+
+  const finita = ['conclusa', 'annullata', 'scaduta'].includes(corsa.stato)
+  const oreDaArrivo = (Date.now() - new Date(corsa.ora_arrivo).getTime()) / 3600_000
+  if (finita && oreDaArrivo > ORE_CHAT_DOPO_ARRIVO) return null
 
   const { data, error } = await db.from('messaggi')
     .insert({ corsa: corsaId, autore: autoreId, testo: pulito })

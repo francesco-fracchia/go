@@ -35,6 +35,17 @@ export interface DatiCorsa {
   prenotaImmediata: boolean
   politica: 'flessibile' | 'rigida'
   note?: string
+  /**
+   * Se questa corsa accetta ancora prenotazioni.
+   *
+   * `Dettaglio` non conosceva affatto lo stato: mostrava «Prenota» su una
+   * corsa già partita, e il server rifiutava. Un comando che porta a un
+   * rifiuto insegna a non fidarsi degli altri comandi — e su questa
+   * schermata è l'unico comando che c'è.
+   */
+  prenotabile: boolean
+  /** com'è finita, quando non è più prenotabile */
+  stato: 'pubblicata' | 'confermata' | 'in_corso' | 'conclusa' | 'annullata' | 'scaduta' | 'bozza'
   ritorno?: {
     id: string; orario: string
     /** se le due tratte si possono pagare insieme */
@@ -232,6 +243,22 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
                 {c.postiLiberi === 1 ? 'Resta un posto' : `${c.postiLiberi} posti liberi`}
               </p>
 
+              {!c.prenotabile && (
+                <p className="chiusa">
+                  {c.stato === 'in_corso'
+                    ? 'Questa corsa è partita.'
+                    : c.stato === 'annullata'
+                      ? 'Questa corsa è stata annullata.'
+                      : c.stato === 'conclusa'
+                        ? 'Questa corsa è già stata fatta.'
+                        : 'Questa corsa non accetta più prenotazioni.'}
+                  {' '}<a href="/cerca">Cercane un&apos;altra</a> sulla stessa
+                  strada, oppure <a href="/cerco">dì dove devi andare</a> e ti
+                  avvisiamo appena qualcuno pubblica.
+                </p>
+              )}
+
+              {c.prenotabile && (
               <div style={{ marginTop: 'var(--s4)' }}>
                 <Prenota
                   corsa={c.id} totaleCent={c.totaleCent} nomeConducente={c.conducente.nome}
@@ -242,6 +269,7 @@ export function Dettaglio({ c, metodo }: { c: DatiCorsa; metodo?: Metodo | null 
                     : null}
                 />
               </div>
+              )}
 
               <details className="scomposizione">
                 <summary>Com&apos;è composto</summary>

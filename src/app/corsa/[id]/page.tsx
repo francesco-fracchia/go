@@ -172,6 +172,15 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     kmDeviazione: 0,
     accettaDeviazioni: r.accetta_deviazioni,
     prenotaImmediata: r.prenota_immediata,
+    /**
+     * Le stesse due condizioni che il server applica in `prenota()`: stato
+     * fra quelli che accettano, e partenza non ancora passata. Scritte qui
+     * per NON mostrare un pulsante che verrà rifiutato, non per decidere —
+     * la decisione resta del server.
+     */
+    prenotabile: ['pubblicata', 'confermata'].includes(r.stato)
+      && new Date(r.ora_partenza) > new Date(),
+    stato: r.stato,
     politica: r.politica,
     note: r.note ?? undefined,
     ritorno: ritorno ? {
