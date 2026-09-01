@@ -1,6 +1,26 @@
 import type { Metadata, Viewport } from 'next'
+import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
+
+/**
+ * I caratteri arrivano da noi, non da Google.
+ *
+ * Con il collegamento al foglio di stile di Google ogni visitatore — anche
+ * chi non si e registrato e sta solo leggendo la pagina — manda il proprio
+ * indirizzo IP a un server statunitense prima di aver toccato niente. E il
+ * caso su cui il tribunale di Monaco ha condannato un sito nel 2022, ed e
+ * evitabile: `next/font` scarica i caratteri al momento della compilazione
+ * e li serve dal nostro dominio. Zero richieste verso l'esterno.
+ */
+const testo = Instrument_Sans({
+  subsets: ['latin'], weight: ['400', '500', '600', '700'],
+  display: 'swap', variable: '--carattere-testo',
+})
+const mono = JetBrains_Mono({
+  subsets: ['latin'], weight: ['400', '500'],
+  display: 'swap', variable: '--carattere-mono',
+})
 
 export const metadata: Metadata = {
   title: 'GO — Se vai comunque, vai insieme.',
@@ -23,19 +43,8 @@ export const viewport: Viewport = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it">
+    <html lang="it" className={`${testo.variable} ${mono.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href={
-            'https://fonts.googleapis.com/css2' +
-            '?family=Instrument+Sans:wght@400;500;600;700' +
-            '&family=JetBrains+Mono:wght@400;500' +
-            '&display=swap'
-          }
-        />
       </head>
       <body>
         {/*

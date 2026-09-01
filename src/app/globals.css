@@ -91,9 +91,9 @@
   --ombra-alta: 0 2px 6px rgba(20,18,60,.07), 0 20px 46px rgba(20,18,60,.16);
 
   /* ── Carattere: uno solo, usato bene ── */
-  --testo: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --testo: var(--carattere-testo), "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --titoli: var(--testo);
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --mono: var(--carattere-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* ── Misure ──
      Tre, non una. La riga di testo non cresce mai oltre la leggibilità;
