@@ -52,6 +52,21 @@ export interface DatiCorsaConducente {
   /** partenza, ritiri nell'ordine, destinazione — per il navigatore */
   tappe?: Array<{ lat: number; lng: number; etichetta?: string }>
   daConfermare: boolean
+  /**
+   * A che ora uscire, e in che ordine passare a prendere.
+   *
+   * Manca quando non ci sono ritiri fuori dall'origine, o quando il
+   * percorso non si è potuto calcolare. In tutti e due i casi la sezione
+   * non compare: nessuna riga vuota che chieda di indovinare.
+   */
+  piano?: {
+    partenza: string
+    arrivo: string
+    minutiAggiunti: number
+    ritardoMin: number
+    allOrigine: string[]
+    passaggi: Array<{ etichetta: string; chi: string[]; quando: string }>
+  } | null
   passeggeri: Array<{
     id: string
     /** Chi è la persona, non quale prenotazione: apre il suo profilo. */
@@ -69,6 +84,19 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
   const liberi = c.postiOfferti - c.passeggeri.length
   const restaACarico = c.costoCent - c.rientroNettoCent
   const minutiAllaPartenza = (new Date(c.oraPartenza).getTime() - Date.now()) / 60_000
+
+  /**
+   * L'ora su cui chi guida deve agire.
+   *
+   * Quando ci sono ritiri lungo la strada non è più quella pubblicata: per
+   * arrivare all'ora promessa bisogna uscire prima. Mostrare la pubblicata
+   * grande e quella vera piccola, dentro l'itinerario, vuol dire far
+   * partire tardi chi legge solo il numero grande — cioè quasi tutti.
+   *
+   * Quella pubblicata non sparisce: resta scritta sotto, perché è l'ora
+   * che i passeggeri hanno letto e che qualcuno potrebbe citarti.
+   */
+  const partenzaVera = c.piano && c.piano.ritardoMin > 0 ? c.piano.partenza : c.oraPartenza
 
   /**
    * Una corsa finita deve SEMBRARE finita.
@@ -108,7 +136,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             ? `Annullata. Sarebbe partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}.`
             : finita
               ? `Partita alle ${orario(c.oraPartenza)} da ${c.origineLabel}, arrivata alle ${orario(c.oraArrivo)}.`
-              : `Parti alle ${orario(c.oraPartenza)} da ${c.origineLabel}`}
+              : `Parti alle ${orario(partenzaVera)} da ${c.origineLabel}`}
         </p>
       </div>
 
@@ -167,7 +195,12 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             <div style={{
               fontFamily: 'var(--titoli)', fontWeight: 700, fontSize: 30,
               letterSpacing: '-.03em', margin: '3px 0 2px',
-            }}>{orario(c.oraPartenza)}</div>
+            }}>{orario(partenzaVera)}</div>
+            {partenzaVera !== c.oraPartenza && (
+              <div style={{ fontSize: 12.5, color: 'var(--tenue)', marginTop: 2 }}>
+                pubblicata {orario(c.oraPartenza)}
+              </div>
+            )}
             <div style={{ fontSize: 14, color: 'var(--tenue)' }}>
               {c.origineLabel} → {c.destinazioneLabel}
             </div>
@@ -195,6 +228,10 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             : `${c.passeggeri.length} ${finita ? (c.passeggeri.length === 1 ? 'è salita' : 'sono salite') : 'a bordo'}`}
           {!finita && liberi > 0 && ` · ${liberi} ${liberi === 1 ? 'posto libero' : 'posti liberi'}`}
         </Etichetta>
+
+        {c.piano && c.piano.passaggi.length > 0 && (
+          <Itinerario piano={c.piano} origine={c.origineLabel} destinazione={c.destinazioneLabel} />
+        )}
 
         <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
           {c.passeggeri.map((p) => (
@@ -361,3 +398,72 @@ function CartaProposta({ p }: { p: Proposta }) {
   )
 }
 
+
+
+/**
+ * L'itinerario: a che ora uscire, e in che ordine.
+ *
+ * Chi deve passare a prendere tre persone in tre posti non ha bisogno di
+ * sapere quanto dura il viaggio — ha bisogno di sapere a che ora uscire di
+ * casa. È un conto che a mente viene male, perché ogni sosta costa più del
+ * tempo di guida che aggiunge: si accosta, si aspetta che scenda, si carica
+ * una borsa. Tre soste da niente sono un quarto d'ora.
+ *
+ * Le ore sono quelle a cui ESSERE LÌ, non quelle a cui ripartire. È la
+ * lettura che serve a chi guida, ed è quella che si può dire al passeggero
+ * senza tradurla.
+ */
+function Itinerario({ piano, origine, destinazione }: {
+  piano: NonNullable<DatiCorsaConducente['piano']>
+  origine: string
+  destinazione: string
+}) {
+  const riga = (ora: string, dove: string, chi?: string, forte?: boolean) => (
+    <div key={`${ora}-${dove}`} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+      <span style={{
+        fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--mono)',
+        fontSize: 13.5, minWidth: 44, flexShrink: 0,
+        color: forte ? 'var(--inchiostro)' : 'var(--tenue)',
+        fontWeight: forte ? 600 : 400,
+      }}>{orario(ora)}</span>
+      <span style={{ minWidth: 0 }}>
+        {chi && <strong style={{ fontSize: 15 }}>{chi}</strong>}
+        <span style={{
+          fontSize: chi ? 13.5 : 15, color: chi ? 'var(--tenue)' : 'var(--inchiostro)',
+          display: chi ? 'block' : undefined,
+        }}>{dove}</span>
+      </span>
+    </div>
+  )
+
+  return (
+    <Riquadro stile={{ padding: '16px 18px', marginTop: 'var(--s4)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+        <Etichetta>il giro</Etichetta>
+        {piano.minutiAggiunti > 0 && (
+          <span style={{ fontSize: 12.5, color: 'var(--tenue)' }}>
+            i ritiri aggiungono {piano.minutiAggiunti} min
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'grid', gap: 11 }}>
+        {riga(piano.partenza, origine, piano.allOrigine.join(' e ') || undefined, true)}
+        {piano.passaggi.map((p) => riga(p.quando, p.etichetta, p.chi.join(' e ')))}
+        {riga(piano.arrivo, destinazione, undefined, true)}
+      </div>
+
+      {piano.ritardoMin > 0 && (
+        <p style={{
+          margin: '14px 0 0', fontSize: 13.5, lineHeight: 1.5,
+          padding: '10px 12px', borderRadius: 'var(--raggio-s)',
+          background: 'var(--accento-velo)', color: 'var(--inchiostro)',
+        }}>
+          Per arrivare in orario devi partire <strong>{piano.ritardoMin} minuti
+          prima</strong> di quanto avevi scritto pubblicando. Chi ti aspetta
+          a {origine} vede ancora l&apos;ora vecchia: diglielo in chat.
+        </p>
+      )}
+    </Riquadro>
+  )
+}

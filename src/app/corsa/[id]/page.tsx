@@ -25,6 +25,7 @@ export const dynamic = 'force-dynamic'
 import { guscio } from '../../../server/guscio.ts'
 import { Telaio } from '../../../components/Telaio.tsx'
 import { FUSO } from '../../../lib/tempo.ts'
+import { pianoDi } from '../../../server/pianifica.ts'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -108,6 +109,25 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       rientroNettoCent: calcolo?.nettoConducente ?? 0,
       // Si chiede la conferma da tre ore prima, e solo se qualcuno aspetta.
       daConfermare: r.stato === 'pubblicata' && aBordo.length > 0 && minuti <= 180 && minuti > 0,
+      /**
+       * L'itinerario dei ritiri.
+       *
+       * Si calcola solo per chi guida, e solo qui: è l'unica schermata dove
+       * serve sapere a che ora uscire di casa. Se qualcosa non torna —
+       * percorso non calcolabile, servizio esterno giù — non si mostra
+       * niente invece di mostrare un'ora inventata: un orario sbagliato è
+       * peggio di nessun orario, perché a quello ci si organizza.
+       */
+      piano: await pianoDi(id).then((p) => p && {
+        partenza: p.partenza.toISOString(),
+        arrivo: p.arrivo.toISOString(),
+        minutiAggiunti: p.minutiAggiunti,
+        ritardoMin: p.ritardoMin,
+        allOrigine: p.allOrigine,
+        passaggi: p.passaggi.map((x) => ({
+          etichetta: x.etichetta, chi: x.chi, quando: x.quando.toISOString(),
+        })),
+      }).catch(() => null),
       passeggeri: aBordo.map((x) => ({
         id: x.id,
         // L'identificativo della PRENOTAZIONE non apre nessun profilo: serve
