@@ -54,6 +54,8 @@ export interface DatiCorsaConducente {
   daConfermare: boolean
   passeggeri: Array<{
     id: string
+    /** Chi è la persona, non quale prenotazione: apre il suo profilo. */
+    profiloId: string | null
     nome: string
     fotoUrl: string | null
     punto: string
@@ -210,9 +212,18 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
                     {finita ? 'saliva' : 'sale'} a {p.punto}
                   </div>
                 </div>
-                <a href={`/chat/${c.id}`} style={{
-                  flexShrink: 0, fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                }}>Scrivi</a>
+                {/* Qui c'era «Scrivi», e accanto a ogni nome puntava alla
+                    STESSA conversazione di gruppo: tre collegamenti identici
+                    che promettevano tre conversazioni separate. Chi lo
+                    toccava per dire una cosa a una persona la diceva a
+                    tutte. Il collegamento per persona esiste — è il suo
+                    profilo — e per scrivere c'è un bottone solo, sotto, che
+                    dice a chi arriva il messaggio. */}
+                {p.profiloId && (
+                  <a href={`/profilo/${p.profiloId}`} style={{
+                    flexShrink: 0, fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                  }}>Profilo</a>
+                )}
               </div>
             </Riquadro>
           ))}

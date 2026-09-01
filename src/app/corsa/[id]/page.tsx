@@ -54,7 +54,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
 
   const { data: prenotazioni } = await db
     .from('prenotazioni')
-    .select('id, passeggero, stato, messaggio, fermata, creata_il, fermate(etichetta, km_incrementali), profili:passeggero(nome, foto_url)')
+    .select('id, passeggero, stato, messaggio, fermata, creata_il, fermate(etichetta, km_incrementali), profili:passeggero(id, nome, foto_url)')
     .eq('corsa', id)
     .not('stato', 'in', '("rifiutata","scaduta","annullata")')
 
@@ -110,6 +110,9 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       daConfermare: r.stato === 'pubblicata' && aBordo.length > 0 && minuti <= 180 && minuti > 0,
       passeggeri: aBordo.map((x) => ({
         id: x.id,
+        // L'identificativo della PRENOTAZIONE non apre nessun profilo: serve
+        // quello della persona, ed è un dato diverso.
+        profiloId: profiloDi(x)?.id ?? null,
         nome: profiloDi(x)?.nome ?? '',
         fotoUrl: profiloDi(x)?.foto_url ?? null,
         punto: fermataDi(x)?.etichetta ?? r.origine_label,
@@ -225,7 +228,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
 const fermataDi = (x: { fermate?: unknown }) =>
   x.fermate as { etichetta?: string; km_incrementali?: number } | null
 const profiloDi = (x: { profili?: unknown }) =>
-  x.profili as { nome?: string; foto_url?: string | null } | null
+  x.profili as { id?: string; nome?: string; foto_url?: string | null } | null
 
 const eta = (nascita: string) => {
   const d = new Date(nascita), o = new Date()
