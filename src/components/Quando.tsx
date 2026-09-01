@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { quando as quandoDetto } from '../lib/tempo.ts'
 
 /**
  * Quando vuoi essere lì.
@@ -97,6 +98,11 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
     const d = new Date(oggi); d.setDate(d.getDate() + i)
     return {
       data: d,
+      /* Qui il fuso NON si dichiara, di proposito: queste date non
+         arrivano dal database, le costruisce il browser a partire da oggi
+         per farne un calendario da toccare. Fissarle a Roma le farebbe
+         litigare con `d.getDate()` qui sotto, che resta locale — e si
+         vedrebbe «mer 2» accanto a un numero di un altro giorno. */
       nome: i === 0 ? 'Oggi' : i === 1 ? 'Domani'
         : d.toLocaleDateString('it-IT', { weekday: 'short' }).replace('.', ''),
       numero: d.getDate(),
@@ -241,17 +247,5 @@ export function Quando({ valore, onCambia, etichetta = 'Quando' }: {
 }
 
 /** «Oggi · 22:30», non «2026-08-31T22:30». */
-function leggibile(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-  const giorni = Math.round(
-    (new Date(d.toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
-  )
-  if (giorni === 0) return `Oggi · ${ora}`
-  if (giorni === 1) return `Domani · ${ora}`
-  if (giorni > 1 && giorni < 7) {
-    return `${d.toLocaleDateString('it-IT', { weekday: 'long' })} · ${ora}`
-  }
-  return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} · ${ora}`
-}
+const leggibile = (iso: string) =>
+  quandoDetto(iso, { oggi: 'Oggi', domani: 'Domani' }) || iso

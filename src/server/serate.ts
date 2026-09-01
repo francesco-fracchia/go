@@ -1,4 +1,5 @@
 import { db } from './db.ts'
+import { quando as diConGiorno } from '../lib/tempo.ts'
 
 /**
  * Le serate.
@@ -52,17 +53,4 @@ export async function prossimeSerate(limite = 8): Promise<SerataConCorse[]> {
  * la data. È la stessa ragione per cui il conto alla rovescia dice «42 min»
  * e non un orario.
  */
-function quando(iso: string): string {
-  const d = new Date(iso)
-  const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-  const oggi = new Date()
-  const giorni = Math.round(
-    (new Date(d.toDateString()).getTime() - new Date(oggi.toDateString()).getTime()) / 86_400_000,
-  )
-  if (giorni === 0) return `stasera · ${ora}`
-  if (giorni === 1) return `domani · ${ora}`
-  if (giorni < 7) {
-    return `${d.toLocaleDateString('it-IT', { weekday: 'long' })} · ${ora}`
-  }
-  return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} · ${ora}`
-}
+const quando = (iso: string) => diConGiorno(iso, { oggi: 'stasera', domani: 'domani' })

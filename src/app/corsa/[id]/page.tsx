@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic'
  */
 import { guscio } from '../../../server/guscio.ts'
 import { Telaio } from '../../../components/Telaio.tsx'
+import { FUSO } from '../../../lib/tempo.ts'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -154,7 +155,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     .map((f) => ({
       etichetta: f.etichetta,
       orario: f.ora_stimata
-        ? new Date(f.ora_stimata).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+        ? new Date(f.ora_stimata).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: FUSO })
         : '',
       tipo: f.tipo,
     }))
@@ -186,7 +187,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     ritorno: ritorno ? {
       id: ritorno.id,
       orario: new Date(ritorno.ora_partenza)
-        .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+        .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: FUSO }),
       /**
        * Il rientro si può prendere insieme, con un pagamento solo?
        *
@@ -200,7 +201,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         ? await preventivaPer(ritorno.id).catch(() => null)
         : null,
       quando: new Date(ritorno.ora_partenza)
-        .toLocaleString('it-IT', { weekday: 'short', hour: '2-digit', minute: '2-digit' }),
+        .toLocaleString('it-IT', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: FUSO }),
     } : null,
     conducente: {
       id: r.conducente,

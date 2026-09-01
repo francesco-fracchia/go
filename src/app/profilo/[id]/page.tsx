@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 import { guscio } from '../../../server/guscio.ts'
 import { Telaio } from '../../../components/Telaio.tsx'
+import { FUSO } from '../../../lib/tempo.ts'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -35,7 +36,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     id: p.id, nome: p.nome, cognome: p.cognome, fotoUrl: p.foto_url,
     eta: p.data_nascita ? eta(p.data_nascita) : undefined,
     bio: p.bio ?? undefined,
-    membroDal: new Date(p.creato_il).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }),
+    membroDal: new Date(p.creato_il).toLocaleDateString('it-IT', { month: 'long', year: 'numeric', timeZone: FUSO }),
     distintivi: d.etichette,
     corseConcluse: d.corseConcluse,
     telefonoOk: p.telefono_ok,
@@ -56,7 +57,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       id: r.id, positiva: r.positiva, tag: r.tag ?? [],
       descrittori: r.descrittori ?? [], testo: r.testo,
       autore: r.ruolo_autore === 'conducente' ? 'Chi guidava' : 'Un passeggero',
-      quando: new Date(r.creata_il).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' }),
+      quando: new Date(r.creata_il).toLocaleDateString('it-IT', { month: 'short', year: 'numeric', timeZone: FUSO }),
     })),
     sintesi: riassunto(tutte),
     abitudini: abitudini(tutte),

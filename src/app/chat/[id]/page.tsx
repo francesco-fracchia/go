@@ -3,6 +3,7 @@ import { db } from '../../../server/db.ts'
 import { richiediUtente } from '../../../server/auth.ts'
 import { messaggi } from '../../../server/chat.ts'
 import { Chat, type Messaggio } from '../../../components/Chat.tsx'
+import { orario } from '../../../lib/tempo.ts'
 
 export default async function Pagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -21,8 +22,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     nomeAutore: (m.profili as unknown as { nome: string } | null)?.nome ?? '',
   }))
 
-  const ora = new Date(corsa.ora_partenza)
-    .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  const ora = orario(corsa.ora_partenza)
 
   return <Chat corsaId={id} mio={utente} iniziali={iniziali}
     titolo={`${corsa.destinazione_label} · ${ora}`} ritorno={`/corsa/${id}`} />

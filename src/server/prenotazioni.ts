@@ -8,6 +8,7 @@ import {
   type Corsa, type Passeggero,
 } from '../lib/pricing.ts'
 import type { Cents } from '../lib/money.ts'
+import { FUSO } from '../lib/tempo.ts'
 
 /**
  * Creazione di una prenotazione.
@@ -240,7 +241,7 @@ export async function prenota(req: RichiestaPrenotazione) {
       clienteId: metodo.cliente,
       metodoPagamento: metodo.metodo,
       prenotazioneId: pren.id,
-      descrizione: `GO — passaggio del ${new Date(riga.ora_partenza).toLocaleDateString('it-IT')}`,
+      descrizione: `GO — passaggio del ${new Date(riga.ora_partenza).toLocaleDateString('it-IT', { timeZone: FUSO })}`,
     })
     await db.from('prenotazioni')
       .update({ stripe_payment_intent: intent.id, autorizzata_il: new Date().toISOString() })

@@ -7,6 +7,7 @@ import { Chiama } from './Chiama.tsx'
 import { AbilitaPush } from './AbilitaPush.tsx'
 import { QuantoManca } from './InViaggio.tsx'
 import { gratuita, testoDisdetta } from '../lib/disdette.ts'
+import { orario } from '../lib/tempo.ts'
 
 /**
  * Dopo la prenotazione.
@@ -303,8 +304,7 @@ function Disdetta({ politica, minuti, prenotazione, destinazione, feeCent }: {
   )
 }
 
-const orario = (iso: string) =>
-  new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+
 
 interface Corsa {
   id: string; ora_partenza: string; ora_arrivo: string

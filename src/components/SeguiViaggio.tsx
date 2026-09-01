@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Marchio } from './Marchio.tsx'
 import type { Viaggio } from '../server/scorta.ts'
+import { orario } from '../lib/tempo.ts'
 
 /**
  * Quello che vede chi ha ricevuto il collegamento.
@@ -35,8 +36,7 @@ export function SeguiViaggio({ v }: { v: Viaggio }) {
     return () => clearInterval(t)
   }, [inViaggio])
 
-  const ora = (iso: string) =>
-    new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  const ora = orario
 
   return (
     <main className="scorta">

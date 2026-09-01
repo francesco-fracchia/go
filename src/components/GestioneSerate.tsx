@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Bottone, Etichetta } from './base.tsx'
 import { CampoLuogo, type LuogoScelto } from './CampoLuogo.tsx'
+import { FUSO } from '../lib/tempo.ts'
 
 /**
  * Inserire le serate.
@@ -141,7 +142,7 @@ export function GestioneSerate({ esistenti, mappa = false, consumo }: {
               <div style={{ fontSize: 13, color: 'var(--tenue)' }}>
                 {s.citta} · {new Date(s.inizio).toLocaleString('it-IT', {
                   weekday: 'short', day: 'numeric', month: 'short',
-                  hour: '2-digit', minute: '2-digit',
+                  hour: '2-digit', minute: '2-digit', timeZone: FUSO,
                 })}
               </div>
             </div>

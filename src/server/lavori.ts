@@ -4,6 +4,7 @@ import { rimatch } from './rimatch.ts'
 import { catturaCorsa } from './cattura.ts'
 import { concludiCorsa } from './viaggio.ts'
 import { stripe, SCADENZA_AUTORIZZAZIONE_GIORNI } from './stripe.ts'
+import { orario } from '../lib/tempo.ts'
 
 /**
  * I lavori schedulati.
@@ -275,5 +276,4 @@ async function passeggeri(corsaId: string) {
   return data ?? []
 }
 
-const orario = (iso: string) =>
-  new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+

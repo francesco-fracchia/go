@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { euro } from './base.tsx'
 import { SegnoAvanti } from './segni.tsx'
+import { FUSO } from '../lib/tempo.ts'
 
 /**
  * Il conto: quello che è entrato, e come ritirarlo.
@@ -150,7 +151,7 @@ export function Conto({ c }: { c: DatiConto }) {
                 <div key={l.settimana} className="voce-elenco" style={{ cursor: 'default' }}>
                   <span className="cresci">
                     settimana del {new Date(l.settimana).toLocaleDateString('it-IT', {
-                      day: 'numeric', month: 'long',
+                      day: 'numeric', month: 'long', timeZone: FUSO,
                     })}
                     <span className="verifica-nota"> · {l.eseguita_il ? 'inviato' : 'in preparazione'}</span>
                   </span>
