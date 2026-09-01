@@ -38,7 +38,7 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
       id, conducente, stato, modalita, ora_partenza, ora_arrivo,
       origine_label, destinazione_label, km_base, pedaggio_cent, parcheggio_cent,
       posti_offerti, sconto_cent, politica, note, prenota_immediata, corsa_ritorno,
-      ritorno_incasso_unico,
+      ritorno_incasso_unico, flessibilita_pubblicata,
       accetta_deviazioni, deviazioni_ritiro, deviazioni_deposito, token_link,
       profili:conducente ( nome, foto_url, data_nascita ),
       veicoli ( marca, modello, colore, fumo, animali, bagagli, centesimi_per_km ),
@@ -75,6 +75,16 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
     const aBordo = attive.filter((x) => x.stato !== 'richiesta')
     const proposte = attive.filter((x) => x.stato === 'richiesta')
     const minuti = (new Date(r.ora_partenza).getTime() - Date.now()) / 60_000
+
+    /**
+     * Il giro si calcola una volta sola.
+     *
+     * Serve all'itinerario E a dire quanto costa ogni proposta in attesa:
+     * il costo è la differenza fra il giro con quella persona e questo. Se
+     * il percorso non si può calcolare resta nullo, e la schermata non
+     * mostra un'ora inventata.
+     */
+    const piano = await pianoDi(id).catch(() => null)
 
     const calcolo = aBordo.length > 0
       ? preventivo(corsa, aBordo.map((x) => ({
@@ -118,18 +128,19 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
        * niente invece di mostrare un'ora inventata: un orario sbagliato è
        * peggio di nessun orario, perché a quello ci si organizza.
        */
-      piano: await pianoDi(id).then((p) => p && {
-        partenza: p.partenza.toISOString(),
-        arrivo: p.arrivo.toISOString(),
-        minutiAggiunti: p.minutiAggiunti,
-        ritardoMin: p.ritardoMin,
-        allOrigine: p.allOrigine,
-        partenzaFatta: p.partenzaFatta,
-        passaggi: p.passaggi.map((x) => ({
+      margineDetto: r.flessibilita_pubblicata ?? 0,
+      piano: piano && {
+        partenza: piano.partenza.toISOString(),
+        arrivo: piano.arrivo.toISOString(),
+        minutiAggiunti: piano.minutiAggiunti,
+        ritardoMin: piano.ritardoMin,
+        allOrigine: piano.allOrigine,
+        partenzaFatta: piano.partenzaFatta,
+        passaggi: piano.passaggi.map((x) => ({
           fermata: x.fermata, etichetta: x.etichetta, chi: x.chi,
           quando: x.quando.toISOString(), passata: x.passata,
         })),
-      }).catch(() => null),
+      },
       passeggeri: aBordo.map((x) => ({
         id: x.id,
         // L'identificativo della PRENOTAZIONE non apre nessun profilo: serve
@@ -141,8 +152,15 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
         quotaCent: quotaApplicata(corsa),
         corseFatte: 0,
       })),
-      proposte: proposte.map((x) => {
+      proposte: await Promise.all(proposte.map(async (x) => {
         const km = Number(fermataDi(x)?.km_incrementali ?? 0)
+        /* Quanto costa dire di sì: il giro con lei, meno il giro senza.
+           Il piano base è già calcolato — qui si aggiunge una sola voce. */
+        const costoMin = km > 0 && piano
+          ? await pianoDi(id, x.id)
+            .then((con) => con ? Math.max(0, con.minutiAggiunti - piano.minutiAggiunti) : 0)
+            .catch(() => 0)
+          : 0
         return {
           id: x.id,
           passeggero: {
@@ -155,8 +173,9 @@ export default async function Pagina({ params }: { params: Promise<{ id: string 
           incassoInPiuCent: Math.floor(km * corsa.centesimiPerKm),
           messaggio: x.messaggio ?? undefined,
           scadeFra: '6 ore',
+          costoMin,
         }
-      }),
+      })),
     }
     return <Telaio {...g} modo="conducente"><CorsaConducente c={dati} /></Telaio>
   }

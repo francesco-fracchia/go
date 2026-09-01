@@ -15,13 +15,15 @@ const MESSAGGI: Record<string, string> = {
 export async function POST(req: Request) {
   try {
     const utente = await richiediUtente()
-    const { prenotazione, accetta, motivo } = await req.json()
+    const { prenotazione, accetta, motivo, assorbe } = await req.json()
 
     if (!accetta) {
       const ok = await rifiutaProposta(prenotazione, utente, motivo)
       return json({ ok }, ok ? 200 : 409)
     }
-    const r = await accettaProposta(prenotazione, utente)
+    // «partenza» o «arrivo»: chi paga i minuti che la deviazione aggiunge.
+    const r = await accettaProposta(prenotazione, utente,
+      assorbe === 'arrivo' ? 'arrivo' : 'partenza')
     return json(
       { esito: r.esito, messaggio: MESSAGGI[r.esito], ...('totale' in r ? { totale: r.totale } : {}) },
       r.esito === 'ok' ? 200 : 409,

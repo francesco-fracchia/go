@@ -1,7 +1,9 @@
 import { db } from './db.ts'
 import { autorizza } from './stripe.ts'
-import { notifica } from './notifiche.ts'
 import { preventivo, autorizzazioneMassima, type Corsa, type Passeggero } from '../lib/pricing.ts'
+import { pianoDi } from './pianifica.ts'
+import { notifica } from './notifiche.ts'
+import { orario } from '../lib/tempo.ts'
 
 /**
  * Accettazione e rifiuto delle proposte.
@@ -13,7 +15,19 @@ import { preventivo, autorizzazioneMassima, type Corsa, type Passeggero } from '
  * fallisce, le successive non partono.
  */
 
-export async function accettaProposta(prenotazioneId: string, conducenteId: string) {
+/**
+ * Accettare una proposta con deviazione cambia gli orari di tutti.
+ *
+ * `assorbe` dice chi paga i minuti in più: uscendo prima («partenza»,
+ * l'arrivo resta) o arrivando dopo («arrivo», la partenza resta). È una
+ * scelta che riguarda persone diverse, e per questo non ha un valore
+ * ragionevole di sistema: chi va a un concerto e chi torna a casa la
+ * fanno all'opposto.
+ */
+export async function accettaProposta(
+  prenotazioneId: string, conducenteId: string,
+  assorbe?: 'partenza' | 'arrivo',
+) {
   const { data: p } = await db
     .from('prenotazioni')
     .select(`
@@ -117,6 +131,37 @@ export async function accettaProposta(prenotazioneId: string, conducenteId: stri
     'Ha detto di sì',
     `Passa a prenderti come avevi chiesto. Ti abbiamo bloccato ${(mia.totale / 100).toFixed(2).replace('.', ',')} € sulla carta.`,
     'proposta_accettata')
+
+  /**
+   * Se c'era una deviazione, gli orari di TUTTI cambiano.
+   *
+   * Chi era già a bordo aveva accettato un'ora, e adesso ne ha un'altra
+   * per una decisione che non ha preso lui. Va detto — e va potuto
+   * disdire senza penale, perché fargli pagare una fee per un cambiamento
+   * altrui è farlo pagare due volte.
+   */
+  const deviato = Number((p.fermate as { km_incrementali?: number } | null)?.km_incrementali ?? 0) > 0
+  if (deviato) {
+    await db.from('corse').update({
+      assorbe: assorbe ?? 'partenza',
+      orario_cambiato_il: new Date().toISOString(),
+    }).eq('id', c.id)
+
+    const piano = await pianoDi(c.id)
+    for (const b of aBordo) {
+      await notifica({
+        destinatario: b.passeggero,
+        tipo: 'corsa_annullata',
+        titolo: 'Gli orari della corsa sono cambiati',
+        testo: assorbe === 'arrivo'
+          ? `Sale un'altra persona lungo la strada: si arriva verso le ${piano ? orario(piano.arrivo) : '—'}. Se non ti va bene puoi disdire senza penale.`
+          : `Sale un'altra persona lungo la strada: si parte alle ${piano ? orario(piano.partenza) : '—'}. Se non ti va bene puoi disdire senza penale.`,
+        url: `/corsa/${c.id}`,
+        corsa: c.id,
+        chiave: `orari:${c.id}:${b.passeggero}:${Date.now()}`,
+      })
+    }
+  }
 
   return { esito: 'ok' as const, totale: mia.totale }
 }

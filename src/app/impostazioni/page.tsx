@@ -4,6 +4,7 @@ import { metodoAttuale } from '../../server/pagamento.ts'
 import { luoghiSalvati } from '../../server/preferiti.ts'
 import { statoMappa } from '../../server/mappe.ts'
 import { Impostazioni } from '../../components/Impostazioni.tsx'
+import { mieiBlocchi } from '../../server/blocchi.ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,11 +13,12 @@ import { Telaio } from '../../components/Telaio.tsx'
 
 export default async function Pagina() {
   const utente = await richiediUtente()
-  const [{ data: p }, metodo, luoghi, mappa] = await Promise.all([
+  const [{ data: p }, metodo, luoghi, mappa, blocchi] = await Promise.all([
     db.from('profili').select('push_attive, sms_attivi, telefono, chiacchiere, musica, soste').eq('id', utente).single(),
     metodoAttuale(utente).catch(() => null),
     luoghiSalvati(utente).catch(() => []),
     statoMappa().catch(() => ({ attiva: false })),
+    mieiBlocchi(utente).catch(() => []),
   ])
   return <Telaio attiva="/profilo" {...await guscio()}><Impostazioni iniziali={{
     push: p?.push_attive ?? true, sms: p?.sms_attivi ?? true, metodo,
@@ -27,5 +29,8 @@ export default async function Pagina() {
       musica: p?.musica ?? 'volentieri',
       soste: p?.soste ?? true,
     },
-  }} /></Telaio>
+  }} bloccati={blocchi.map((b) => ({
+    id: b.bloccato,
+    nome: (b.profili as unknown as { nome: string } | null)?.nome ?? 'qualcuno',
+  }))} /></Telaio>
 }

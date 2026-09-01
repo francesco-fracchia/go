@@ -30,6 +30,7 @@ create table if not exists blocchi (
 create index if not exists blocchi_bloccato on blocchi (bloccato);
 
 alter table blocchi enable row level security;
+drop policy if exists "vedo e gestisco i miei blocchi" on blocchi;
 create policy "vedo e gestisco i miei blocchi" on blocchi for all to authenticated
   using (chi = auth.uid()) with check (chi = auth.uid());
 

@@ -28,6 +28,8 @@ import { SonoPartito } from './SonoPartito.tsx'
  */
 
 export interface Proposta {
+  /** Quanti minuti in più costa il suo ritiro: zero se sale dove si parte. */
+  costoMin?: number
   id: string
   passeggero: { nome: string; fotoUrl: string | null; corseFatte: number }
   punto: string
@@ -72,6 +74,8 @@ export interface DatiCorsaConducente {
       quando: string; passata: boolean
     }>
   } | null
+  /** Il margine sull'arrivo dichiarato pubblicando: serve alla scelta. */
+  margineDetto?: number
   passeggeri: Array<{
     id: string
     /** Chi è la persona, non quale prenotazione: apre il suo profilo. */
@@ -188,7 +192,9 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
             {c.proposte.length === 1 ? 'una richiesta' : `${c.proposte.length} richieste`}
           </Etichetta>
           <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
-            {c.proposte.map((p) => <CartaProposta key={p.id} p={p} />)}
+            {c.proposte.map((p) => (
+              <CartaProposta key={p.id} p={p} margineDetto={c.margineDetto ?? 0} />
+            ))}
           </div>
         </section>
       )}
@@ -383,7 +389,7 @@ export function CorsaConducente({ c }: { c: DatiCorsaConducente }) {
  * conducente che scopre dopo di aver perso una prenotazione mentre ci
  * pensava non pubblica più.
  */
-function CartaProposta({ p }: { p: Proposta }) {
+function CartaProposta({ p, margineDetto }: { p: Proposta; margineDetto: number }) {
   return (
     <Riquadro stile={{ padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -423,7 +429,8 @@ function CartaProposta({ p }: { p: Proposta }) {
         }}>«{p.messaggio}»</p>
       )}
 
-      <RispondiProposta prenotazione={p.id} scadeFra={p.scadeFra} />
+      <RispondiProposta prenotazione={p.id} scadeFra={p.scadeFra}
+        costoMin={p.costoMin ?? 0} margineDetto={margineDetto} />
     </Riquadro>
   )
 }

@@ -34,7 +34,11 @@ export interface DatiImpostazioni {
   preferenze: { chiacchiere: Quanto; musica: Quanto; soste: boolean }
 }
 
-export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
+export function Impostazioni({ iniziali, bloccati = [] }: {
+  iniziali: DatiImpostazioni
+  /** Chi hai bloccato: sparisce dalla ricerca, quindi va ritrovato da qui. */
+  bloccati?: Array<{ id: string; nome: string }>
+}) {
   const [push, setPush] = useState(iniziali.push)
   const [sms, setSms] = useState(iniziali.sms)
   const [metodo, setMetodo] = useState(iniziali.metodo)
@@ -124,6 +128,15 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
           )}
         </Gruppo>
 
+        {bloccati.length > 0 && (
+          <Gruppo titolo="Persone che eviti"
+            nota="Non vi incontrate più: le loro corse non ti compaiono e non potete prenotare l'uno sull'altra. Loro non lo sanno.">
+            {bloccati.map((b) => (
+              <SbloccaRiga key={b.id} id={b.id} nome={b.nome} />
+            ))}
+          </Gruppo>
+        )}
+
         <Gruppo titolo="Aspetto"
           nota="Il buio non è una preferenza estetica: questa applicazione si usa di notte, in macchina.">
           <div className="scelte-tema">
@@ -157,6 +170,33 @@ export function Impostazioni({ iniziali }: { iniziali: DatiImpostazioni }) {
       </div>
     </div>
     </>
+  )
+}
+
+/**
+ * Sbloccare qualcuno deve essere possibile senza ritrovarne il profilo.
+ *
+ * Chi è bloccato sparisce dalla ricerca, quindi il suo profilo non si
+ * raggiunge più per la strada normale: senza questo elenco un blocco
+ * sarebbe di fatto definitivo, e nessuno l'aveva deciso così.
+ */
+function SbloccaRiga({ id, nome }: { id: string; nome: string }) {
+  const [tolto, setTolto] = useState(false)
+  if (tolto) {
+    return <p className="t-nota" style={{ margin: 0 }}>{nome} non è più bloccato.</p>
+  }
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+    }}>
+      <a href={`/profilo/${id}`} style={{ fontSize: 15, textDecoration: 'none', color: 'var(--inchiostro)' }}>
+        {nome}
+      </a>
+      <button type="button" className="collegamento-piccolo" onClick={async () => {
+        const r = await fetch(`/api/blocchi?persona=${encodeURIComponent(id)}`, { method: 'DELETE' })
+        if (r.ok) setTolto(true)
+      }}>Sblocca</button>
+    </div>
   )
 }
 

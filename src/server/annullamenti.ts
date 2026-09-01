@@ -49,8 +49,9 @@ export async function disdiciPasseggero(
   const { data: p } = await db
     .from('prenotazioni')
     .select(`id, stato, totale_cent, quota_cent, deviazione_cent, fee_cent,
-             stripe_payment_intent,
-             corse!inner(id, conducente, ora_partenza, politica, destinazione_label)`)
+             stripe_payment_intent, creata_il,
+             corse!inner(id, conducente, ora_partenza, politica, destinazione_label,
+                         orario_cambiato_il)`)
     .eq('id', prenotazioneId)
     .eq('passeggero', passeggeroId)
     .single()
@@ -69,7 +70,21 @@ export async function disdiciPasseggero(
     fee: p.fee_cent,
     totale: p.totale_cent,
   })
-  const { alConducente, daCatturare } = opts.senzaPenale
+  /**
+   * Se gli orari sono cambiati DOPO che aveva prenotato, non paga.
+   *
+   * Accettare una deviazione sposta la partenza o l'arrivo di tutti. Chi
+   * era già a bordo aveva accettato un'ora e adesso ne ha un'altra per una
+   * decisione che non ha preso lui: fargli pagare una penale per andarsene
+   * sarebbe fargli pagare due volte lo stesso cambiamento.
+   *
+   * Non è una gentilezza, è la stessa regola che vale ovunque: la penale
+   * è per chi cambia idea, non per chi subisce l'idea di un altro.
+   */
+  const cambiatoDopo = c.orario_cambiato_il
+    && new Date(c.orario_cambiato_il) > new Date(p.creata_il)
+
+  const { alConducente, daCatturare } = opts.senzaPenale || cambiatoDopo
     ? { alConducente: 0, daCatturare: 0 }
     : penale
 
@@ -157,4 +172,6 @@ const no = (m: string): EsitoDisdetta => ({
 interface RigaCorsa {
   id: string; conducente: string; ora_partenza: string
   politica: 'flessibile' | 'rigida' | 'nessuna'; destinazione_label: string
+  /** Quando chi guida ha cambiato gli orari: dopo, si disdice senza penale. */
+  orario_cambiato_il: string | null
 }

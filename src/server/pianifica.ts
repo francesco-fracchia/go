@@ -31,6 +31,10 @@ export interface PassaggioSegnato {
 }
 
 export interface PianoCorsa extends Omit<Piano, 'passaggi'> {
+  /** Chi paga i minuti in più: si esce prima, o si arriva dopo. */
+  assorbe: 'partenza' | 'arrivo'
+  /** Quanto più tardi si arriva rispetto all'ora pubblicata. */
+  ritardoArrivoMin: number
   passaggi: PassaggioSegnato[]
   /** Chi guida ha confermato di essere uscito: da qui le ore sono vere. */
   partenzaFatta: boolean
@@ -74,17 +78,27 @@ export function ordinaLungoIlPercorso<T extends { punto: Punto }>(
     .map((x) => x.r)
 }
 
-/** I ritiri con almeno una prenotazione viva, e chi ci sale. */
-export async function ritiriDi(corsaId: string): Promise<Ritiro[]> {
+/**
+ * I ritiri con almeno una prenotazione ACCETTATA, e chi ci sale.
+ *
+ * Una proposta in attesa non entra nel giro: mostrarla vorrebbe dire far
+ * vedere a chi guida un itinerario che comprende una fermata che non ha
+ * ancora accettato, e su cui sta appunto decidendo. `ancheRichiesta`
+ * serve a una cosa sola — calcolare quanto costerebbe dire di sì.
+ */
+export async function ritiriDi(
+  corsaId: string, ancheRichiesta?: string,
+): Promise<Ritiro[]> {
   const { data } = await db
     .from('prenotazioni')
-    .select('fermata, profili:passeggero(nome), fermate(id, etichetta, geo, tipo)')
+    .select('id, fermata, stato, profili:passeggero(nome), fermate(id, etichetta, geo, tipo)')
     .eq('corsa', corsaId)
     .not('stato', 'in', '("rifiutata","scaduta","annullata")')
     .not('fermata', 'is', null)
 
   const per = new Map<string, Ritiro>()
   for (const r of (data ?? []) as unknown as Array<Record<string, any>>) {
+    if (r.stato === 'richiesta' && r.id !== ancheRichiesta) continue
     const f = r.fermate
     if (!f || f.tipo !== 'ritiro') continue
     const punto = leggiPunto(f.geo)
@@ -97,10 +111,12 @@ export async function ritiriDi(corsaId: string): Promise<Ritiro[]> {
   return [...per.values()]
 }
 
-export async function pianoDi(corsaId: string): Promise<PianoCorsa | null> {
+export async function pianoDi(
+  corsaId: string, ancheRichiesta?: string,
+): Promise<PianoCorsa | null> {
   const { data: c } = await db
     .from('corse')
-    .select('origine_label, destinazione_label, origine_geo, destinazione_geo, ora_partenza, ora_arrivo')
+    .select('origine_label, destinazione_label, origine_geo, destinazione_geo, ora_partenza, ora_arrivo, assorbe')
     .eq('id', corsaId)
     .maybeSingle()
   if (!c) return null
@@ -117,7 +133,8 @@ export async function pianoDi(corsaId: string): Promise<PianoCorsa | null> {
   const idPartenza = (righeFermate ?? []).find((f) => f.tipo === 'partenza')?.id
 
   const diretto = await percorso([origine, destinazione])
-  const ritiri = ordinaLungoIlPercorso(await ritiriDi(corsaId), diretto.polilinea)
+  const ritiri = ordinaLungoIlPercorso(
+    await ritiriDi(corsaId, ancheRichiesta), diretto.polilinea)
 
   /**
    * Chi non ha una fermata sale dove parte la corsa.
@@ -150,13 +167,37 @@ export async function pianoDi(corsaId: string): Promise<PianoCorsa | null> {
     tratte.push(t.minuti)
   }
 
-  const oraArrivo = new Date(c.ora_arrivo)
-  const piano = calcola({
-    oraArrivo,
-    tratte,
-    fermate: ritiri.map((r) => ({ etichetta: r.etichetta, chi: r.chi })),
-    minutiDiretti: diretto.minuti,
-  })
+  const fermateDelGiro = ritiri.map((r) => ({ etichetta: r.etichetta, chi: r.chi }))
+
+  /**
+   * Chi paga i minuti che i ritiri aggiungono, lo decide chi guida.
+   *
+   * «partenza»: l'arrivo è l'ancora e si esce di casa prima. Giusto quando
+   * alla destinazione qualcosa comincia a un'ora — un concerto, un turno.
+   *
+   * «arrivo»: si parte all'ora scritta e si arriva dopo. Giusto quando alla
+   * destinazione non aspetta nessuno, e chi è a bordo preferisce non
+   * alzarsi prima.
+   *
+   * Prima era sempre la prima, e non perché qualcuno l'avesse scelta: era
+   * incorporata nel conto, che è il posto peggiore per tenere una decisione.
+   */
+  const piano = c.assorbe === 'arrivo'
+    ? (() => {
+      const partenza = new Date(c.ora_partenza)
+      const { passaggi, arrivo } = avanza({ adesso: partenza, tratte, fermate: fermateDelGiro })
+      const totale = (arrivo.getTime() - partenza.getTime()) / 60_000
+      return {
+        partenza, passaggi, arrivo,
+        minutiAggiunti: Math.max(0, Math.round(totale - diretto.minuti)),
+      }
+    })()
+    : calcola({
+      oraArrivo: new Date(c.ora_arrivo),
+      tratte,
+      fermate: fermateDelGiro,
+      minutiDiretti: diretto.minuti,
+    })
 
   /**
    * Si scrive l'ora su ogni fermata.
@@ -178,7 +219,7 @@ export async function pianoDi(corsaId: string): Promise<PianoCorsa | null> {
    * all'ora prevista, e nessuno stava riscrivendo niente di proposito —
    * bastava guardare la pagina.
    */
-  if (!partenzaFatta) {
+  if (!partenzaFatta && !ancheRichiesta) {
     await Promise.all(ritiri.map((r, k) =>
       db.from('fermate')
         .update({ ora_stimata: piano.passaggi[k]?.quando.toISOString() ?? null })
@@ -227,8 +268,12 @@ export async function pianoDi(corsaId: string): Promise<PianoCorsa | null> {
   const arrivo = arrivoVero ? new Date(arrivoVero) : piano.arrivo
 
   const partenzaPubblicata = new Date(c.ora_partenza)
+  const arrivoPubblicato = new Date(c.ora_arrivo)
   return {
     ...piano,
+    assorbe: c.assorbe,
+    ritardoArrivoMin: Math.max(0,
+      Math.round((arrivo.getTime() - arrivoPubblicato.getTime()) / 60_000)),
     partenza,
     arrivo,
     passaggi,
