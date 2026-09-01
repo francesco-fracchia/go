@@ -222,7 +222,7 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
       {(p.stato === 'autorizzata' || p.stato === 'richiesta') && (
         <div style={{ marginTop: 26 }}>
           <Disdetta politica={c.politica} minuti={minutiAllaPartenza} prenotazione={p.id}
-            destinazione={c.destinazioneLabel} />
+            destinazione={c.destinazioneLabel} feeCent={p.feeCent} />
         </div>
       )}
     </main>
@@ -270,14 +270,16 @@ function Voce({ nome, valore }: { nome: string; valore: number }) {
  * Un pulsante "annulla" che scopre la penale solo nella schermata di
  * conferma è il modo più veloce di far sentire qualcuno raggirato.
  */
-function Disdetta({ politica, minuti, prenotazione, destinazione }: {
+function Disdetta({ politica, minuti, prenotazione, destinazione, feeCent }: {
   politica: 'flessibile' | 'rigida'; minuti: number; prenotazione: string
   destinazione: string
+  /** La quota di servizio, per poterla nominare invece di chiamarla «costi». */
+  feeCent: number
 }) {
   // Le regole stanno in un posto solo: qui si leggono, non si riscrivono.
   const ore = minuti / 60
   const senzaCosti = gratuita(ore, politica)
-  const testo = testoDisdetta(ore, politica)
+  const testo = testoDisdetta(ore, politica, feeCent)
 
   return (
     <div>

@@ -73,15 +73,49 @@ export function calcolaPenale(opts: {
  * l'interfaccia annunciava «senza costi» mentre il server tratteneva. Una
  * soglia si legge, non si campiona.
  */
+/**
+ * «Senza costi» deve voler dire che non si trattiene NIENTE.
+ *
+ * Questa funzione guardava solo la quota che resta a chi guida, e ignorava
+ * la quota di servizio. Risultato: fra le ventiquattro ore e l'ora prima
+ * della partenza diceva «puoi disdire senza costi» e poi tratteneva
+ * trenta centesimi. Una promessa smentita da un addebito è peggio di un
+ * addebito annunciato — e per trenta centesimi si perde una persona che
+ * per tre euro sarebbe rimasta.
+ *
+ * Adesso è vero: gratuita significa che il totale trattenuto è zero.
+ */
 export function gratuita(oreMancanti: number, politica: Politica): boolean {
+  if (oreMancanti < ORE_FEE_GRATUITA) return false
   return politica === 'flessibile' ? oreMancanti >= 1 : oreMancanti >= 6
 }
 
-/** Il testo mostrato al passeggero PRIMA che prema, non dopo. */
-export function testoDisdetta(oreMancanti: number, politica: Politica): string {
+/**
+ * Il testo mostrato al passeggero PRIMA che prema, non dopo.
+ *
+ * `fee` serve a poterla nominare: «tranne la quota di servizio» è una frase
+ * che non si può controllare, «tranne 0,30 € di servizio» sì.
+ */
+export function testoDisdetta(
+  oreMancanti: number, politica: Politica, fee?: Cents,
+): string {
   if (gratuita(oreMancanti, politica)) return 'Puoi disdire senza costi.'
-  if (politica === 'rigida' && oreMancanti >= 2) {
+
+  const quotaResta = politica === 'flessibile'
+    ? oreMancanti < 1
+    : oreMancanti < 2
+  const meta = politica === 'rigida' && oreMancanti >= 2 && oreMancanti < 6
+
+  if (quotaResta) {
+    return 'Manca poco: la quota resta a chi guida, che sta già venendo.'
+  }
+  if (meta) {
     return 'Ormai è tardi: metà della quota resta a chi guida, che ha già rinunciato al posto.'
   }
-  return 'Manca poco: la quota resta a chi guida, che sta già venendo.'
+  // Resta solo la quota di servizio: la si nomina, invece di chiamarla
+  // «senza costi» e poi prenderla.
+  const importo = fee === undefined
+    ? 'la quota di servizio'
+    : `${(fee / 100).toFixed(2).replace('.', ',')} € di quota di servizio`
+  return `Ti torna tutto tranne ${importo}: sotto le ventiquattro ore quella resta.`
 }

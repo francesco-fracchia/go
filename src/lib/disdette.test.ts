@@ -70,12 +70,22 @@ test('la rigida non è mai più conveniente della flessibile per chi disdice', (
   }
 })
 
+/**
+ * Questo test confrontava «senza costi» con `alConducente === 0`, cioè
+ * ignorava la quota di servizio — e così affermava come corretta la
+ * bugia: fra le ventiquattro ore e l'ora prima della partenza si leggeva
+ * «puoi disdire senza costi» e si trattenevano trenta centesimi.
+ *
+ * Un test può bloccare un comportamento sbagliato tanto quanto
+ * proteggerne uno giusto. Il confronto vero è con TUTTO quello che si
+ * trattiene, che è quello che il passeggero vede sull'estratto conto.
+ */
 test('il testo mostrato corrisponde a quello che si trattiene', () => {
   for (const politica of ['flessibile', 'rigida'] as const) {
-    for (let ore = 0; ore <= 24; ore += 0.5) {
+    for (let ore = 0; ore <= 48; ore += 0.5) {
       const senzaCosti = testoDisdetta(ore, politica).includes('senza costi')
-      assert.equal(senzaCosti, caso(ore, politica).alConducente === 0,
-        `${politica} a ${ore} ore: il testo non corrisponde alla penale`)
+      assert.equal(senzaCosti, caso(ore, politica).daCatturare === 0,
+        `${politica} a ${ore} ore: il testo non corrisponde a quanto si trattiene`)
       assert.equal(senzaCosti, gratuita(ore, politica))
     }
   }
@@ -87,4 +97,36 @@ test('a corsa già partita si trattiene tutto', () => {
     assert.equal(p.rimborso, 0)
     assert.equal(p.daCatturare, eur(4.45))
   }
+})
+
+// ─── «Senza costi» deve voler dire zero ───────────────────────────────
+
+test('gratuita è vera solo quando non si trattiene NIENTE', () => {
+  const q = 355, fee = 30, tot = 385
+  for (const politica of ['flessibile', 'rigida'] as const) {
+    for (const ore of [0.5, 1, 1.5, 2, 3, 6, 7, 12, 23.9, 24, 25, 48]) {
+      const p = calcolaPenale({ oreMancanti: ore, politica, quotaConducente: q, fee, totale: tot })
+      assert.equal(
+        gratuita(ore, politica), p.daCatturare === 0,
+        `${politica} a ${ore}h: dice gratuita=${gratuita(ore, politica)} ma trattiene ${p.daCatturare}`,
+      )
+    }
+  }
+})
+
+/**
+ * Il caso che aveva il difetto: sotto le ventiquattro ore la quota di
+ * servizio si trattiene sempre, anche quando a chi guida non va niente.
+ * Prima lì si leggeva «puoi disdire senza costi», e poi arrivavano trenta
+ * centesimi.
+ */
+test('fra le 24 ore e il gradino della quota si dice cosa resta, e quanto', () => {
+  const testo = testoDisdetta(7, 'flessibile', 30)
+  assert.match(testo, /0,30/)
+  assert.doesNotMatch(testo, /senza costi/)
+})
+
+test('sopra le ventiquattro ore è davvero senza costi', () => {
+  assert.equal(testoDisdetta(48, 'flessibile', 30), 'Puoi disdire senza costi.')
+  assert.equal(testoDisdetta(48, 'rigida', 30), 'Puoi disdire senza costi.')
 })
