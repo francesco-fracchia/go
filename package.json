@@ -13,7 +13,9 @@
     "prepara": "node scripts/copia-worker.mjs",
     "migra": "node --env-file-if-exists=.env.local scripts/migra.mjs",
     "query": "node --env-file=.env.local scripts/verifica-query.mjs",
-    "orfani": "node scripts/trova-orfani.mjs"
+    "orfani": "node scripts/trova-orfani.mjs",
+    "collegamenti": "node scripts/verifica-collegamenti.mjs",
+    "verifica": "npm run typecheck && npm test && npm run collegamenti && npm run orfani"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
