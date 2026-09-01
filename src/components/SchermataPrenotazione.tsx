@@ -121,7 +121,10 @@ export function SchermataPrenotazione({ p }: { p: DatiPrenotazione }) {
           {ritrovo}
         </div>
         <div style={{ fontSize: 15, color: 'var(--inchiostro-2)' }}>
-          alle {orario(c.oraPartenza)} · arrivo previsto {orario(c.oraArrivo)}
+          {/* «Previsto» è una promessa: dopo l'arrivo diventa una svista.
+              La stessa riga, con il tempo giusto. */}
+          alle {orario(c.oraPartenza)} · {arrivata ? 'arrivato alle' : 'arrivo previsto'}{' '}
+          {orario(c.oraArrivo)}
         </div>
         {/* Dopo l'arrivo non si manda più nessuno da nessuna parte. */}
         {!arrivata && (
